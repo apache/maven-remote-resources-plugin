@@ -19,10 +19,16 @@ package org.apache.maven.plugin.resources.remote.it;
  * under the License.
  */
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
 import org.codehaus.plexus.util.FileUtils;
+import org.codehaus.plexus.util.Os;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,16 +40,21 @@ import java.net.URISyntaxException;
 public class IT_RunOnlyAtExecutionRoot
     extends AbstractIT
 {
-
+    @Test
     public void test()
         throws IOException, URISyntaxException, VerificationException
     {
+        // Workaround for Windows + Maven-3.5.x + Jenkins due to MNG-6261
+        assumeTrue( !(System.getenv( "JENKINS_HOME" ) != null && Os.isFamily( Os.FAMILY_WINDOWS ) && System.getenv( "MAVEN_HOME" ).contains( "-3.5." ) ) );
+        
         File dir = TestUtils.getTestDir( "run-only-at-execution-root" );
 
         Verifier verifier;
 
         verifier = TestUtils.newVerifier( new File( dir, "resource-projects" ) );
         verifier.executeGoal( "deploy" );
+        verifier.setLogFileName( "first.log" );
+        verifier.displayStreamBuffers();
         verifier.verifyErrorFreeLog();
         verifier.resetStreams();
 
@@ -58,6 +69,7 @@ public class IT_RunOnlyAtExecutionRoot
         // verifier.deleteArtifacts( "org.apache.maven.plugin.rresource.it.mrr41" );
 
         verifier.executeGoal( "generate-resources" );
+        verifier.displayStreamBuffers();
         verifier.verifyErrorFreeLog();
         verifier.resetStreams();
 

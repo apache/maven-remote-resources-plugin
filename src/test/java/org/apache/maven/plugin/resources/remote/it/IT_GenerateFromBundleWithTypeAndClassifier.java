@@ -19,10 +19,13 @@ package org.apache.maven.plugin.resources.remote.it;
  * under the License.
  */
 
+import static org.junit.Assert.assertTrue;
+
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
 import org.codehaus.plexus.util.FileUtils;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,10 +34,11 @@ import java.net.URISyntaxException;
 public class IT_GenerateFromBundleWithTypeAndClassifier
     extends AbstractIT
 {
-    
+    @Test
     public void test()
         throws IOException, URISyntaxException, VerificationException
     {
+        
         File dir = TestUtils.getTestDir( "generate-from-bundle-with-type-and-classifier" );
         Verifier verifier = TestUtils.newVerifier( dir );
         

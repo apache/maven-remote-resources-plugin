@@ -20,17 +20,14 @@ package org.apache.maven.plugin.resources.remote.it;
  */
 
 import org.apache.maven.plugin.resources.remote.it.support.BootstrapInstaller;
-
-import junit.framework.TestCase;
+import org.junit.Before;
 
 public abstract class AbstractIT
-    extends TestCase
 {
+    @Before
     public void setUp()
         throws Exception
     {
         BootstrapInstaller.install();
-        
-        super.setUp();
     }
 }

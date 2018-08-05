@@ -28,8 +28,8 @@ under the License.
   <parent>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-plugins</artifactId>
-    <version>30</version>
-    <relativePath>../../pom/maven/maven-plugins/pom.xml</relativePath>
+    <version>32</version>
+    <relativePath/>
   </parent>
 
   <artifactId>maven-remote-resources-plugin</artifactId>

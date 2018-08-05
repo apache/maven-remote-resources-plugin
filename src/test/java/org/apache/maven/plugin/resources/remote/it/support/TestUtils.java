@@ -62,6 +62,7 @@ public class TestUtils
     {
         Verifier verifier = new Verifier( dir.getAbsolutePath() );
         verifier.setLocalRepo( System.getProperty( "localRepositoryPath" ) );
+        verifier.getSystemProperties().setProperty( "https.protocols", System.getProperty( "https.protocols", "TLSv1.2" ) );
         return verifier;
     }
 
