@@ -94,6 +94,7 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.exception.MethodInvocationException;
 import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.exception.ResourceNotFoundException;
+import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.log.LogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
@@ -1151,6 +1152,7 @@ public class ProcessRemoteResourcesMojo
     protected void processResourceBundles( RemoteResourcesClassLoader classLoader, VelocityContext context )
         throws MojoExecutionException
     {
+        String velocityResource = null;
         try
         {
             // CHECKSTYLE_OFF: LineLength
@@ -1181,6 +1183,7 @@ public class ProcessRemoteResourcesMojo
                         if ( projectResource.endsWith( TEMPLATE_SUFFIX ) )
                         {
                             projectResource = projectResource.substring( 0, projectResource.length() - 3 );
+                            velocityResource = bundleResource;
                             doVelocity = true;
                         }
 
@@ -1283,9 +1286,9 @@ public class ProcessRemoteResourcesMojo
         {
             throw new MojoExecutionException( "Error parsing remote resource bundle descriptor.", e );
         }
-        catch ( Exception e )
+        catch ( VelocityException e )
         {
-            throw new MojoExecutionException( "Error rendering velocity resource.", e );
+            throw new MojoExecutionException( "Error rendering Velocity resource '" + velocityResource + "'", e );
         }
     }
 
