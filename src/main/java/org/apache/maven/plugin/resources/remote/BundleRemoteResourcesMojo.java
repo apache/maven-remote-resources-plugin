@@ -39,7 +39,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Bundle up resources that should be considered as a remote-resource.
+ * Bundle up resources that should be considered as a remote-resource,
+ * generating <code>META-INF/maven/remote-resources.xml</code> descriptor.
  */
 @Mojo( name = "bundle", defaultPhase = LifecyclePhase.GENERATE_RESOURCES, threadSafe = true )
 public class BundleRemoteResourcesMojo

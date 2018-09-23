@@ -110,13 +110,13 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 /**
  * <p>
- * Pull down resourceBundles containing remote resources and process the resources contained inside. When that is done
+ * Pull down resourceBundles containing remote resources and process the resources contained inside. When that is done,
  * the resources are injected into the current (in-memory) Maven project, making them available to the process-resources
  * phase.
  * </p>
  * <p>
- * Resources that end in ".vm" are treated as velocity templates. For those, the ".vm" is stripped off for the final
- * artifact name and it's fed through velocity to have properties expanded, conditions processed, etc...
+ * Resources that end in ".vm" are treated as Velocity templates. For those, the ".vm" is stripped off for the final
+ * artifact name and it's fed through Velocity to have properties expanded, conditions processed, etc...
  * </p>
  * <p/>
  * Resources that don't end in ".vm" are copied "as is".

@@ -27,10 +27,12 @@ ${project.name}
 
   This plugin is used to retrieve JARs of resources from remote repositories,
   process those resources, and incorporate them into JARs you build with
-  Maven. A very common use-case is the need to package certain resources in a
-  consistent way across your organization: at Apache it is required that every
+  Maven.
+  
+  A very common use-case is the need to package certain resources in a
+  consistent way across your organization. For example at Apache, it is required that every
   JAR produced contains a copy of the Apache license and a notice file that
-  references all used software in a given project.
+  references all used software in a given project: see {{{/apache-resource-bundles/}Apache Resource Bundles}}.
 
 * Goals Overview
 

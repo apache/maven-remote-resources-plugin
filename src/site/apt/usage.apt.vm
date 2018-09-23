@@ -58,7 +58,7 @@ Usage
 ------------------- 
  
  This will trigger the scanning of that project's <<<$\{basedir}/src/main/resources>>> directory and create the
- <<<$\{basedir}/target/classes/META-INF/maven/remote-resources.xml>>> manifest file.
+ <<<$\{basedir}/target/classes/META-INF/maven/remote-resources.xml>>> {{{./remote-resources.html}manifest file}}.
 
  <<Note:>> The files have to be named like <<<*.vm>>> to mark them as {{{htps://velocity.apache.org}Velocity}} macro files which will
            be filtered by the <<process>> goal. If you don't name the files according to this,
