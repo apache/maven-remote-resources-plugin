@@ -27,7 +27,7 @@
 Usage
 
   To handle filtering this version of Maven Remote Resources Plugin uses
-  {{{http://maven.apache.org/shared/maven-filtering/index.html}Maven Filtering}} ${mavenFilteringVersion}.
+  {{{/shared/maven-filtering/index.html}Maven Filtering}} ${mavenFilteringVersion}.
 
 
 * How to Create a Resource Bundle
@@ -57,11 +57,11 @@ Usage
 </project>
 ------------------- 
  
- This will trigger the scanning of that project's <<<${basedir}/src/main/resources>>> directory and create the
- <<<${basedir}/target/classes/META-INF/maven/remote-resources.xml>>> manifest file.
+ This will trigger the scanning of that project's <<<$\{basedir}/src/main/resources>>> directory and create the
+ <<<$\{basedir}/target/classes/META-INF/maven/remote-resources.xml>>> manifest file.
 
- <<Note:>> The files have to be named like <<<*.vm>>> to let them velocity macro files which will
-           be filtered by the <<process>> goal. If you don't name the files according to this
+ <<Note:>> The files have to be named like <<<*.vm>>> to mark them as {{{htps://velocity.apache.org}Velocity}} macro files which will
+           be filtered by the <<process>> goal. If you don't name the files according to this,
            they will not been filtered.
 
 
@@ -100,7 +100,7 @@ Usage
 
  This will retrieve the <<<apache-jar-resource-bundle-1.0.jar>>> from the remote repositories
  specified in your POM, process each resource in the bundle and deposit them in your projects
- <<<${basedir}/target/classes>>> directory. 
+ <<<$\{basedir}/target/classes>>> directory. 
 
 
 * Running Once in a Multi-Module Build

@@ -17,10 +17,10 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-<model xmlns="https://codehaus-plexus.github.io/MODELLO/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="https://codehaus-plexus.github.io/MODELLO/1.1.0 https://codehaus-plexus.github.io/modello/xsd/modello-1.1.0.xsd"
+<model xmlns="https://codehaus-plexus.github.io/MODELLO/1.8.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="https://codehaus-plexus.github.io/MODELLO/1.8.0 https://codehaus-plexus.github.io/modello/xsd/modello-1.8.0.xsd"
        xml.namespace="http://maven.apache.org/supplemental-model/${version}"
-       xml.schemaLocation="http://maven.apache.org/xsd/supplemental-model-${version}.xsd">
+       xml.schemaLocation="https://maven.apache.org/xsd/supplemental-model-${version}.xsd">
   <id>supplemental-model</id>
   <name>SupplementalDataModel</name>
   <description>Provides access to supplemental POM data models.</description>
