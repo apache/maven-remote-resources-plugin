@@ -937,10 +937,10 @@ public class ProcessRemoteResourcesMojo
 
         if ( !needOverwrite )
         {
-            getLog().info( "File " + file + " is up to date" );
+            getLog().debug( "File " + file + " is up to date" );
             return;
         }
-        getLog().info( "Writing " + file );
+        getLog().debug( "Writing " + file );
         OutputStream os = new FileOutputStream( file );
         try
         {
@@ -1082,6 +1082,7 @@ public class ProcessRemoteResourcesMojo
         {
             for ( String artifactDescriptor : bundles )
             {
+                getLog().info( "Preparing remote bundle " + artifactDescriptor );
                 // groupId:artifactId:version[:type[:classifier]]
                 String[] s = artifactDescriptor.split( ":" );
 
@@ -1153,12 +1154,15 @@ public class ProcessRemoteResourcesMojo
         throws MojoExecutionException
     {
         String velocityResource = null;
+        int bundleCount = 0;
         try
         {
             // CHECKSTYLE_OFF: LineLength
             for ( Enumeration<URL> e = classLoader.getResources( BundleRemoteResourcesMojo.RESOURCES_MANIFEST ); e.hasMoreElements(); )
             {
                 URL url = e.nextElement();
+                bundleCount++;
+                getLog().debug( "processResourceBundle on bundle#" + bundleCount + " " + url );
 
                 InputStream in = null;
                 OutputStream out = null;
@@ -1175,9 +1179,12 @@ public class ProcessRemoteResourcesMojo
                     reader.close();
                     reader = null;
 
+                    int resourceCount = 0;
                     for ( String bundleResource : bundle.getRemoteResources() )
                     {
                         String projectResource = bundleResource;
+                        resourceCount++;
+                        getLog().debug( "bundle#" + bundleCount + " resource#" + resourceCount + " " + bundleResource );
 
                         boolean doVelocity = false;
                         if ( projectResource.endsWith( TEMPLATE_SUFFIX ) )
@@ -1229,12 +1236,14 @@ public class ProcessRemoteResourcesMojo
                                     FileUtils.copyURLToFile( resUrl, f );
                                 }
                             }
+
                             File appendedResourceFile = new File( appendedResourcesDirectory, projectResource );
                             File appendedVmResourceFile =
                                 new File( appendedResourcesDirectory, projectResource + ".vm" );
 
                             if ( appendedResourceFile.exists() )
                             {
+                                getLog().info( "copying appended resource: " + projectResource );
                                 in = new FileInputStream( appendedResourceFile );
                                 out = new FileOutputStream( f, true );
                                 IOUtil.copy( in, out );
@@ -1245,6 +1254,7 @@ public class ProcessRemoteResourcesMojo
                             }
                             else if ( appendedVmResourceFile.exists() )
                             {
+                                getLog().info( "filtering appended resource: " + projectResource + ".vm" );
                                 reader = new FileReader( appendedVmResourceFile );
 
                                 if ( bundle.getSourceEncoding() == null )
