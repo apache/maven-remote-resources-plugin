@@ -138,6 +138,10 @@ public class BundleRemoteResourcesMojo
             remoteResourcesBundle.addRemoteResource( StringUtils.replace( resource, '\\', '/' ) );
         }
 
+        int n = remoteResourcesBundle.getRemoteResources().size();
+        getLog().info( "Writing " + RESOURCES_MANIFEST + " descriptor with " + n + " entr"
+            + ( ( n > 1 ) ? "ies" : "y" ) );
+
         RemoteResourcesBundleXpp3Writer w = new RemoteResourcesBundleXpp3Writer();
 
         Writer writer = null;

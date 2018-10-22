@@ -1171,10 +1171,11 @@ public class ProcessRemoteResourcesMojo
     {
         String velocityResource = null;
         int bundleCount = 0;
+        int resourceCount = 0;
         try
         {
-            // CHECKSTYLE_OFF: LineLength
-            for ( Enumeration<URL> e = classLoader.getResources( BundleRemoteResourcesMojo.RESOURCES_MANIFEST ); e.hasMoreElements(); )
+            for ( Enumeration<URL> e =
+                classLoader.getResources( BundleRemoteResourcesMojo.RESOURCES_MANIFEST ); e.hasMoreElements(); )
             {
                 URL url = e.nextElement();
                 bundleCount++;
@@ -1195,12 +1196,14 @@ public class ProcessRemoteResourcesMojo
                     reader.close();
                     reader = null;
 
-                    int resourceCount = 0;
+                    int bundleResourceCount = 0;
                     for ( String bundleResource : bundle.getRemoteResources() )
                     {
                         String projectResource = bundleResource;
+                        bundleResourceCount++;
                         resourceCount++;
-                        getLog().debug( "bundle#" + bundleCount + " resource#" + resourceCount + " " + bundleResource );
+                        getLog().debug( "bundle#" + bundleCount + " resource#" + bundleResourceCount + " "
+                            + bundleResource );
 
                         boolean doVelocity = false;
                         if ( projectResource.endsWith( TEMPLATE_SUFFIX ) )
@@ -1301,8 +1304,10 @@ public class ProcessRemoteResourcesMojo
                     IOUtil.close( writer );
                     IOUtil.close( reader );
                 }
-                // CHECKSTYLE_ON: LineLength
             }
+
+            getLog().info( "Copied " + resourceCount + " resource" + ( ( resourceCount > 1 ) ? "s" : "" ) + " from "
+                + bundleCount + " bundle" + ( ( bundleCount > 1 ) ? "s" : "" ) + "." );
         }
         catch ( IOException e )
         {
