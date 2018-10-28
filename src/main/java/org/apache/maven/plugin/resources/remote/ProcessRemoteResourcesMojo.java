@@ -37,6 +37,7 @@ import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1163,11 +1164,17 @@ public class ProcessRemoteResourcesMojo
     protected void processResourceBundles( ClassLoader classLoader, VelocityContext context )
         throws MojoExecutionException
     {
-        String velocityResource = null;
+        List<Map.Entry<String, RemoteResourcesBundle>> remoteResources =
+            new ArrayList<Map.Entry<String, RemoteResourcesBundle>>();
         int bundleCount = 0;
         int resourceCount = 0;
+
+        // list remote resources form bundles
+        InputStream in = null;
         try
         {
+            RemoteResourcesBundleXpp3Reader bundleReader = new RemoteResourcesBundleXpp3Reader();
+
             for ( Enumeration<URL> e =
                 classLoader.getResources( BundleRemoteResourcesMojo.RESOURCES_MANIFEST ); e.hasMoreElements(); )
             {
@@ -1175,145 +1182,157 @@ public class ProcessRemoteResourcesMojo
                 bundleCount++;
                 getLog().debug( "processResourceBundle on bundle#" + bundleCount + " " + url );
 
-                InputStream in = null;
-                OutputStream out = null;
-                Reader reader = null;
-                Writer writer = null;
-                try
+                in = url.openStream();
+
+                RemoteResourcesBundle bundle = bundleReader.read( in );
+
+                in.close();
+                in = null;
+
+                int n = 0;
+                for ( String bundleResource : bundle.getRemoteResources() )
                 {
-                    reader = new InputStreamReader( url.openStream() );
-
-                    RemoteResourcesBundleXpp3Reader bundleReader = new RemoteResourcesBundleXpp3Reader();
-
-                    RemoteResourcesBundle bundle = bundleReader.read( reader );
-
-                    reader.close();
-                    reader = null;
-
-                    int bundleResourceCount = 0;
-                    for ( String bundleResource : bundle.getRemoteResources() )
-                    {
-                        String projectResource = bundleResource;
-                        bundleResourceCount++;
-                        resourceCount++;
-                        getLog().debug( "bundle#" + bundleCount + " resource#" + bundleResourceCount + " "
-                            + bundleResource );
-
-                        boolean doVelocity = false;
-                        if ( projectResource.endsWith( TEMPLATE_SUFFIX ) )
-                        {
-                            projectResource = projectResource.substring( 0, projectResource.length() - 3 );
-                            velocityResource = bundleResource;
-                            doVelocity = true;
-                        }
-
-                        // Don't overwrite resource that are already being provided.
-
-                        File f = new File( outputDirectory, projectResource );
-
-                        FileUtils.mkdir( f.getParentFile().getAbsolutePath() );
-
-                        if ( !copyResourceIfExists( f, projectResource, context ) )
-                        {
-                            if ( doVelocity )
-                            {
-                                DeferredFileOutputStream os =
-                                    new DeferredFileOutputStream( velocityFilterInMemoryThreshold, f );
-
-                                writer = bundle.getSourceEncoding() == null
-                                             ? new OutputStreamWriter( os )
-                                             : new OutputStreamWriter( os, bundle.getSourceEncoding() );
-
-                                if ( bundle.getSourceEncoding() == null )
-                                {
-                                    // TODO: Is this correct? Shouldn't we behave like the rest of maven and fail
-                                    // down to JVM default instead ISO-8859-1 ?
-                                    velocity.mergeTemplate( bundleResource, "ISO-8859-1", context, writer );
-                                }
-                                else
-                                {
-                                    velocity.mergeTemplate( bundleResource, bundle.getSourceEncoding(), context,
-                                                            writer );
-
-                                }
-
-                                writer.close();
-                                writer = null;
-                                fileWriteIfDiffers( os );
-                            }
-                            else
-                            {
-                                URL resUrl = classLoader.getResource( bundleResource );
-                                if ( resUrl != null )
-                                {
-                                    FileUtils.copyURLToFile( resUrl, f );
-                                }
-                            }
-
-                            File appendedResourceFile = new File( appendedResourcesDirectory, projectResource );
-                            File appendedVmResourceFile =
-                                new File( appendedResourcesDirectory, projectResource + ".vm" );
-
-                            if ( appendedResourceFile.exists() )
-                            {
-                                getLog().info( "copying appended resource: " + projectResource );
-                                in = new FileInputStream( appendedResourceFile );
-                                out = new FileOutputStream( f, true );
-                                IOUtil.copy( in, out );
-                                out.close();
-                                out = null;
-                                in.close();
-                                in = null;
-                            }
-                            else if ( appendedVmResourceFile.exists() )
-                            {
-                                getLog().info( "filtering appended resource: " + projectResource + ".vm" );
-                                reader = new FileReader( appendedVmResourceFile );
-
-                                if ( bundle.getSourceEncoding() == null )
-                                {
-                                    writer = new PrintWriter( new FileWriter( f, true ) );
-                                }
-                                else
-                                {
-                                    writer =
-                                        new PrintWriter( new OutputStreamWriter( new FileOutputStream( f, true ),
-                                                                                 bundle.getSourceEncoding() ) );
-                                }
-
-                                Velocity.init();
-                                Velocity.evaluate( context, writer, "remote-resources", reader );
-                                writer.close();
-                                writer = null;
-                                reader.close();
-                                reader = null;
-                            }
-                        }
-                    }
-                }
-                finally
-                {
-                    IOUtil.close( out );
-                    IOUtil.close( in );
-                    IOUtil.close( writer );
-                    IOUtil.close( reader );
+                    n++;
+                    resourceCount++;
+                    getLog().debug( "bundle#" + bundleCount + " resource#" + n + " " + bundleResource );
+                    remoteResources.add( new AbstractMap.SimpleEntry<String, RemoteResourcesBundle>( bundleResource,
+                                                                                                     bundle ) );
                 }
             }
+        }
+        catch ( IOException ioe )
+        {
+            throw new MojoExecutionException( "Error finding remote resources manifests", ioe );
+        }
+        catch ( XmlPullParserException xppe )
+        {
+            throw new MojoExecutionException( "Error parsing remote resource bundle descriptor.", xppe );
+        }
+        finally
+        {
+            IOUtil.close( in );
+        }
 
-            getLog().info( "Copied " + resourceCount + " resource" + ( ( resourceCount > 1 ) ? "s" : "" ) + " from "
-                + bundleCount + " bundle" + ( ( bundleCount > 1 ) ? "s" : "" ) + "." );
-        }
-        catch ( IOException e )
+        getLog().info( "Copying " + resourceCount + " resource" + ( ( resourceCount > 1 ) ? "s" : "" ) + " from "
+            + bundleCount + " bundle" + ( ( bundleCount > 1 ) ? "s" : "" ) + "." );
+
+        String velocityResource = null;
+        OutputStream out = null;
+        Writer writer = null;
+        Reader reader = null;
+
+        try
         {
-            throw new MojoExecutionException( "Error finding remote resources manifests", e );
+
+            for ( Map.Entry<String, RemoteResourcesBundle> entry : remoteResources )
+            {
+                String bundleResource = entry.getKey();
+                RemoteResourcesBundle bundle = entry.getValue();
+
+                String projectResource = bundleResource;
+
+                boolean doVelocity = false;
+                if ( projectResource.endsWith( TEMPLATE_SUFFIX ) )
+                {
+                    projectResource = projectResource.substring( 0, projectResource.length() - 3 );
+                    velocityResource = bundleResource;
+                    doVelocity = true;
+                }
+
+                // Don't overwrite resource that are already being provided.
+
+                File f = new File( outputDirectory, projectResource );
+
+                FileUtils.mkdir( f.getParentFile().getAbsolutePath() );
+
+                if ( !copyResourceIfExists( f, projectResource, context ) )
+                {
+                    if ( doVelocity )
+                    {
+                        DeferredFileOutputStream os =
+                            new DeferredFileOutputStream( velocityFilterInMemoryThreshold, f );
+
+                        writer = bundle.getSourceEncoding() == null ? new OutputStreamWriter( os )
+                                        : new OutputStreamWriter( os, bundle.getSourceEncoding() );
+
+                        if ( bundle.getSourceEncoding() == null )
+                        {
+                            // TODO: Is this correct? Shouldn't we behave like the rest of maven and fail
+                            // down to JVM default instead ISO-8859-1 ?
+                            velocity.mergeTemplate( bundleResource, "ISO-8859-1", context, writer );
+                        }
+                        else
+                        {
+                            velocity.mergeTemplate( bundleResource, bundle.getSourceEncoding(), context, writer );
+
+                        }
+
+                        writer.close();
+                        writer = null;
+                        fileWriteIfDiffers( os );
+                    }
+                    else
+                    {
+                        URL resUrl = classLoader.getResource( bundleResource );
+                        if ( resUrl != null )
+                        {
+                            FileUtils.copyURLToFile( resUrl, f );
+                        }
+                    }
+
+                    File appendedResourceFile = new File( appendedResourcesDirectory, projectResource );
+                    File appendedVmResourceFile = new File( appendedResourcesDirectory, projectResource + ".vm" );
+
+                    if ( appendedResourceFile.exists() )
+                    {
+                        getLog().info( "Copying appended resource: " + projectResource );
+                        in = new FileInputStream( appendedResourceFile );
+                        out = new FileOutputStream( f, true );
+                        IOUtil.copy( in, out );
+                        out.close();
+                        out = null;
+                        in.close();
+                        in = null;
+                    }
+                    else if ( appendedVmResourceFile.exists() )
+                    {
+                        getLog().info( "Filtering appended resource: " + projectResource + ".vm" );
+                        reader = new FileReader( appendedVmResourceFile );
+
+                        if ( bundle.getSourceEncoding() == null )
+                        {
+                            writer = new PrintWriter( new FileWriter( f, true ) );
+                        }
+                        else
+                        {
+                            writer = new PrintWriter( new OutputStreamWriter( new FileOutputStream( f, true ),
+                                                                              bundle.getSourceEncoding() ) );
+                        }
+
+                        Velocity.init();
+                        Velocity.evaluate( context, writer, "remote-resources", reader );
+                        writer.close();
+                        writer = null;
+                        reader.close();
+                        reader = null;
+                    }
+                }
+            }
         }
-        catch ( XmlPullParserException e )
+        catch ( IOException ioe )
         {
-            throw new MojoExecutionException( "Error parsing remote resource bundle descriptor.", e );
+            throw new MojoExecutionException( "Error reading remote resource", ioe );
         }
         catch ( VelocityException e )
         {
             throw new MojoExecutionException( "Error rendering Velocity resource '" + velocityResource + "'", e );
+        }
+        finally
+        {
+            IOUtil.close( out );
+            IOUtil.close( in );
+            IOUtil.close( writer );
+            IOUtil.close( reader );
         }
     }
 
