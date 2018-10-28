@@ -444,12 +444,14 @@ public class RemoteResourcesMojoTest
 
         return mojo;
     }
+
     protected BundleRemoteResourcesMojo lookupBundleMojoWithDefaultSettings( final MavenProject project )
         throws Exception
     {
         File resourceDir = new File( project.getBasedir() + "/src/main/resources" );
         return lookupBundleMojoWithSettings( project, resourceDir, null );
     }
+
     protected BundleRemoteResourcesMojo lookupBundleMojoWithSettings( final MavenProject project,
                                                                       File resourceDir, String sourceEncoding )
     throws Exception
@@ -491,8 +493,8 @@ public class RemoteResourcesMojoTest
                                     null, //Settings settings,
                                     null, //ArtifactRepository localRepository,
                                     null, //EventDispatcher eventDispatcher,
-                                    new ReactorManager(new ArrayList<MavenProject>()),
-                                    Arrays.asList("install"),
+                                    new ReactorManager( new ArrayList<MavenProject>() ),
+                                    Arrays.asList( "install" ),
                                     project.getBasedir().toString(),
                                     new Properties(),
                                     Calendar.getInstance().getTime() );

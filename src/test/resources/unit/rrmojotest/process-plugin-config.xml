@@ -25,6 +25,7 @@ under the License.
         <artifactId>maven-remote-resources-plugin</artifactId>
         <configuration>
           <localRepository>${localRepository}</localRepository>
+          <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
     </plugins>
