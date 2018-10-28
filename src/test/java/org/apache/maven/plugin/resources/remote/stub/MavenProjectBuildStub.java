@@ -223,17 +223,20 @@ public class MavenProjectBuildStub
     {
         File currentDirectory;
 
-        for (String aDirectoryList : directoryList) {
-            currentDirectory = new File(parent, "/" + aDirectoryList);
+        for ( String aDirectoryList : directoryList )
+        {
+            currentDirectory = new File( parent, "/" + aDirectoryList );
 
-            if (!currentDirectory.exists()) {
+            if ( !currentDirectory.exists() )
+            {
                 currentDirectory.mkdirs();
             }
 
             // duplicate dir structure in test resources
-            currentDirectory = new File(testparent, "/" + aDirectoryList);
+            currentDirectory = new File( testparent, "/" + aDirectoryList );
 
-            if (!currentDirectory.exists()) {
+            if ( !currentDirectory.exists() )
+            {
                 currentDirectory.mkdirs();
             }
         }
@@ -273,21 +276,27 @@ public class MavenProjectBuildStub
             return;
         }
 
-        for (String aList : list) {
-            currentFile = new File(parent, aList);
+        for ( String aList : list )
+        {
+            currentFile = new File( parent, aList );
 
             // create the necessary parent directories
             // before we create the files
-            if (!currentFile.getParentFile().exists()) {
+            if ( !currentFile.getParentFile().exists() )
+            {
                 currentFile.getParentFile().mkdirs();
             }
 
-            if (!currentFile.exists()) {
-                try {
+            if ( !currentFile.exists() )
+            {
+                try
+                {
                     currentFile.createNewFile();
-                    populateFile(currentFile, RESOURCES_FILE);
-                } catch (IOException io) {
-                    //TODO: handle exception
+                    populateFile( currentFile, RESOURCES_FILE );
+                }
+                catch ( IOException io )
+                {
+                    // TODO: handle exception
                 }
             }
         }

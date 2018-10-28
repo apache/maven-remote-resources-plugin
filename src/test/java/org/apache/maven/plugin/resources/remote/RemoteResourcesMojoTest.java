@@ -378,9 +378,10 @@ public class RemoteResourcesMojoTest
 
         setupDefaultProject( project );
 
-        for (String resourceName2 : resourceNames) {
-            File resource = new File(resourceDir, resourceName2);
-            URL source = getClass().getResource("/" + resourceName2);
+        for ( String resourceName2 : resourceNames )
+        {
+            File resource = new File( resourceDir, resourceName2 );
+            URL source = getClass().getResource( "/" + resourceName2 );
 
             FileUtils.copyURLToFile(source, resource);
         }
@@ -391,8 +392,9 @@ public class RemoteResourcesMojoTest
         assertTrue( xmlFile.exists() );
 
         String data = FileUtils.fileRead( xmlFile );
-        for (String resourceName1 : resourceNames) {
-            assertTrue(data.contains(resourceName1));
+        for ( String resourceName1 : resourceNames )
+        {
+            assertTrue( data.contains( resourceName1 ) );
         }
 
         if ( null != jarName )
@@ -402,11 +404,12 @@ public class RemoteResourcesMojoTest
             jar.write( data.getBytes() );
             jar.closeEntry();
 
-            for (String resourceName : resourceNames) {
-                File resource = new File(resourceDir, resourceName);
-                InputStream in = new FileInputStream(resource);
-                jar.putNextEntry(new ZipEntry(resourceName));
-                IOUtil.copy(in, jar);
+            for ( String resourceName : resourceNames )
+            {
+                File resource = new File( resourceDir, resourceName );
+                InputStream in = new FileInputStream( resource );
+                jar.putNextEntry( new ZipEntry( resourceName ) );
+                IOUtil.copy( in, jar );
                 jar.closeEntry();
                 in.close();
             }
@@ -423,6 +426,7 @@ public class RemoteResourcesMojoTest
         // test environment
         return new MavenProjectResourcesStub( testName );
     }
+
     protected void setupDefaultProject( final MavenProjectResourcesStub project )
     throws Exception
     {

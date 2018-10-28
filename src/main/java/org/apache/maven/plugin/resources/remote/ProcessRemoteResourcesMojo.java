@@ -187,7 +187,7 @@ public class ProcessRemoteResourcesMojo
     protected String encoding;
 
     /**
-     * The local repository taken from Maven's runtime. Typically $HOME/.m2/repository.
+     * The local repository taken from Maven's runtime. Typically <code>$HOME/.m2/repository</code>.
      */
     @Parameter( defaultValue = "${localRepository}", readonly = true, required = true )
     private ArtifactRepository localRepository;
@@ -221,7 +221,7 @@ public class ProcessRemoteResourcesMojo
      * artifacts with incomplete POM metadata.
      * <p/>
      * By default, this Mojo looks for supplemental model data in the file
-     * "${appendedResourcesDirectory}/supplemental-models.xml".
+     * "<code>${appendedResourcesDirectory}/supplemental-models.xml</code>".
      *
      * @since 1.0-alpha-5
      */
@@ -243,8 +243,7 @@ public class ProcessRemoteResourcesMojo
     private Map<String, Model> supplementModels;
 
     /**
-     * Merges supplemental data model with artifact
-     * metadata. Useful when processing artifacts with
+     * Merges supplemental data model with artifact metadata. Useful when processing artifacts with
      * incomplete POM metadata.
      */
     @Component
@@ -266,8 +265,7 @@ public class ProcessRemoteResourcesMojo
     private boolean skip;
 
     /**
-     * Attaches the resources to the main build of the project as a resource
-     * directory.
+     * Attaches the resources to the main build of the project as a resource directory.
      *
      * @since 1.5
      */
@@ -275,8 +273,7 @@ public class ProcessRemoteResourcesMojo
     private boolean attachToMain;
 
     /**
-     * Attaches the resources to the test build of the project as a resource
-     * directory.
+     * Attaches the resources to the test build of the project as a resource directory.
      *
      * @since 1.5
      */
@@ -284,15 +281,15 @@ public class ProcessRemoteResourcesMojo
     private boolean attachToTest;
 
     /**
-     * Additional properties to be passed to velocity.
+     * Additional properties to be passed to Velocity.
      * <p/>
-     * Several properties are automatically added:<br/>
-     * project - the current MavenProject <br/>
-     * projects - the list of dependency projects<br/>
-     * projectsSortedByOrganization - the list of dependency projects sorted by organization<br/>
-     * projectTimespan - the timespan of the current project (requires inceptionYear in pom)<br/>
-     * locator - the ResourceManager that can be used to retrieve additional resources<br/>
-     * <p/>
+     * Several properties are automatically added:<ul>
+     * <li><code>project</code> - the current MavenProject </li>
+     * <li><code>projects</code> - the list of dependency projects</li>
+     * <li><code>projectsSortedByOrganization</code> - the list of dependency projects sorted by organization</li>
+     * <li><code>projectTimespan</code> - the timespan of the current project (requires inceptionYear in pom)</li>
+     * <li><code>locator</code> - the ResourceManager that can be used to retrieve additional resources</li>
+     * </ul>
      * See <a
      * href="https://maven.apache.org/ref/current/maven-project/apidocs/org/apache/maven/project/MavenProject.html"> the
      * javadoc for MavenProject</a> for information about the properties on the MavenProject.
@@ -454,22 +451,12 @@ public class ProcessRemoteResourcesMojo
             getLog().info( "Skipping remote-resource generation in this project because it's not the Execution Root" );
             return;
         }
+
         if ( resolveScopes == null )
         {
-            if ( excludeScope == null || "".equals( excludeScope ) )
-            {
-                resolveScopes = new String[] { this.includeScope };
-            }
-            else
-            {
-                resolveScopes = new String[] { Artifact.SCOPE_TEST };
-            }
+            resolveScopes =
+                new String[] { StringUtils.isEmpty( excludeScope ) ? this.includeScope : Artifact.SCOPE_TEST };
         }
-        velocity = new VelocityEngine();
-        velocity.setProperty( VelocityEngine.RUNTIME_LOG_LOGSYSTEM, this );
-        velocity.setProperty( "resource.loader", "classpath" );
-        velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
-        velocity.init();
 
         if ( supplementalModels == null )
         {
@@ -488,14 +475,7 @@ public class ProcessRemoteResourcesMojo
             }
         }
 
-        addSupplementalModelArtifacts();
-        locator.addSearchPath( FileResourceLoader.ID, project.getFile().getParentFile().getAbsolutePath() );
-        if ( appendedResourcesDirectory != null )
-        {
-            locator.addSearchPath( FileResourceLoader.ID, appendedResourcesDirectory.getAbsolutePath() );
-        }
-        locator.addSearchPath( "url", "" );
-        locator.setOutputDirectory( new File( project.getBuild().getDirectory() ) );
+        configureLocator();
 
         if ( includeProjectProperties )
         {
@@ -509,53 +489,56 @@ public class ProcessRemoteResourcesMojo
         ClassLoader origLoader = Thread.currentThread().getContextClassLoader();
         try
         {
-            Thread.currentThread().setContextClassLoader( this.getClass().getClassLoader() );
-
             validate();
 
             List<File> resourceBundleArtifacts = downloadBundles( resourceBundles );
             supplementModels = loadSupplements( supplementalModels );
 
-            VelocityContext context = buildVelocityContext( properties );
+            ClassLoader classLoader = initalizeClassloader( resourceBundleArtifacts );
 
-            RemoteResourcesClassLoader classLoader = new RemoteResourcesClassLoader( null );
-
-            initalizeClassloader( classLoader, resourceBundleArtifacts );
             Thread.currentThread().setContextClassLoader( classLoader );
+
+            velocity = new VelocityEngine();
+            velocity.setProperty( VelocityEngine.RUNTIME_LOG_LOGSYSTEM, this );
+            velocity.setProperty( "resource.loader", "classpath" );
+            velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+            velocity.init();
+
+            VelocityContext context = buildVelocityContext( properties );
 
             processResourceBundles( classLoader, context );
 
-            try
+            if ( outputDirectory.exists() )
             {
-                if ( outputDirectory.exists() )
+                // ----------------------------------------------------------------------------
+                // Push our newly generated resources directory into the MavenProject so that
+                // these resources can be picked up by the process-resources phase.
+                // ----------------------------------------------------------------------------
+                Resource resource = new Resource();
+                resource.setDirectory( outputDirectory.getAbsolutePath() );
+                // MRRESOURCES-61 handle main and test resources separately
+                if ( attachToMain )
                 {
-                    // ----------------------------------------------------------------------------
-                    // Push our newly generated resources directory into the MavenProject so that
-                    // these resources can be picked up by the process-resources phase.
-                    // ----------------------------------------------------------------------------
-                    Resource resource = new Resource();
-                    resource.setDirectory( outputDirectory.getAbsolutePath() );
-                    // MRRESOURCES-61 handle main and test resources separately
-                    if ( attachToMain )
-                    {
-                        project.getResources().add( resource );
-                    }
-                    if ( attachToTest )
-                    {
-                        project.getTestResources().add( resource );
-                    }
+                    project.getResources().add( resource );
+                }
+                if ( attachToTest )
+                {
+                    project.getTestResources().add( resource );
+                }
 
-                    // ----------------------------------------------------------------------------
-                    // Write out archiver dot file
-                    // ----------------------------------------------------------------------------
+                // ----------------------------------------------------------------------------
+                // Write out archiver dot file
+                // ----------------------------------------------------------------------------
+                try
+                {
                     File dotFile = new File( project.getBuild().getDirectory(), ".plxarc" );
                     FileUtils.mkdir( dotFile.getParentFile().getAbsolutePath() );
                     FileUtils.fileWrite( dotFile.getAbsolutePath(), outputDirectory.getName() );
                 }
-            }
-            catch ( IOException e )
-            {
-                throw new MojoExecutionException( "Error creating dot file for archiving instructions.", e );
+                catch ( IOException e )
+                {
+                    throw new MojoExecutionException( "Error creating dot file for archiving instructions.", e );
+                }
             }
         }
         finally
@@ -564,7 +547,7 @@ public class ProcessRemoteResourcesMojo
         }
     }
 
-    private void addSupplementalModelArtifacts()
+    private void configureLocator()
         throws MojoExecutionException
     {
         if ( supplementalModelArtifacts != null && !supplementalModelArtifacts.isEmpty() )
@@ -591,6 +574,14 @@ public class ProcessRemoteResourcesMojo
             }
 
         }
+
+        locator.addSearchPath( FileResourceLoader.ID, project.getFile().getParentFile().getAbsolutePath() );
+        if ( appendedResourcesDirectory != null )
+        {
+            locator.addSearchPath( FileResourceLoader.ID, appendedResourcesDirectory.getAbsolutePath() );
+        }
+        locator.addSearchPath( "url", "" );
+        locator.setOutputDirectory( new File( project.getBuild().getDirectory() ) );
     }
 
     @SuppressWarnings( "unchecked" )
@@ -893,7 +884,8 @@ public class ProcessRemoteResourcesMojo
      * @param outStream Deferred stream
      * @throws IOException
      */
-    private void fileWriteIfDiffers( DeferredFileOutputStream outStream ) throws IOException
+    private void fileWriteIfDiffers( DeferredFileOutputStream outStream )
+        throws IOException
     {
         File file = outStream.getFile();
         if ( outStream.isThresholdExceeded() )
@@ -1150,15 +1142,17 @@ public class ProcessRemoteResourcesMojo
         return bundleArtifacts;
     }
 
-    private void initalizeClassloader( RemoteResourcesClassLoader cl, List<File> artifacts )
+    private ClassLoader initalizeClassloader( List<File> artifacts )
         throws MojoExecutionException
     {
+        RemoteResourcesClassLoader cl = new RemoteResourcesClassLoader( null );
         try
         {
             for ( File artifact : artifacts )
             {
                 cl.addURL( artifact.toURI().toURL() );
             }
+            return cl;
         }
         catch ( MalformedURLException e )
         {
@@ -1166,7 +1160,7 @@ public class ProcessRemoteResourcesMojo
         }
     }
 
-    protected void processResourceBundles( RemoteResourcesClassLoader classLoader, VelocityContext context )
+    protected void processResourceBundles( ClassLoader classLoader, VelocityContext context )
         throws MojoExecutionException
     {
         String velocityResource = null;
