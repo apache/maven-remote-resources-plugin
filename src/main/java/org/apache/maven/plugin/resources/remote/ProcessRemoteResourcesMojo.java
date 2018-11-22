@@ -145,7 +145,7 @@ public class ProcessRemoteResourcesMojo
      * <p>
      * So, the default filtering delimiters might be specified as:
      * </p>
-     * 
+     *
      * <pre>
      * &lt;delimiters&gt;
      *   &lt;delimiter&gt;${*}&lt/delimiter&gt;
@@ -378,7 +378,7 @@ public class ProcessRemoteResourcesMojo
      * The default is the same as "includeScope" if there are no exclude scopes set.
      * Otherwise, it defaults to "test" to grab all the dependencies so the
      * exclude filters can filter out what is not needed.
-     * 
+     *
      * @since 1.5
      */
     @Parameter
@@ -1358,7 +1358,6 @@ public class ProcessRemoteResourcesMojo
         try
         {
             tmpFile = File.createTempFile( "maven-remote-resources-plugin", null );
-            tmpFile.deleteOnExit();
             copyBundleResource( classLoader, bundleResource, tmpFile );
             MavenFileFilterRequest req = setupRequest( tmpFile, to );
             fileFilter.copyFile( req );
@@ -1371,7 +1370,8 @@ public class ProcessRemoteResourcesMojo
         {
             if ( tmpFile != null && !tmpFile.delete() )
             {
-                getLog().warn( "Unable to delete temporary file: " + tmpFile );
+                tmpFile.deleteOnExit();
+                getLog().warn( "Unable to delete temporary file: " + tmpFile + ". Trying again when this VM exits." );
             }
         }
     }
