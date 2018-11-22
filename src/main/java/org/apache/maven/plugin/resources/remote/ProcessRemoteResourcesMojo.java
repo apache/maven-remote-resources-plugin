@@ -853,7 +853,7 @@ public class ProcessRemoteResourcesMojo
                 }
                 else if ( resource.isFiltering() )
                 {
-                    MavenFileFilterRequest req = setupRequest( source, file, resource.isFiltering() );
+                    MavenFileFilterRequest req = setupRequest( source, file );
 
                     try
                     {
@@ -944,12 +944,12 @@ public class ProcessRemoteResourcesMojo
         }
     }
 
-    private MavenFileFilterRequest setupRequest( File source, File file, boolean isFiltering )
+    private MavenFileFilterRequest setupRequest( File source, File file )
     {
         MavenFileFilterRequest req = new MavenFileFilterRequest();
         req.setFrom( source );
         req.setTo( file );
-        req.setFiltering( isFiltering );
+        req.setFiltering( true );
 
         req.setMavenProject( project );
         req.setMavenSession( mavenSession );
@@ -1360,7 +1360,7 @@ public class ProcessRemoteResourcesMojo
             tmpFile = File.createTempFile( "maven-remote-resources-plugin", null );
             tmpFile.deleteOnExit();
             copyBundleResource( classLoader, bundleResource, tmpFile );
-            MavenFileFilterRequest req = setupRequest( tmpFile, to, true );
+            MavenFileFilterRequest req = setupRequest( tmpFile, to );
             fileFilter.copyFile( req );
         }
         catch ( MavenFilteringException e )
