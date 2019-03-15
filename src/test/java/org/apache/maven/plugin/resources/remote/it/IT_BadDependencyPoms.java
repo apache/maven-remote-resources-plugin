@@ -46,7 +46,7 @@ public class IT_BadDependencyPoms
         Verifier verifier = TestUtils.newVerifier( dir );
         verifier.deleteArtifacts( "test" );
         verifier.getSystemProperties().setProperty( "it.dir", dir.getAbsolutePath() );
-        
+
         try
         {
             verifier.executeGoal( "generate-resources" );
@@ -60,19 +60,19 @@ public class IT_BadDependencyPoms
             // This is the case if we have missing artifacts
             // as in this test case.
             // This means we can't test the created file which will never
-            // contain the appropriate data we wan't to check for. 
-            // So the only reliable way is to check the log output 
+            // contain the appropriate data we wan't to check for.
+            // So the only reliable way is to check the log output
             // from maven which will print out message according to
             // the missing artifacts.
 
             File output = new File( dir, "log.txt" );
             String content = FileUtils.fileRead( output );
-            
+
             assertTrue(content.contains("mvn install:install-file -DgroupId=test -DartifactId=pom -Dversion=0.2 -Dpackaging=jar"));
             assertTrue(content.contains("mvn install:install-file -DgroupId=test -DartifactId=missing -Dversion=0.1 -Dpackaging=jar"));
             assertTrue(content.contains("mvn install:install-file -DgroupId=test -DartifactId=invalid -Dversion=0.1 -Dpackaging=jar"));
         }
-        
+
     }
 
 }

@@ -67,18 +67,18 @@ public class IT_GetDependencyProjects
             // This is the case if we have missing artifacts
             // as in this test case.
             // This means we can't test the created file which will never
-            // contain the appropriate data we wan't to check for. 
-            // So the only reliable way is to check the log output 
+            // contain the appropriate data we wan't to check for.
+            // So the only reliable way is to check the log output
             // from maven which will print out message according to
             // the missing artifacts.
             File output = new File( verifier.getBasedir(), "log.txt" );
             String content = FileUtils.fileRead( output );
-            
+
             assertTrue(content.contains( "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=release -Dversion=1.0 -Dpackaging=jar" ));
             assertTrue (content.contains( "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=snapshot -Dversion=1.0-SNAPSHOT -Dpackaging=jar" ));
         }
 
-        
+
     }
 
 }

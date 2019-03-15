@@ -44,10 +44,10 @@ public class IT_GenerateFromOverride
         verifier.executeGoal( "generate-resources" );
         verifier.verifyErrorFreeLog();
         verifier.resetStreams();
-        
+
         File output = new File( dir, "target/maven-shared-archive-resources/DEPENDENCIES" );
         String content = FileUtils.fileRead( output );
-        
+
         assertTrue(content.contains("Override:"));
     }
 

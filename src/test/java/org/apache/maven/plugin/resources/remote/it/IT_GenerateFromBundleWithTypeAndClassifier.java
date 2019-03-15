@@ -38,17 +38,17 @@ public class IT_GenerateFromBundleWithTypeAndClassifier
     public void test()
         throws IOException, URISyntaxException, VerificationException
     {
-        
+
         File dir = TestUtils.getTestDir( "generate-from-bundle-with-type-and-classifier" );
         Verifier verifier = TestUtils.newVerifier( dir );
-        
+
         verifier.executeGoal( "generate-resources" );
         verifier.verifyErrorFreeLog();
         verifier.resetStreams();
-        
+
         File output = new File( dir, "target/maven-shared-archive-resources/DEPENDENCIES" );
         String content = FileUtils.fileRead( output );
-        
+
         assertTrue(content.contains("Built-In:"));
     }
 

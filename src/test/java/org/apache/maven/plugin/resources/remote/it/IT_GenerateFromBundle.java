@@ -40,14 +40,14 @@ public class IT_GenerateFromBundle
     {
         File dir = TestUtils.getTestDir( "generate-from-bundle" );
         Verifier verifier = TestUtils.newVerifier( dir );
-        
+
         verifier.executeGoal( "generate-resources" );
         verifier.verifyErrorFreeLog();
         verifier.resetStreams();
-        
+
         File output = new File( dir, "target/maven-shared-archive-resources/DEPENDENCIES" );
         String content = FileUtils.fileRead( output );
-        
+
         assertTrue(content.contains("Built-In:"));
     }
 

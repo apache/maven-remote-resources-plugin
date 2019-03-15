@@ -28,23 +28,23 @@ import java.net.URISyntaxException;
 
 public class BootstrapInstaller
 {
-    
+
     private static boolean installed = false;
-    
+
     public static void install()
         throws IOException, URISyntaxException, VerificationException
     {
         if ( !installed )
         {
             File bootstrapDir = TestUtils.getTestDir( "bootstrap" );
-            
+
             Verifier verifier = TestUtils.newVerifier( bootstrapDir );
-            
+
             verifier.executeGoal( "deploy" );
-            
+
             verifier.verifyErrorFreeLog();
             verifier.resetStreams();
-            
+
             installed = true;
         }
     }

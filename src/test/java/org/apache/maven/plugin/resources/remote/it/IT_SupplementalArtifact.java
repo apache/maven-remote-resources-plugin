@@ -47,7 +47,7 @@ public class IT_SupplementalArtifact
         Verifier verifier;
 
         verifier = TestUtils.newVerifier( resources );
-        
+
         verifier.deleteArtifacts( "org.apache.maven.plugin.rresource.it.mrr43" );
 
         verifier.executeGoal( "deploy" );

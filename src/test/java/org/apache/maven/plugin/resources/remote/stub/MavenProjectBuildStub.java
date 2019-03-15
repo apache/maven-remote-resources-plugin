@@ -81,12 +81,12 @@ public class MavenProjectBuildStub
         super( key );
 
         build = new Build();
-        resourcesFileList = new ArrayList<String>();
-        sourceFileList = new ArrayList<String>();
-        rootFileList = new ArrayList<String>();
-        directoryList = new ArrayList<String>();
-        targetClassesList = new ArrayList<String>();
-        dataMap = new HashMap<String, String>();
+        resourcesFileList = new ArrayList<>();
+        sourceFileList = new ArrayList<>();
+        rootFileList = new ArrayList<>();
+        directoryList = new ArrayList<>();
+        targetClassesList = new ArrayList<>();
+        dataMap = new HashMap<>();
         setupBuild();
     }
 
@@ -142,6 +142,7 @@ public class MavenProjectBuildStub
         return testResourcesDirectory;
     }
 
+    @Override
     public Build getBuild()
     {
         return build;
@@ -171,7 +172,7 @@ public class MavenProjectBuildStub
     private void setupBuild()
     {
         // check getBasedir method for the exact path
-        // we need to recreate the dir structure in 
+        // we need to recreate the dir structure in
         // an isolated environment
         srcDirectory = testRootDir + "/src";
         buildDirectory = testRootDir + "/target";
@@ -205,7 +206,7 @@ public class MavenProjectBuildStub
         createFiles( resourcesDirectory, testResourcesDirectory );
         setupRootFiles();
 
-        // setup target dir        
+        // setup target dir
         if ( !FileUtils.fileExists( outputDirectory ) )
         {
             FileUtils.mkdir( outputDirectory );

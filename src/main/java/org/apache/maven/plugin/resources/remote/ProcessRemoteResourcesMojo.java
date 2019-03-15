@@ -22,6 +22,7 @@ package org.apache.maven.plugin.resources.remote;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -33,6 +34,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -96,6 +98,7 @@ import org.apache.velocity.exception.MethodInvocationException;
 import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.exception.ResourceNotFoundException;
 import org.apache.velocity.exception.VelocityException;
+import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.log.LogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
@@ -296,7 +299,7 @@ public class ProcessRemoteResourcesMojo
      * javadoc for MavenProject</a> for information about the properties on the MavenProject.
      */
     @Parameter
-    private Map<String, Object> properties = new HashMap<String, Object>();
+    private Map<String, Object> properties = new HashMap<>();
 
     /**
      * Whether to include properties defined in the project when filtering resources.
@@ -431,6 +434,7 @@ public class ProcessRemoteResourcesMojo
 
     private VelocityEngine velocity;
 
+    @Override
     @SuppressWarnings( "unchecked" )
     public void execute()
         throws MojoExecutionException
@@ -500,7 +504,7 @@ public class ProcessRemoteResourcesMojo
             Thread.currentThread().setContextClassLoader( classLoader );
 
             velocity = new VelocityEngine();
-            velocity.setProperty( VelocityEngine.RUNTIME_LOG_LOGSYSTEM, this );
+            velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, this );
             velocity.setProperty( "resource.loader", "classpath" );
             velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
             velocity.init();
@@ -588,7 +592,7 @@ public class ProcessRemoteResourcesMojo
     @SuppressWarnings( "unchecked" )
     protected List<MavenProject> getProjects()
     {
-        List<MavenProject> projects = new ArrayList<MavenProject>();
+        List<MavenProject> projects = new ArrayList<>();
 
         // add filters in well known order, least specific to most specific
         FilterArtifacts filter = new FilterArtifacts();
@@ -706,7 +710,7 @@ public class ProcessRemoteResourcesMojo
     @SuppressWarnings( "unchecked" )
     private Set<Artifact> aggregateProjectDependencyArtifacts()
     {
-        Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
+        Set<Artifact> artifacts = new LinkedHashSet<>();
 
         List<MavenProject> projects = mavenSession.getSortedProjects();
         for ( MavenProject p : projects )
@@ -747,8 +751,8 @@ public class ProcessRemoteResourcesMojo
     protected Map<Organization, List<MavenProject>> getProjectsSortedByOrganization( List<MavenProject> projects )
     {
         Map<Organization, List<MavenProject>> organizations =
-            new TreeMap<Organization, List<MavenProject>>( new OrganizationComparator() );
-        List<MavenProject> unknownOrganization = new ArrayList<MavenProject>();
+            new TreeMap<>( new OrganizationComparator() );
+        List<MavenProject> unknownOrganization = new ArrayList<>();
 
         for ( MavenProject p : projects )
         {
@@ -757,7 +761,7 @@ public class ProcessRemoteResourcesMojo
                 List<MavenProject> sortedProjects = organizations.get( p.getOrganization() );
                 if ( sortedProjects == null )
                 {
-                    sortedProjects = new ArrayList<MavenProject>();
+                    sortedProjects = new ArrayList<>();
                 }
                 sortedProjects.add( p );
 
@@ -803,47 +807,19 @@ public class ProcessRemoteResourcesMojo
             {
                 if ( source == templateSource )
                 {
-                    Reader reader = null;
-                    Writer writer = null;
-                    DeferredFileOutputStream os = new DeferredFileOutputStream( velocityFilterInMemoryThreshold, file );
-                    try
+                    try ( DeferredFileOutputStream os = 
+                                    new DeferredFileOutputStream( velocityFilterInMemoryThreshold, file ) )
                     {
-
-                        if ( encoding != null )
+                        try ( Reader reader = getReader( source ); Writer writer = getWriter( os ) )
                         {
-                            reader = new InputStreamReader( new FileInputStream( source ), encoding );
-                            writer = new OutputStreamWriter( os, encoding );
+                            velocity.evaluate( context, writer, "", reader );
                         }
-                        else
+                        catch ( ParseErrorException | MethodInvocationException | ResourceNotFoundException e )
                         {
-                            reader = ReaderFactory.newPlatformReader( source );
-                            writer = WriterFactory.newPlatformWriter( os );
+                            throw new MojoExecutionException( "Error rendering velocity resource: " + source, e );
                         }
-
-                        velocity.evaluate( context, writer, "", reader );
-                        writer.close();
-                        writer = null;
-                        reader.close();
-                        reader = null;
+                        fileWriteIfDiffers( os );
                     }
-                    catch ( ParseErrorException e )
-                    {
-                        throw new MojoExecutionException( "Error rendering velocity resource: " + source, e );
-                    }
-                    catch ( MethodInvocationException e )
-                    {
-                        throw new MojoExecutionException( "Error rendering velocity resource: " + source, e );
-                    }
-                    catch ( ResourceNotFoundException e )
-                    {
-                        throw new MojoExecutionException( "Error rendering velocity resource: " + source, e );
-                    }
-                    finally
-                    {
-                        IOUtil.close( writer );
-                        IOUtil.close( reader );
-                    }
-                    fileWriteIfDiffers( os );
                 }
                 else if ( resource.isFiltering() )
                 {
@@ -874,6 +850,30 @@ public class ProcessRemoteResourcesMojo
         return false;
     }
 
+    private Reader getReader( File source ) throws IOException
+    {
+        if ( encoding != null )
+        {
+            return new InputStreamReader( new FileInputStream( source ), encoding );
+        }
+        else
+        {
+            return ReaderFactory.newPlatformReader( source );
+        }
+    }
+    
+    private Writer getWriter( OutputStream os ) throws IOException
+    {
+        if ( encoding != null )
+        {
+            return new OutputStreamWriter( os, encoding );
+        }
+        else
+        {
+            return WriterFactory.newPlatformWriter( os );
+        }
+    }
+
     /**
      * If the transformation result fits in memory and the destination file already exists
      * then both are compared.
@@ -899,10 +899,8 @@ public class ProcessRemoteResourcesMojo
 
         if ( file.exists() )
         {
-            InputStream is = null;
-            try
+            try ( InputStream is = new FileInputStream( file ) )
             {
-                is = new FileInputStream( file );
                 final InputStream newContents = new ByteArrayInputStream( outStream.getData() );
                 needOverwrite = !IOUtil.contentEquals( is, newContents );
                 if ( getLog().isDebugEnabled() )
@@ -910,13 +908,6 @@ public class ProcessRemoteResourcesMojo
                     getLog().debug( "File " + file + " contents "
                                         + ( needOverwrite ? "differs" : "does not differ" ) );
                 }
-
-                is.close();
-                is = null;
-            }
-            finally
-            {
-                IOUtil.close( is );
             }
         }
 
@@ -926,16 +917,10 @@ public class ProcessRemoteResourcesMojo
             return;
         }
         getLog().debug( "Writing " + file );
-        OutputStream os = new FileOutputStream( file );
-        try
+        
+        try ( OutputStream os = new FileOutputStream( file ) )
         {
             outStream.writeTo( os );
-            os.close();
-            os = null;
-        }
-        finally
-        {
-            IOUtil.close( os );
         }
     }
 
@@ -957,7 +942,7 @@ public class ProcessRemoteResourcesMojo
 
         if ( filterDelimiters != null && !filterDelimiters.isEmpty() )
         {
-            LinkedHashSet<String> delims = new LinkedHashSet<String>();
+            LinkedHashSet<String> delims = new LinkedHashSet<>();
             if ( useDefaultFilterDelimiters )
             {
                 delims.addAll( req.getDelimiters() );
@@ -1085,7 +1070,7 @@ public class ProcessRemoteResourcesMojo
     private List<File> downloadBundles( List<String> bundles )
         throws MojoExecutionException
     {
-        List<File> bundleArtifacts = new ArrayList<File>();
+        List<File> bundleArtifacts = new ArrayList<>();
 
         try
         {
@@ -1165,12 +1150,11 @@ public class ProcessRemoteResourcesMojo
         throws MojoExecutionException
     {
         List<Map.Entry<String, RemoteResourcesBundle>> remoteResources =
-            new ArrayList<Map.Entry<String, RemoteResourcesBundle>>();
+            new ArrayList<>();
         int bundleCount = 0;
         int resourceCount = 0;
 
         // list remote resources form bundles
-        InputStream in = null;
         try
         {
             RemoteResourcesBundleXpp3Reader bundleReader = new RemoteResourcesBundleXpp3Reader();
@@ -1182,12 +1166,12 @@ public class ProcessRemoteResourcesMojo
                 bundleCount++;
                 getLog().debug( "processResourceBundle on bundle#" + bundleCount + " " + url );
 
-                in = url.openStream();
-
-                RemoteResourcesBundle bundle = bundleReader.read( in );
-
-                in.close();
-                in = null;
+                RemoteResourcesBundle bundle;
+                
+                try ( InputStream in = url.openStream() )
+                {
+                    bundle = bundleReader.read( in );
+                }
 
                 int n = 0;
                 for ( String bundleResource : bundle.getRemoteResources() )
@@ -1195,7 +1179,7 @@ public class ProcessRemoteResourcesMojo
                     n++;
                     resourceCount++;
                     getLog().debug( "bundle#" + bundleCount + " resource#" + n + " " + bundleResource );
-                    remoteResources.add( new AbstractMap.SimpleEntry<String, RemoteResourcesBundle>( bundleResource,
+                    remoteResources.add( new AbstractMap.SimpleEntry<>( bundleResource,
                                                                                                      bundle ) );
                 }
             }
@@ -1208,19 +1192,11 @@ public class ProcessRemoteResourcesMojo
         {
             throw new MojoExecutionException( "Error parsing remote resource bundle descriptor.", xppe );
         }
-        finally
-        {
-            IOUtil.close( in );
-        }
 
         getLog().info( "Copying " + resourceCount + " resource" + ( ( resourceCount > 1 ) ? "s" : "" ) + " from "
             + bundleCount + " bundle" + ( ( bundleCount > 1 ) ? "s" : "" ) + "." );
 
         String velocityResource = null;
-        OutputStream out = null;
-        Writer writer = null;
-        Reader reader = null;
-
         try
         {
 
@@ -1249,27 +1225,26 @@ public class ProcessRemoteResourcesMojo
                 {
                     if ( doVelocity )
                     {
-                        DeferredFileOutputStream os =
-                            new DeferredFileOutputStream( velocityFilterInMemoryThreshold, f );
-
-                        writer = bundle.getSourceEncoding() == null ? new OutputStreamWriter( os )
-                                        : new OutputStreamWriter( os, bundle.getSourceEncoding() );
-
-                        if ( bundle.getSourceEncoding() == null )
+                        try ( DeferredFileOutputStream os =
+                                        new DeferredFileOutputStream( velocityFilterInMemoryThreshold, f ) )
                         {
-                            // TODO: Is this correct? Shouldn't we behave like the rest of maven and fail
-                            // down to JVM default instead ISO-8859-1 ?
-                            velocity.mergeTemplate( bundleResource, "ISO-8859-1", context, writer );
+                            try ( Writer writer = bundle.getSourceEncoding() == null ? new OutputStreamWriter( os )
+                                            : new OutputStreamWriter( os, bundle.getSourceEncoding() ) )
+                            {
+                                if ( bundle.getSourceEncoding() == null )
+                                {
+                                    // TODO: Is this correct? Shouldn't we behave like the rest of maven and fail
+                                    // down to JVM default instead ISO-8859-1 ?
+                                    velocity.mergeTemplate( bundleResource, "ISO-8859-1", context, writer );
+                                }
+                                else
+                                {
+                                    velocity.mergeTemplate( bundleResource, bundle.getSourceEncoding(), context,
+                                                            writer );
+                                }
+                            }
+                            fileWriteIfDiffers( os );
                         }
-                        else
-                        {
-                            velocity.mergeTemplate( bundleResource, bundle.getSourceEncoding(), context, writer );
-
-                        }
-
-                        writer.close();
-                        writer = null;
-                        fileWriteIfDiffers( os );
                     }
                     else
                     {
@@ -1286,35 +1261,24 @@ public class ProcessRemoteResourcesMojo
                     if ( appendedResourceFile.exists() )
                     {
                         getLog().info( "Copying appended resource: " + projectResource );
-                        in = new FileInputStream( appendedResourceFile );
-                        out = new FileOutputStream( f, true );
-                        IOUtil.copy( in, out );
-                        out.close();
-                        out = null;
-                        in.close();
-                        in = null;
+                        try ( InputStream in = new FileInputStream( appendedResourceFile );
+                              OutputStream out = new FileOutputStream( f, true ) )
+                        {
+                            IOUtil.copy( in, out );
+                        }
+                        
                     }
                     else if ( appendedVmResourceFile.exists() )
                     {
                         getLog().info( "Filtering appended resource: " + projectResource + ".vm" );
-                        reader = new FileReader( appendedVmResourceFile );
+                        
 
-                        if ( bundle.getSourceEncoding() == null )
+                        try ( Reader reader = new FileReader( appendedVmResourceFile ); 
+                              Writer writer = getWriter( bundle, f ) )
                         {
-                            writer = new PrintWriter( new FileWriter( f, true ) );
+                            Velocity.init();
+                            Velocity.evaluate( context, writer, "remote-resources", reader );
                         }
-                        else
-                        {
-                            writer = new PrintWriter( new OutputStreamWriter( new FileOutputStream( f, true ),
-                                                                              bundle.getSourceEncoding() ) );
-                        }
-
-                        Velocity.init();
-                        Velocity.evaluate( context, writer, "remote-resources", reader );
-                        writer.close();
-                        writer = null;
-                        reader.close();
-                        reader = null;
                     }
                 }
             }
@@ -1327,13 +1291,22 @@ public class ProcessRemoteResourcesMojo
         {
             throw new MojoExecutionException( "Error rendering Velocity resource '" + velocityResource + "'", e );
         }
-        finally
+    }
+
+    private Writer getWriter( RemoteResourcesBundle bundle, File f )
+        throws IOException, UnsupportedEncodingException, FileNotFoundException
+    {
+        Writer writer;
+        if ( bundle.getSourceEncoding() == null )
         {
-            IOUtil.close( out );
-            IOUtil.close( in );
-            IOUtil.close( writer );
-            IOUtil.close( reader );
+            writer = new PrintWriter( new FileWriter( f, true ) );
         }
+        else
+        {
+            writer = new PrintWriter( new OutputStreamWriter( new FileOutputStream( f, true ),
+                                                              bundle.getSourceEncoding() ) );
+        }
+        return writer;
     }
 
     protected Model getSupplement( Xpp3Dom supplementModelXml )
@@ -1392,7 +1365,7 @@ public class ProcessRemoteResourcesMojo
             return Collections.emptyMap();
         }
 
-        List<Supplement> supplements = new ArrayList<Supplement>();
+        List<Supplement> supplements = new ArrayList<>();
         for ( String set : models )
         {
             getLog().debug( "Preparing ruleset: " + set );
@@ -1426,7 +1399,7 @@ public class ProcessRemoteResourcesMojo
 
         getLog().debug( "Loading supplements complete." );
 
-        Map<String, Model> supplementMap = new HashMap<String, Model>();
+        Map<String, Model> supplementMap = new HashMap<>();
         for ( Supplement sd : supplements )
         {
             Xpp3Dom dom = (Xpp3Dom) sd.getProject();
@@ -1462,6 +1435,7 @@ public class ProcessRemoteResourcesMojo
     class OrganizationComparator
         implements Comparator<Organization>
     {
+        @Override
         public int compare( Organization org1, Organization org2 )
         {
             int i = compareStrings( org1.getName(), org2.getName() );
@@ -1499,6 +1473,7 @@ public class ProcessRemoteResourcesMojo
     class ProjectComparator
         implements Comparator<MavenProject>
     {
+        @Override
         public int compare( MavenProject p1, MavenProject p2 )
         {
             return p1.getArtifact().compareTo( p2.getArtifact() );
@@ -1511,11 +1486,13 @@ public class ProcessRemoteResourcesMojo
     }
 
     /* LogChute methods */
+    @Override
     public void init( RuntimeServices rs )
         throws Exception
     {
     }
 
+    @Override
     public void log( int level, String message )
     {
         switch ( level )
@@ -1539,6 +1516,7 @@ public class ProcessRemoteResourcesMojo
         }
     }
 
+    @Override
     public void log( int level, String message, Throwable t )
     {
         switch ( level )
@@ -1562,6 +1540,7 @@ public class ProcessRemoteResourcesMojo
         }
     }
 
+    @Override
     public boolean isLevelEnabled( int level )
     {
         return false;

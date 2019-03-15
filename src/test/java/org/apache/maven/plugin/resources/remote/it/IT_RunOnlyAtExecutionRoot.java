@@ -46,7 +46,7 @@ public class IT_RunOnlyAtExecutionRoot
     {
         // Workaround for Windows + Maven-3.5.x + Jenkins due to MNG-6261
         assumeTrue( !(System.getenv( "JENKINS_HOME" ) != null && Os.isFamily( Os.FAMILY_WINDOWS ) && System.getenv( "MAVEN_HOME" ).contains( "-3.5." ) ) );
-        
+
         File dir = TestUtils.getTestDir( "run-only-at-execution-root" );
 
         Verifier verifier;
@@ -64,7 +64,7 @@ public class IT_RunOnlyAtExecutionRoot
         // Based on the name i assumed to be sure the remote-resources-plugin
         // will be executed only at root level.
         // This will fail, cause if an needed artifact is not there
-        // maven will fail. 
+        // maven will fail.
         // Might reconsider how to write a better testcase.
         // verifier.deleteArtifacts( "org.apache.maven.plugin.rresource.it.mrr41" );
 

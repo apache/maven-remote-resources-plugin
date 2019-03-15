@@ -67,10 +67,6 @@ under the License.
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
-          <configuration>
-            <source>6</source>
-            <target>6</target>
-          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

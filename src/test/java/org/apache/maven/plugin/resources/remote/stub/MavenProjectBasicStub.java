@@ -70,21 +70,24 @@ public class MavenProjectBasicStub
 
         artifact.populate( this );
 
-        // this is ugly but needed to ensure that the copy constructor 
+        // this is ugly but needed to ensure that the copy constructor
         // works correctly
         initializeParentFields();
     }
 
+    @Override
     public String getName()
     {
         return "Test Project " + identifier;
     }
 
+    @Override
     public void setDescription( String desc )
     {
         description = desc;
     }
 
+    @Override
     public String getDescription()
     {
         if ( description == null )
@@ -97,33 +100,39 @@ public class MavenProjectBasicStub
         }
     }
 
+    @Override
     public File getBasedir()
     {
-        // create an isolated environment 
+        // create an isolated environment
         // see setupTestEnvironment for details
         return new File( testRootDir );
     }
 
+    @Override
     public Artifact getArtifact()
     {
         return artifact;
     }
 
+    @Override
     public String getGroupId()
     {
         return "org.apache.maven.plugin.test";
     }
 
+    @Override
     public String getArtifactId()
     {
         return "maven-resource-plugin-test#" + identifier;
     }
 
+    @Override
     public String getPackaging()
     {
         return "ejb";
     }
 
+    @Override
     public String getVersion()
     {
         return identifier;
@@ -134,6 +143,7 @@ public class MavenProjectBasicStub
         properties.put( key, value );
     }
 
+    @Override
     public Properties getProperties()
     {
         return properties;
@@ -142,17 +152,17 @@ public class MavenProjectBasicStub
     // to prevent the MavenProject copy constructor from blowing up
     private void initializeParentFields()
     {
-        // the pom should be located in the isolated dummy root         
+        // the pom should be located in the isolated dummy root
         super.setFile( new File( getBasedir(), "pom.xml" ) );
-        super.setDependencyArtifacts( new HashSet<Object>() );
-        super.setArtifacts( new HashSet<Object>() );
-        super.setPluginArtifacts( new HashSet<Object>() );
-        super.setReportArtifacts( new HashSet<Object>() );
-        super.setExtensionArtifacts( new HashSet<Object>() );
-        super.setRemoteArtifactRepositories( new LinkedList<Object>() );
-        super.setPluginArtifactRepositories( new LinkedList<Object>() );
-        super.setCollectedProjects( new LinkedList<Object>() );
-        super.setActiveProfiles( new LinkedList<Object>() );
+        super.setDependencyArtifacts( new HashSet<>() );
+        super.setArtifacts( new HashSet<>() );
+        super.setPluginArtifacts( new HashSet<>() );
+        super.setReportArtifacts( new HashSet<>() );
+        super.setExtensionArtifacts( new HashSet<>() );
+        super.setRemoteArtifactRepositories( new LinkedList<>() );
+        super.setPluginArtifactRepositories( new LinkedList<>() );
+        super.setCollectedProjects( new LinkedList<>() );
+        super.setActiveProfiles( new LinkedList<>() );
         super.setOriginalModel( null );
         super.setExecutionProject( this );
         super.setArtifact( artifact );

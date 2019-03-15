@@ -25,6 +25,7 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.execution.ReactorManager;
+import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.project.MavenProject;
@@ -54,12 +55,14 @@ public class RemoteResourcesMojoTest
     static final String DEFAULT_BUNDLE_POM_PATH = "target/test-classes/unit/rrmojotest/bundle-plugin-config.xml";
     static final String DEFAULT_PROCESS_POM_PATH = "target/test-classes/unit/rrmojotest/process-plugin-config.xml";
 
+    @Override
     public void setUp()
         throws Exception
     {
         super.setUp();
     }
 
+    @Override
     public void tearDown()
         throws Exception
     {
@@ -142,9 +145,9 @@ public class RemoteResourcesMojoTest
                                                                         new String[] {
                                                                             "test:test:1.0:war"
                                                                         } );
-    
+
         setupDefaultProject( project );
-    
+
         ArtifactRepository repo = (ArtifactRepository) getVariableValueFromObject( mojo, "localRepository" );
         String path = repo.pathOf( new DefaultArtifact( "test",
                                                         "test",
@@ -153,22 +156,22 @@ public class RemoteResourcesMojoTest
                                                         "war",
                                                         "",
                                                         new DefaultArtifactHandler() ) );
-    
+
         File file = new File( repo.getBasedir() + "/" + path + ".war" );
         file.getParentFile().mkdirs();
         buildResourceBundle( "default-simplebundles-create",
                              null,
                              new String[] { "SIMPLE.txt" },
                              file );
-    
-    
+
+
         mojo.execute();
-    
+
         file = (File) getVariableValueFromObject( mojo, "outputDirectory" );
         file = new File( file, "SIMPLE.txt" );
         assertTrue( file.exists() );
     }
-    
+
     public void testSimpleBundlesWithClassifier()
         throws Exception
     {
@@ -177,9 +180,9 @@ public class RemoteResourcesMojoTest
                                                                         new String[] {
                                                                             "test:test:1.0:jar:test"
                                                                         } );
-    
+
         setupDefaultProject( project );
-    
+
         ArtifactRepository repo = (ArtifactRepository) getVariableValueFromObject( mojo, "localRepository" );
         String path = repo.pathOf( new DefaultArtifact( "test",
                                                         "test",
@@ -188,22 +191,22 @@ public class RemoteResourcesMojoTest
                                                         "jar",
                                                         "test",
                                                         new DefaultArtifactHandler() ) );
-    
+
         File file = new File( repo.getBasedir() + "/" + path + ".jar" );
         file.getParentFile().mkdirs();
         buildResourceBundle( "default-simplebundles-create",
                              null,
                              new String[] { "SIMPLE.txt" },
                              file );
-    
-    
+
+
         mojo.execute();
-    
+
         file = (File) getVariableValueFromObject( mojo, "outputDirectory" );
         file = new File( file, "SIMPLE.txt" );
         assertTrue( file.exists() );
     }
-    
+
     public void testVelocityUTF8()
         throws Exception
     {
@@ -431,7 +434,7 @@ public class RemoteResourcesMojoTest
     throws Exception
     {
         // put this on the root dir
-        project.addFile( "pom.xml", MavenProjectResourcesStub.ROOT_FILE );
+        project.addFile( "pom.xml", MavenProjectBuildStub.ROOT_FILE );
         project.setInceptionYear( "2007" );
         // start creating the environment
         project.setupBuildEnvironment();
@@ -484,7 +487,7 @@ public class RemoteResourcesMojoTest
                                                                  String bundles[] )
         throws Exception
     {
-        return lookupProcessMojoWithSettings( project, new ArrayList<String>( Arrays.asList( bundles ) ) );
+        return lookupProcessMojoWithSettings( project, new ArrayList<>( Arrays.asList( bundles ) ) );
     }
 
     protected ProcessRemoteResourcesMojo lookupProcessMojoWithSettings( final MavenProject project,

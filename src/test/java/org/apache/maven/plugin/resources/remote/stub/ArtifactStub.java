@@ -97,238 +97,285 @@ public class ArtifactStub
         versionRange = VersionRange.createFromVersion( version );
     }
 
+    @Override
     public boolean hasClassifier()
     {
         return true;
     }
 
+    @Override
     public String getBaseVersion()
     {
         return "Test Version";
     }
 
+    @Override
     public void setBaseVersion( String version )
     {
         baseVersion = version;
     }
 
+    @Override
     public void setFile( File _file )
     {
         file = _file;
     }
 
+    @Override
     public File getFile()
     {
         return new File( "testfile" );
     }
 
+    @Override
     public String getGroupId()
     {
         return groupId;
     }
 
+    @Override
     public String getArtifactId()
     {
         return artifactId;
     }
 
+    @Override
     public String getVersion()
     {
         return version;
     }
 
+    @Override
     public void setVersion( String _version )
     {
         version = _version;
     }
 
+    @Override
     public String getScope()
     {
         return scope;
     }
 
+    @Override
     public String getType()
     {
         return type;
     }
 
+    @Override
     public String getClassifier()
     {
         return classifier;
     }
 
+    @Override
     public String getId()
     {
         return identifier;
     }
 
+    @Override
     public String getDependencyConflictId()
     {
         return dependencyConflictId;
     }
 
+    @Override
     public void addMetadata( ArtifactMetadata metadata )
     {
 
     }
 
+    @Override
     public Collection<ArtifactMetadata> getMetadataList()
     {
-        return new LinkedList<ArtifactMetadata>();
+        return new LinkedList<>();
     }
 
+    @Override
     public void setRepository( ArtifactRepository remoteRepository )
     {
 
     }
 
+    @Override
     public ArtifactRepository getRepository()
     {
         return null;
     }
 
+    @Override
     public void updateVersion( String version, ArtifactRepository localRepository )
     {
 
     }
 
+    @Override
     public String getDownloadUrl()
     {
         return downloadUrl;
     }
 
+    @Override
     public void setDownloadUrl( String _downloadUrl )
     {
         downloadUrl = _downloadUrl;
     }
 
+    @Override
     public ArtifactFilter getDependencyFilter()
     {
         return null;
     }
 
+    @Override
     public void setDependencyFilter( ArtifactFilter artifactFilter )
     {
 
     }
 
+    @Override
     public ArtifactHandler getArtifactHandler()
     {
         return artifactHandler;
     }
 
+    @Override
     public List<String> getDependencyTrail()
     {
-        return new LinkedList<String>();
+        return new LinkedList<>();
     }
 
+    @Override
     public void setDependencyTrail(List<String> dependencyTrail)
     {
 
     }
 
+    @Override
     public void setScope( String _scope )
     {
         scope = _scope;
     }
 
+    @Override
     public VersionRange getVersionRange()
     {
         return versionRange;
     }
 
+    @Override
     public void setVersionRange( VersionRange newRange )
     {
 
     }
 
+    @Override
     public void selectVersion( String version )
     {
         selectedVersion = version;
     }
 
+    @Override
     public void setGroupId( String _groupId )
     {
         groupId = _groupId;
     }
 
+    @Override
     public void setArtifactId( String _artifactId )
     {
         artifactId = _artifactId;
     }
 
+    @Override
     public boolean isSnapshot()
     {
         return true;
     }
 
+    @Override
     public void setResolved( boolean _resolved )
     {
         resolved = _resolved;
     }
 
+    @Override
     public boolean isResolved()
     {
         return true;
     }
 
+    @Override
     public void setResolvedVersion( String version )
     {
         resolvedVersion = version;
     }
 
 
+    @Override
     public void setArtifactHandler( ArtifactHandler handler )
     {
 
     }
 
+    @Override
     public boolean isRelease()
     {
         return true;
     }
 
+    @Override
     public void setRelease( boolean _release )
     {
         release = _release;
     }
 
+    @Override
     public List<ArtifactVersion> getAvailableVersions()
     {
-        return new LinkedList<ArtifactVersion>();
+        return new LinkedList<>();
     }
 
+    @Override
     public void setAvailableVersions(List<ArtifactVersion> versions)
     {
 
     }
 
+    @Override
     public boolean isOptional()
     {
         return true;
     }
 
+    @Override
     public void setOptional( boolean _optional )
     {
         optional = _optional;
     }
 
+    @Override
     public ArtifactVersion getSelectedVersion()
         throws OverConstrainedVersionException
     {
         return null;
     }
 
+    @Override
     public boolean isSelectedVersionKnown()
         throws OverConstrainedVersionException
     {
         return true;
     }
 
+    @Override
     public int compareTo(Artifact o) {
         return 0;
     }
 
+    @Override
     public ArtifactMetadata getMetadata(Class<?> metadataClass) {
         return null;
     }

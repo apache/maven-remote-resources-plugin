@@ -37,42 +37,50 @@ public class ModelStub
 
     }
 
+    @Override
     public String getVersion()
     {
         return "0.0-TEST";
     }
 
+    @Override
     public String getModelVersion()
     {
         return "0.0-TEST";
     }
 
+    @Override
     public String getName()
     {
         return "Test Model";
     }
 
+    @Override
     public String getGroupId()
     {
         return "org.apache.maven.test";
     }
 
+    @Override
     public String getPackaging()
     {
         return "jar";
     }
 
+    @Override
     public Parent getParent()
     {
         //return new Parent();
         return null;
     }
 
+    @Override
     public String getArtifactId()
     {
         return "maven-test-plugin";
     }
 
+    @Override
     public Properties getProperties()
     {
         return new Properties();

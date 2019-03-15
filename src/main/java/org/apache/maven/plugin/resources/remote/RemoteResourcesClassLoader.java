@@ -33,6 +33,7 @@ public class RemoteResourcesClassLoader
         super( new URL[]{} , parent );
     }
 
+    @Override
     public void addURL( URL url )
     {
         super.addURL( url );
@@ -42,6 +43,7 @@ public class RemoteResourcesClassLoader
     // that we have provided.   Thus, we don't pull junk from the
     // system classpath jars and stuff instead of the jars
     // we specifically provided
+    @Override
     public URL getResource( String name ) 
     {
         URL url = findResource( name );
