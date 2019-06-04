@@ -44,8 +44,10 @@ public class IT_RunOnlyAtExecutionRoot
     public void test()
         throws IOException, URISyntaxException, VerificationException
     {
-        // Workaround for Windows + Maven-3.5.x + Jenkins due to MNG-6261
-        assumeTrue( !(System.getenv( "JENKINS_HOME" ) != null && Os.isFamily( Os.FAMILY_WINDOWS ) && System.getenv( "MAVEN_HOME" ).contains( "-3.5." ) ) );
+        // Workaround for Windows + Maven-3.5.x/3.6.0 + Jenkins due to MNG-6261
+        assumeTrue( !( System.getenv( "JENKINS_HOME" ) != null 
+                       && Os.isFamily( Os.FAMILY_WINDOWS ) 
+                       &&  ( System.getenv( "MAVEN_HOME" ).contains( "-3.5." ) || System.getenv( "MAVEN_HOME" ).contains( "-3.6.0" ) ) ) );
 
         File dir = TestUtils.getTestDir( "run-only-at-execution-root" );
 
