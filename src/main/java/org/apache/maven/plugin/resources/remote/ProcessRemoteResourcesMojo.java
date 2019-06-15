@@ -148,7 +148,7 @@ public class ProcessRemoteResourcesMojo
      * <p>
      * So, the default filtering delimiters might be specified as:
      * </p>
-     * 
+     *
      * <pre>
      * &lt;delimiters&gt;
      *   &lt;delimiter&gt;${*}&lt/delimiter&gt;
@@ -381,14 +381,14 @@ public class ProcessRemoteResourcesMojo
      * The default is the same as "includeScope" if there are no exclude scopes set.
      * Otherwise, it defaults to "test" to grab all the dependencies so the
      * exclude filters can filter out what is not needed.
-     * 
+     *
      * @since 1.5
      */
     @Parameter
     private String[] resolveScopes;
 
     /**
-     * Comma separated list of Artifact names too exclude.
+     * Comma separated list of Artifact names to exclude.
      *
      * @since 1.0
      */
@@ -426,6 +426,12 @@ public class ProcessRemoteResourcesMojo
      */
     @Parameter( property = "excludeTransitive", defaultValue = "false" )
     protected boolean excludeTransitive;
+
+    /**
+     * Should we use resource filtering when copying the remote resources?
+     */
+    @Parameter( property = "useResourceFiltering", defaultValue = "false" )
+    protected boolean useResourceFiltering;
 
     /**
      */
@@ -823,8 +829,7 @@ public class ProcessRemoteResourcesMojo
                 }
                 else if ( resource.isFiltering() )
                 {
-
-                    MavenFileFilterRequest req = setupRequest( resource, source, file );
+                    MavenFileFilterRequest req = setupRequest( source, file );
 
                     try
                     {
@@ -924,12 +929,12 @@ public class ProcessRemoteResourcesMojo
         }
     }
 
-    private MavenFileFilterRequest setupRequest( Resource resource, File source, File file )
+    private MavenFileFilterRequest setupRequest( File source, File file )
     {
         MavenFileFilterRequest req = new MavenFileFilterRequest();
         req.setFrom( source );
         req.setTo( file );
-        req.setFiltering( resource.isFiltering() );
+        req.setFiltering( true );
 
         req.setMavenProject( project );
         req.setMavenSession( mavenSession );
@@ -1246,13 +1251,13 @@ public class ProcessRemoteResourcesMojo
                             fileWriteIfDiffers( os );
                         }
                     }
+                    else if ( useResourceFiltering )
+                    {
+                        filterBundleResource( classLoader, bundleResource, f );
+                    }
                     else
                     {
-                        URL resUrl = classLoader.getResource( bundleResource );
-                        if ( resUrl != null )
-                        {
-                            FileUtils.copyURLToFile( resUrl, f );
-                        }
+                        copyBundleResource( classLoader, bundleResource, f );
                     }
 
                     File appendedResourceFile = new File( appendedResourcesDirectory, projectResource );
@@ -1307,6 +1312,41 @@ public class ProcessRemoteResourcesMojo
                                                               bundle.getSourceEncoding() ) );
         }
         return writer;
+    }
+
+    private void copyBundleResource( ClassLoader classLoader, String bundleResource, File to )
+        throws IOException
+    {
+        URL resUrl = classLoader.getResource( bundleResource );
+        if ( resUrl != null )
+        {
+            FileUtils.copyURLToFile( resUrl, to );
+        }
+    }
+
+    private void filterBundleResource( ClassLoader classLoader, String bundleResource, File to )
+        throws IOException, MojoExecutionException
+    {
+        File tmpFile = null;
+        try
+        {
+            tmpFile = File.createTempFile( "maven-remote-resources-plugin", null );
+            copyBundleResource( classLoader, bundleResource, tmpFile );
+            MavenFileFilterRequest req = setupRequest( tmpFile, to );
+            fileFilter.copyFile( req );
+        }
+        catch ( MavenFilteringException e )
+        {
+            throw new MojoExecutionException( "Error filtering remote resource: " + bundleResource, e );
+        }
+        finally
+        {
+            if ( tmpFile != null && !tmpFile.delete() )
+            {
+                tmpFile.deleteOnExit();
+                getLog().warn( "Unable to delete temporary file: " + tmpFile + ". Trying again when this VM exits." );
+            }
+        }
     }
 
     protected Model getSupplement( Xpp3Dom supplementModelXml )
