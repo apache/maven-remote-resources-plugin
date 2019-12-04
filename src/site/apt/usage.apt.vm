@@ -62,7 +62,7 @@ Usage
 
  <<Note:>> The files have to be named like <<<*.vm>>> to mark them as {{{htps://velocity.apache.org}Velocity}} macro files which will
            be filtered by the <<process>> goal. If you don't name the files according to this,
-           they will not been filtered.
+           they will not be filtered.
 
 
 * How to Use Remote Resource Bundles 
