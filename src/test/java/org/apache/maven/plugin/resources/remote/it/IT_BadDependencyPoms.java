@@ -68,9 +68,9 @@ public class IT_BadDependencyPoms
             File output = new File( dir, "log.txt" );
             String content = FileUtils.fileRead( output );
 
-            assertTrue(content.contains("mvn install:install-file -DgroupId=test -DartifactId=pom -Dversion=0.2 -Dpackaging=jar"));
-            assertTrue(content.contains("mvn install:install-file -DgroupId=test -DartifactId=missing -Dversion=0.1 -Dpackaging=jar"));
-            assertTrue(content.contains("mvn install:install-file -DgroupId=test -DartifactId=invalid -Dversion=0.1 -Dpackaging=jar"));
+            assertTrue( content.contains( "mvn install:install-file -DgroupId=test -DartifactId=pom -Dversion=0.2 -Dpackaging=jar" ) );
+            assertTrue( content.contains( "mvn install:install-file -DgroupId=test -DartifactId=missing -Dversion=0.1 -Dpackaging=jar" ) );
+            assertTrue( content.contains( "mvn install:install-file -DgroupId=test -DartifactId=invalid -Dversion=0.1 -Dpackaging=jar" ) );
         }
 
     }

@@ -50,7 +50,7 @@ public class IT_CustomFilterDelimiter
         File output = new File( dir, "target/maven-shared-archive-resources/DEPENDENCIES" );
         String content = FileUtils.fileRead( output );
 
-        assertTrue(content.contains("Override: custom-filter-delim"));
+        assertTrue( content.contains( "Override: custom-filter-delim" ) );
     }
 
 }

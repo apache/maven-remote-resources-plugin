@@ -48,7 +48,7 @@ public class IT_GenerateFromBundle
         File output = new File( dir, "target/maven-shared-archive-resources/DEPENDENCIES" );
         String content = FileUtils.fileRead( output );
 
-        assertTrue(content.contains("Built-In:"));
+        assertTrue( content.contains( "Built-In:" ) );
     }
 
 }

@@ -371,14 +371,15 @@ public class ArtifactStub
     }
 
     @Override
-    public int compareTo(Artifact o) {
+    public int compareTo( Artifact o )
+    {
         return 0;
     }
 
     @Override
-    public ArtifactMetadata getMetadata(Class<?> metadataClass) {
+    public ArtifactMetadata getMetadata( Class<?> metadataClass )
+    {
         return null;
     }
-
 
 }
