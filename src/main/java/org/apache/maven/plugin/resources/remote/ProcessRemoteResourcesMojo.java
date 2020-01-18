@@ -56,6 +56,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.io.output.DeferredFileOutputStream;
 import org.apache.maven.ProjectDependenciesResolver;
+import org.apache.maven.archiver.MavenArchiver;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -426,6 +427,14 @@ public class ProcessRemoteResourcesMojo
      */
     @Parameter( property = "excludeTransitive", defaultValue = "false" )
     protected boolean excludeTransitive;
+
+    /**
+     * Timestamp for reproducible output archive entries, either formatted as ISO 8601
+     * <code>yyyy-MM-dd'T'HH:mm:ssXXX</code> or as an int representing seconds since the epoch (like
+     * <a href="https://reproducible-builds.org/docs/source-date-epoch/">SOURCE_DATE_EPOCH</a>).
+     */
+    @Parameter( defaultValue = "${project.build.outputTimestamp}" )
+    private String outputTimestamp;
 
     /**
      */
@@ -1040,8 +1049,12 @@ public class ProcessRemoteResourcesMojo
         context.put( KEY_PROJECTS_ORGS, null );
         // the following properties are cheap to calculate, so we provide them eagerly
 
+        // Reproducible Builds: try to use reproducible output timestamp 
+        MavenArchiver archiver = new MavenArchiver();
+        Date outputDate = archiver.parseOutputTimestamp( outputTimestamp );
+
         String inceptionYear = project.getInceptionYear();
-        String year = new SimpleDateFormat( "yyyy" ).format( new Date() );
+        String year = new SimpleDateFormat( "yyyy" ).format( ( outputDate == null ) ? new Date() : outputDate );
 
         if ( StringUtils.isEmpty( inceptionYear ) )
         {

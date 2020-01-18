@@ -327,7 +327,7 @@ public class RemoteResourcesMojoTest
 
         String data = FileUtils.fileRead( file );
         assertTrue( data.contains( "project.name: Test Project default-filterbundles" ) );
-        assertTrue( data.contains( "projectTimespan: 2007-" ) );
+        assertTrue( data.contains( "projectTimespan: 2007-2019" ) );
         assertTrue( data.contains( "projects: [" ) );
         assertTrue( data.contains( "projectsSortedByOrganization: {" ) );
     }
