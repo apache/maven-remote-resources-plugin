@@ -30,7 +30,7 @@ under the License.
   </parent>
 
   <artifactId>maven-remote-resources-plugin</artifactId>
-  <version>1.7.0</version>
+  <version>1.7.1-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Apache Maven Remote Resources Plugin</name>
@@ -50,7 +50,7 @@ under the License.
     <connection>scm:git:https://gitbox.apache.org/repos/asf/maven-remote-resources-plugin.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/maven-remote-resources-plugin.git</developerConnection>
     <url>https://github.com/apache/maven-remote-resources-plugin/tree/${project.scm.tag}</url>
-    <tag>maven-remote-resources-plugin-1.7.0</tag>
+    <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>JIRA</system>
