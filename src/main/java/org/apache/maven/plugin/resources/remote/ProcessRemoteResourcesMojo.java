@@ -58,13 +58,13 @@ import org.apache.commons.io.output.DeferredFileOutputStream;
 import org.apache.maven.ProjectDependenciesResolver;
 import org.apache.maven.archiver.MavenArchiver;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
-import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.lifecycle.internal.ProjectArtifactFactory;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Resource;
@@ -77,12 +77,14 @@ import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.InvalidProjectModelException;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectBuilder;
+import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.project.artifact.InvalidDependencyVersionException;
-import org.apache.maven.project.inheritance.ModelInheritanceAssembler;
+import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.shared.artifact.filter.collection.ArtifactFilterException;
 import org.apache.maven.shared.artifact.filter.collection.ArtifactIdFilter;
 import org.apache.maven.shared.artifact.filter.collection.FilterArtifacts;
@@ -92,6 +94,9 @@ import org.apache.maven.shared.artifact.filter.collection.ScopeFilter;
 import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenFileFilterRequest;
 import org.apache.maven.shared.filtering.MavenFilteringException;
+import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
+import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
+import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResult;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
@@ -251,8 +256,7 @@ public class ProcessRemoteResourcesMojo
      * Merges supplemental data model with artifact metadata. Useful when processing artifacts with
      * incomplete POM metadata.
      */
-    @Component
-    private ModelInheritanceAssembler inheritanceAssembler;
+    private ModelInheritanceAssembler inheritanceAssembler = new ModelInheritanceAssembler();
 
     /**
      * The resource bundles that will be retrieved and processed,
@@ -327,6 +331,12 @@ public class ProcessRemoteResourcesMojo
     private List<Resource> resources;
 
     /**
+     * Repository system, needed to create Artifact and Repository objects.
+     */
+    @Component
+    protected RepositorySystem repositorySystem;
+
+    /**
      * Artifact Resolver, needed to resolve and download the {@code resourceBundles}.
      */
     @Component
@@ -339,10 +349,10 @@ public class ProcessRemoteResourcesMojo
     private MavenFileFilter fileFilter;
 
     /**
-     * Artifact factory, needed to create artifacts.
+     * Project artifact factory, needed to create artifacts for the project dependencies.
      */
     @Component
-    private ArtifactFactory artifactFactory;
+    private ProjectArtifactFactory projectArtifactFactory;
 
     /**
      * The Maven session.
@@ -353,8 +363,8 @@ public class ProcessRemoteResourcesMojo
     /**
      * ProjectBuilder, needed to create projects from the artifacts.
      */
-    @Component( role = MavenProjectBuilder.class )
-    private MavenProjectBuilder mavenProjectBuilder;
+    @Component( role = ProjectBuilder.class )
+    private ProjectBuilder projectBuilder;
 
     /**
      */
@@ -637,53 +647,49 @@ public class ProcessRemoteResourcesMojo
 
         for ( Artifact artifact : artifacts )
         {
+            List<ArtifactRepository> remoteRepo = remoteArtifactRepositories;
+            if ( artifact.isSnapshot() )
+            {
+                VersionRange rng = VersionRange.createFromVersion( artifact.getBaseVersion() );
+                artifact = new DefaultArtifact( artifact.getGroupId(), artifact.getArtifactId(), rng,
+                                                artifact.getType(), artifact.getClassifier(), artifact.getScope(),
+                                                artifact.getArtifactHandler(), artifact.isOptional() );
+            }
+
+            getLog().debug( "Building project for " + artifact );
+            MavenProject p;
             try
             {
-                List<ArtifactRepository> remoteRepo = remoteArtifactRepositories;
-                if ( artifact.isSnapshot() )
-                {
-                    VersionRange rng = VersionRange.createFromVersion( artifact.getBaseVersion() );
-                    artifact =
-                        artifactFactory.createDependencyArtifact( artifact.getGroupId(), artifact.getArtifactId(), rng,
-                                                                  artifact.getType(), artifact.getClassifier(),
-                                                                  artifact.getScope(), null, artifact.isOptional() );
-                }
-
-                getLog().debug( "Building project for " + artifact );
-                MavenProject p;
-                try
-                {
-                    p = mavenProjectBuilder.buildFromRepository( artifact, remoteRepo, localRepository );
-                }
-                catch ( InvalidProjectModelException e )
-                {
-                    getLog().warn( "Invalid project model for artifact [" + artifact.getArtifactId() + ":"
-                                       + artifact.getGroupId() + ":" + artifact.getVersion() + "]. "
-                                       + "It will be ignored by the remote resources Mojo." );
-                    continue;
-                }
-
-                String supplementKey =
-                    generateSupplementMapKey( p.getModel().getGroupId(), p.getModel().getArtifactId() );
-
-                if ( supplementModels.containsKey( supplementKey ) )
-                {
-                    Model mergedModel = mergeModels( p.getModel(), supplementModels.get( supplementKey ) );
-                    MavenProject mergedProject = new MavenProject( mergedModel );
-                    projects.add( mergedProject );
-                    mergedProject.setArtifact( artifact );
-                    mergedProject.setVersion( artifact.getVersion() );
-                    getLog().debug( "Adding project with groupId [" + mergedProject.getGroupId() + "] (supplemented)" );
-                }
-                else
-                {
-                    projects.add( p );
-                    getLog().debug( "Adding project with groupId [" + p.getGroupId() + "]" );
-                }
+                ProjectBuildingRequest req = new DefaultProjectBuildingRequest()
+                        .setLocalRepository( localRepository )
+                        .setRemoteRepositories( remoteRepo );
+                ProjectBuildingResult res = projectBuilder.build( artifact, req );
+                p = res.getProject();
             }
             catch ( ProjectBuildingException e )
             {
-                throw new IllegalStateException( e.getMessage(), e );
+                getLog().warn( "Invalid project model for artifact [" + artifact.getArtifactId() + ":"
+                                   + artifact.getGroupId() + ":" + artifact.getVersion() + "]. "
+                                   + "It will be ignored by the remote resources Mojo." );
+                continue;
+            }
+
+            String supplementKey =
+                generateSupplementMapKey( p.getModel().getGroupId(), p.getModel().getArtifactId() );
+
+            if ( supplementModels.containsKey( supplementKey ) )
+            {
+                Model mergedModel = mergeModels( p.getModel(), supplementModels.get( supplementKey ) );
+                MavenProject mergedProject = new MavenProject( mergedModel );
+                projects.add( mergedProject );
+                mergedProject.setArtifact( artifact );
+                mergedProject.setVersion( artifact.getVersion() );
+                getLog().debug( "Adding project with groupId [" + mergedProject.getGroupId() + "] (supplemented)" );
+            }
+            else
+            {
+                projects.add( p );
+                getLog().debug( "Adding project with groupId [" + p.getGroupId() + "]" );
             }
         }
         Collections.sort( projects, new ProjectComparator() );
@@ -696,7 +702,7 @@ public class ProcessRemoteResourcesMojo
         {
             if ( runOnlyAtExecutionRoot )
             {
-                List<MavenProject> projects = mavenSession.getSortedProjects();
+                List<MavenProject> projects = mavenSession.getProjects();
                 return dependencyResolver.resolve( projects, Arrays.asList( resolveScopes ), mavenSession );
             }
             else
@@ -721,14 +727,14 @@ public class ProcessRemoteResourcesMojo
     {
         Set<Artifact> artifacts = new LinkedHashSet<>();
 
-        List<MavenProject> projects = mavenSession.getSortedProjects();
+        List<MavenProject> projects = mavenSession.getProjects();
         for ( MavenProject p : projects )
         {
             if ( p.getDependencyArtifacts() == null )
             {
                 try
                 {
-                    Set<Artifact> depArtifacts = p.createArtifacts( artifactFactory, null, null );
+                    Set<Artifact> depArtifacts = projectArtifactFactory.createArtifacts( p );
 
                     if ( depArtifacts != null && !depArtifacts.isEmpty() )
                     {
@@ -1085,57 +1091,52 @@ public class ProcessRemoteResourcesMojo
     {
         List<File> bundleArtifacts = new ArrayList<>();
 
-        try
+        for ( String artifactDescriptor : bundles )
         {
-            for ( String artifactDescriptor : bundles )
-            {
-                getLog().info( "Preparing remote bundle " + artifactDescriptor );
-                // groupId:artifactId:version[:type[:classifier]]
-                String[] s = artifactDescriptor.split( ":" );
+            getLog().info( "Preparing remote bundle " + artifactDescriptor );
+            // groupId:artifactId:version[:type[:classifier]]
+            String[] s = artifactDescriptor.split( ":" );
 
-                File artifactFile = null;
-                // check if the artifact is part of the reactor
-                if ( mavenSession != null )
+            File artifactFile = null;
+            // check if the artifact is part of the reactor
+            if ( mavenSession != null )
+            {
+                List<MavenProject> list = mavenSession.getProjects();
+                for ( MavenProject p : list )
                 {
-                    List<MavenProject> list = mavenSession.getSortedProjects();
-                    for ( MavenProject p : list )
+                    if ( s[0].equals( p.getGroupId() ) && s[1].equals( p.getArtifactId() )
+                        && s[2].equals( p.getVersion() ) )
                     {
-                        if ( s[0].equals( p.getGroupId() ) && s[1].equals( p.getArtifactId() )
-                            && s[2].equals( p.getVersion() ) )
+                        if ( s.length >= 4 && "test-jar".equals( s[3] ) )
                         {
-                            if ( s.length >= 4 && "test-jar".equals( s[3] ) )
-                            {
-                                artifactFile = new File( p.getBuild().getTestOutputDirectory() );
-                            }
-                            else
-                            {
-                                artifactFile = new File( p.getBuild().getOutputDirectory() );
-                            }
+                            artifactFile = new File( p.getBuild().getTestOutputDirectory() );
+                        }
+                        else
+                        {
+                            artifactFile = new File( p.getBuild().getOutputDirectory() );
                         }
                     }
                 }
-                if ( artifactFile == null || !artifactFile.exists() )
-                {
-                    String type = ( s.length >= 4 ? s[3] : "jar" );
-                    String classifier = ( s.length == 5 ? s[4] : null );
-                    Artifact artifact =
-                        artifactFactory.createDependencyArtifact( s[0], s[1], VersionRange.createFromVersion( s[2] ),
-                                                                  type, classifier, Artifact.SCOPE_RUNTIME );
-
-                    artifactResolver.resolve( artifact, remoteArtifactRepositories, localRepository );
-
-                    artifactFile = artifact.getFile();
-                }
-                bundleArtifacts.add( artifactFile );
             }
-        }
-        catch ( ArtifactResolutionException e )
-        {
-            throw new MojoExecutionException( "Error downloading resources archive.", e );
-        }
-        catch ( ArtifactNotFoundException e )
-        {
-            throw new MojoExecutionException( "Resources archive cannot be found.", e );
+            if ( artifactFile == null || !artifactFile.exists() )
+            {
+                String type = ( s.length >= 4 ? s[3] : "jar" );
+                String classifier = ( s.length == 5 ? s[4] : null );
+                Artifact artifact = repositorySystem.createArtifactWithClassifier( s[0], s[1], s[2], type, classifier );
+
+                try
+                {
+                    ArtifactResult result = artifactResolver.resolveArtifact(
+                            mavenSession.getProjectBuildingRequest(), artifact );
+                    artifactFile = result.getArtifact().getFile();
+                }
+                catch ( ArtifactResolverException e )
+                {
+                    throw new MojoExecutionException( "Error processing remote resources", e );
+                }
+
+            }
+            bundleArtifacts.add( artifactFile );
         }
 
         return bundleArtifacts;

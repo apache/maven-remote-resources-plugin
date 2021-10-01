@@ -376,10 +376,4 @@ public class ArtifactStub
         return 0;
     }
 
-    @Override
-    public ArtifactMetadata getMetadata( Class<?> metadataClass )
-    {
-        return null;
-    }
-
 }
