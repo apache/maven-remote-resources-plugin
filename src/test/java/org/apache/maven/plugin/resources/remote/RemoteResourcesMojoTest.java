@@ -22,13 +22,21 @@ package org.apache.maven.plugin.resources.remote;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.LegacyLocalRepositoryManager;
 import org.apache.maven.artifact.versioning.VersionRange;
+import org.apache.maven.execution.DefaultMavenExecutionRequest;
+import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.execution.ReactorManager;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
+import org.codehaus.plexus.DefaultPlexusContainer;
+import org.codehaus.plexus.logging.console.ConsoleLoggerManager;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
@@ -43,6 +51,12 @@ import java.util.Properties;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import org.codehaus.plexus.util.IOUtil;
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.internal.impl.EnhancedLocalRepositoryManagerFactory;
+import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
+import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.repository.LocalRepositoryManager;
 
 
 /**
@@ -54,6 +68,8 @@ public class RemoteResourcesMojoTest
 {
     static final String DEFAULT_BUNDLE_POM_PATH = "target/test-classes/unit/rrmojotest/bundle-plugin-config.xml";
     static final String DEFAULT_PROCESS_POM_PATH = "target/test-classes/unit/rrmojotest/process-plugin-config.xml";
+
+    private final String LOCAL_REPO = "target/local-repo/";
 
     @Override
     public void setUp()
@@ -496,15 +512,21 @@ public class RemoteResourcesMojoTest
     {
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojo();
 
-        MavenSession session = new MavenSession( getContainer(),
-                                    null, //Settings settings,
-                                    null, //ArtifactRepository localRepository,
-                                    null, //EventDispatcher eventDispatcher,
-                                    new ReactorManager( new ArrayList<MavenProject>() ),
-                                    Arrays.asList( "install" ),
-                                    project.getBasedir().toString(),
-                                    new Properties(),
-                                    Calendar.getInstance().getTime() );
+        ArtifactRepository localRepository = mojo.repositorySystem.createLocalRepository( new File( LOCAL_REPO ) );
+        DefaultRepositorySystemSession reposession = MavenRepositorySystemUtils.newSession();
+        reposession.setLocalRepositoryManager( new SimpleLocalRepositoryManagerFactory()
+                .newInstance( reposession, new LocalRepository( new File( LOCAL_REPO ) ) ) );
+
+        DefaultMavenExecutionRequest request = new DefaultMavenExecutionRequest();
+        request.setLocalRepository( localRepository );
+        request = new DefaultMavenExecutionRequest();
+        request.setUserProperties( null );
+        request.setLocalRepository( localRepository );
+        request.setGoals( Arrays.asList( "install" ) );
+        request.setBaseDirectory( project.getBasedir() );
+        request.setStartTime( Calendar.getInstance().getTime() );
+        MavenSession session = new MavenSession( getContainer(), reposession, request, new DefaultMavenExecutionResult() );
+        session.setProjects( Arrays.asList( project ) );
 
         setVariableValueToObject( mojo, "project", project );
         setVariableValueToObject( mojo, "outputDirectory", new File( project.getBuild().getOutputDirectory() ) );

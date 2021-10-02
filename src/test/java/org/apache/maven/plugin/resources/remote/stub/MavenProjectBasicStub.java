@@ -25,6 +25,8 @@ import java.util.LinkedList;
 import java.util.Properties;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.model.Profile;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.PlexusTestCase;
 import org.codehaus.plexus.util.FileUtils;
@@ -154,15 +156,14 @@ public class MavenProjectBasicStub
     {
         // the pom should be located in the isolated dummy root
         super.setFile( new File( getBasedir(), "pom.xml" ) );
-        super.setDependencyArtifacts( new HashSet<>() );
-        super.setArtifacts( new HashSet<>() );
-        super.setPluginArtifacts( new HashSet<>() );
-        super.setReportArtifacts( new HashSet<>() );
-        super.setExtensionArtifacts( new HashSet<>() );
-        super.setRemoteArtifactRepositories( new LinkedList<>() );
-        super.setPluginArtifactRepositories( new LinkedList<>() );
-        super.setCollectedProjects( new LinkedList<>() );
-        super.setActiveProfiles( new LinkedList<>() );
+        super.setDependencyArtifacts( new HashSet<Artifact>() );
+        super.setArtifacts( new HashSet<Artifact>() );
+        super.setReportArtifacts( new HashSet<Artifact>() );
+        super.setExtensionArtifacts( new HashSet<Artifact>() );
+        super.setRemoteArtifactRepositories( new LinkedList<ArtifactRepository>() );
+        super.setPluginArtifactRepositories( new LinkedList<ArtifactRepository>() );
+        super.setCollectedProjects( new LinkedList<MavenProject>() );
+        super.setActiveProfiles( new LinkedList<Profile>() );
         super.setOriginalModel( null );
         super.setExecutionProject( this );
         super.setArtifact( artifact );
