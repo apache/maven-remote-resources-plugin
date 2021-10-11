@@ -128,7 +128,6 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
  * Resources that end in ".vm" are treated as Velocity templates. For those, the ".vm" is stripped off for the final
  * artifact name and it's fed through Velocity to have properties expanded, conditions processed, etc...
  * </p>
- * <p/>
  * Resources that don't end in ".vm" are copied "as is".
  */
 // NOTE: Removed the following in favor of maven-artifact-resolver library, for MRRESOURCES-41
@@ -157,11 +156,10 @@ public class ProcessRemoteResourcesMojo
      * 
      * <pre>
      * &lt;delimiters&gt;
-     *   &lt;delimiter&gt;${*}&lt/delimiter&gt;
-     *   &lt;delimiter&gt;@&lt/delimiter&gt;
+     *   &lt;delimiter&gt;${*}&lt;/delimiter&gt;
+     *   &lt;delimiter&gt;@&lt;/delimiter&gt;
      * &lt;/delimiters&gt;
      * </pre>
-     * <p/>
      * Since the '@' delimiter is the same on both ends, we don't need to specify '@*@' (though we can).
      *
      * @since 1.1
