@@ -652,7 +652,7 @@ public class ProcessRemoteResourcesMojo
             {
                 VersionRange rng = VersionRange.createFromVersion( artifact.getBaseVersion() );
                 artifact = new DefaultArtifact( artifact.getGroupId(), artifact.getArtifactId(), rng,
-                                                artifact.getType(), artifact.getClassifier(), artifact.getScope(),
+                                                artifact.getScope(), artifact.getType(), artifact.getClassifier(),
                                                 artifact.getArtifactHandler(), artifact.isOptional() );
             }
 
