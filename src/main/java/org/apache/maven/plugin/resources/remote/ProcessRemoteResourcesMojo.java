@@ -659,6 +659,7 @@ public class ProcessRemoteResourcesMojo
             try
             {
                 ProjectBuildingRequest req = new DefaultProjectBuildingRequest()
+                        .setRepositorySession( mavenSession.getRepositorySession() )
                         .setLocalRepository( localRepository )
                         .setRemoteRepositories( remoteRepo );
                 ProjectBuildingResult res = projectBuilder.build( artifact, req );
