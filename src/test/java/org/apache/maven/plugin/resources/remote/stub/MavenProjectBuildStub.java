@@ -154,8 +154,8 @@ public class MavenProjectBuildStub
      * also returns false if it is relative to
      * the parent
      *
-     * @param path
-     * @return
+     * @param path the path to check
+     * @return true if the path is relative
      */
     private boolean isValidPath( String path )
     {

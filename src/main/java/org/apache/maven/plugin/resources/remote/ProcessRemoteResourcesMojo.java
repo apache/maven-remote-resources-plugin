@@ -21,8 +21,6 @@ package org.apache.maven.plugin.resources.remote;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -34,10 +32,10 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -254,7 +252,7 @@ public class ProcessRemoteResourcesMojo
      * Merges supplemental data model with artifact metadata. Useful when processing artifacts with
      * incomplete POM metadata.
      */
-    private ModelInheritanceAssembler inheritanceAssembler = new ModelInheritanceAssembler();
+    private final ModelInheritanceAssembler inheritanceAssembler = new ModelInheritanceAssembler();
 
     /**
      * The resource bundles that will be retrieved and processed,
@@ -492,7 +490,7 @@ public class ProcessRemoteResourcesMojo
                 catch ( MalformedURLException e )
                 {
                     // ignore
-                    getLog().debug( "URL issue with supplemental-models.xml: " + e.toString() );
+                    getLog().debug( "URL issue with supplemental-models.xml: " + e );
                 }
             }
         }
@@ -691,7 +689,7 @@ public class ProcessRemoteResourcesMojo
                 getLog().debug( "Adding project with groupId [" + p.getGroupId() + "]" );
             }
         }
-        Collections.sort( projects, new ProjectComparator() );
+        projects.sort( new ProjectComparator() );
         return projects;
     }
 
@@ -709,19 +707,13 @@ public class ProcessRemoteResourcesMojo
                 return dependencyResolver.resolve( project, Arrays.asList( resolveScopes ), mavenSession );
             }
         }
-        catch ( ArtifactResolutionException e )
-        {
-            throw new IllegalStateException( "Failed to resolve dependencies for one or more projects in the reactor. "
-                + "Reason: " + e.getMessage(), e );
-        }
-        catch ( ArtifactNotFoundException e )
+        catch ( ArtifactResolutionException | ArtifactNotFoundException e )
         {
             throw new IllegalStateException( "Failed to resolve dependencies for one or more projects in the reactor. "
                 + "Reason: " + e.getMessage(), e );
         }
     }
 
-    @SuppressWarnings( "unchecked" )
     private Set<Artifact> aggregateProjectDependencyArtifacts()
     {
         Set<Artifact> artifacts = new LinkedHashSet<>();
@@ -868,7 +860,7 @@ public class ProcessRemoteResourcesMojo
     {
         if ( encoding != null )
         {
-            return new InputStreamReader( new FileInputStream( source ), encoding );
+            return new InputStreamReader( Files.newInputStream( source.toPath() ), encoding );
         }
         else
         {
@@ -897,7 +889,7 @@ public class ProcessRemoteResourcesMojo
      * <p>Note: the method should be called after {@link org.apache.commons.io.output.DeferredFileOutputStream#close}
      *
      * @param outStream Deferred stream
-     * @throws IOException
+     * @throws IOException if an I/O error occurs
      */
     private void fileWriteIfDiffers( DeferredFileOutputStream outStream )
         throws IOException
@@ -913,7 +905,7 @@ public class ProcessRemoteResourcesMojo
 
         if ( file.exists() )
         {
-            try ( InputStream is = new FileInputStream( file ) )
+            try ( InputStream is = Files.newInputStream( file.toPath() ) )
             {
                 final InputStream newContents = new ByteArrayInputStream( outStream.getData() );
                 needOverwrite = !IOUtil.contentEquals( is, newContents );
@@ -932,7 +924,7 @@ public class ProcessRemoteResourcesMojo
         }
         getLog().debug( "Writing " + file );
         
-        try ( OutputStream os = new FileOutputStream( file ) )
+        try ( OutputStream os = Files.newOutputStream( file.toPath() ) )
         {
             outStream.writeTo( os );
         }
@@ -1029,7 +1021,6 @@ public class ProcessRemoteResourcesMojo
     private static final String KEY_PROJECTS_ORGS = "projectsSortedByOrganization";
 
     protected VelocityContext buildVelocityContext( Map<String, Object> properties )
-        throws MojoExecutionException
     {
         // the following properties are expensive to calculate, so we provide them lazily
         VelocityContext context = new VelocityContext( properties )
@@ -1274,7 +1265,7 @@ public class ProcessRemoteResourcesMojo
                     if ( appendedResourceFile.exists() )
                     {
                         getLog().info( "Copying appended resource: " + projectResource );
-                        try ( InputStream in = new FileInputStream( appendedResourceFile );
+                        try ( InputStream in = Files.newInputStream( appendedResourceFile.toPath() );
                               OutputStream out = new FileOutputStream( f, true ) )
                         {
                             IOUtil.copy( in, out );
@@ -1307,7 +1298,7 @@ public class ProcessRemoteResourcesMojo
     }
 
     private Writer getWriter( RemoteResourcesBundle bundle, File f )
-        throws IOException, UnsupportedEncodingException, FileNotFoundException
+        throws IOException
     {
         Writer writer;
         if ( bundle.getSourceEncoding() == null )
@@ -1369,7 +1360,7 @@ public class ProcessRemoteResourcesMojo
         return groupId.trim() + ":" + artifactId.trim();
     }
 
-    private Map<String, Model> loadSupplements( String models[] )
+    private Map<String, Model> loadSupplements( String[] models )
         throws MojoExecutionException
     {
         if ( models == null )
@@ -1445,7 +1436,7 @@ public class ProcessRemoteResourcesMojo
         return loc;
     }
 
-    class OrganizationComparator
+    static class OrganizationComparator
         implements Comparator<Organization>
     {
         @Override
@@ -1483,7 +1474,7 @@ public class ProcessRemoteResourcesMojo
         }
     }
 
-    class ProjectComparator
+    static class ProjectComparator
         implements Comparator<MavenProject>
     {
         @Override
@@ -1501,7 +1492,6 @@ public class ProcessRemoteResourcesMojo
     /* LogChute methods */
     @Override
     public void init( RuntimeServices rs )
-        throws Exception
     {
     }
 

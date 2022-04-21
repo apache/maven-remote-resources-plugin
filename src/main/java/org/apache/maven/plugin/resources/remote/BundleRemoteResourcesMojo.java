@@ -34,8 +34,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Bundle up resources that should be considered as a remote-resource,
@@ -131,7 +129,7 @@ public class BundleRemoteResourcesMojo
         scanner.addDefaultExcludes();
         scanner.scan();
 
-        List<String> includedFiles = Arrays.asList( scanner.getIncludedFiles() );
+        String[] includedFiles = scanner.getIncludedFiles();
 
         for ( String resource : includedFiles )
         {

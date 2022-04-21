@@ -31,7 +31,6 @@ import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
-import org.apache.maven.artifact.versioning.OverConstrainedVersionException;
 import org.apache.maven.artifact.versioning.VersionRange;
 
 
@@ -358,14 +357,12 @@ public class ArtifactStub
 
     @Override
     public ArtifactVersion getSelectedVersion()
-        throws OverConstrainedVersionException
     {
         return null;
     }
 
     @Override
     public boolean isSelectedVersionKnown()
-        throws OverConstrainedVersionException
     {
         return true;
     }
