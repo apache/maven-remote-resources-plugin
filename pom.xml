@@ -71,6 +71,9 @@ under the License.
     <javaVersion>7</javaVersion>
     <mavenVersion>3.2.5</mavenVersion>
     <project.build.outputTimestamp>2022-07-17T16:33:17Z</project.build.outputTimestamp>
+
+    <!-- Used by site documentation as well, do not remove -->
+    <mavenFilteringVersion>3.2.0</mavenFilteringVersion>
   </properties>
 
   <dependencies>
@@ -131,7 +134,7 @@ under the License.
     <dependency>
       <groupId>org.apache.maven.shared</groupId>
       <artifactId>maven-filtering</artifactId>
-      <version>3.2.0</version>
+      <version>${mavenFilteringVersion}</version>
     </dependency>
 
     <!-- plexus -->
