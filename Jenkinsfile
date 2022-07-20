@@ -17,4 +17,4 @@
  * under the License.
  */
 
-asfMavenTlpPlgnBuild()
+asfMavenTlpPlgnBuild(mavens: ['3.6.x','3.8.x'])
