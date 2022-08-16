@@ -21,7 +21,6 @@ package org.apache.maven.plugin.resources.remote;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -38,6 +37,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -493,7 +493,7 @@ public class ProcessRemoteResourcesMojo
                 catch ( MalformedURLException e )
                 {
                     // ignore
-                    getLog().debug( "URL issue with supplemental-models.xml: " + e.toString() );
+                    getLog().debug( "URL issue with supplemental-models.xml: " + e );
                 }
             }
         }
@@ -696,7 +696,7 @@ public class ProcessRemoteResourcesMojo
                 getLog().debug( "Adding project with groupId [" + p.getGroupId() + "]" );
             }
         }
-        Collections.sort( projects, new ProjectComparator() );
+        projects.sort(new ProjectComparator());
         return projects;
     }
 
@@ -714,12 +714,7 @@ public class ProcessRemoteResourcesMojo
                 return dependencyResolver.resolve( project, Arrays.asList( resolveScopes ), mavenSession );
             }
         }
-        catch ( ArtifactResolutionException e )
-        {
-            throw new IllegalStateException( "Failed to resolve dependencies for one or more projects in the reactor. "
-                + "Reason: " + e.getMessage(), e );
-        }
-        catch ( ArtifactNotFoundException e )
+        catch ( ArtifactResolutionException | ArtifactNotFoundException e )
         {
             throw new IllegalStateException( "Failed to resolve dependencies for one or more projects in the reactor. "
                 + "Reason: " + e.getMessage(), e );
@@ -873,7 +868,7 @@ public class ProcessRemoteResourcesMojo
     {
         if ( encoding != null )
         {
-            return new InputStreamReader( new FileInputStream( source ), encoding );
+            return new InputStreamReader( Files.newInputStream( source.toPath() ), encoding );
         }
         else
         {
@@ -918,9 +913,9 @@ public class ProcessRemoteResourcesMojo
 
         if ( file.exists() )
         {
-            try ( InputStream is = new FileInputStream( file ) )
+            try (InputStream is = Files.newInputStream( file.toPath() );
+                 InputStream newContents = new ByteArrayInputStream( outStream.getData() ))
             {
-                final InputStream newContents = new ByteArrayInputStream( outStream.getData() );
                 needOverwrite = !IOUtil.contentEquals( is, newContents );
                 if ( getLog().isDebugEnabled() )
                 {
@@ -937,7 +932,7 @@ public class ProcessRemoteResourcesMojo
         }
         getLog().debug( "Writing " + file );
         
-        try ( OutputStream os = new FileOutputStream( file ) )
+        try ( OutputStream os = Files.newOutputStream( file.toPath() ) )
         {
             outStream.writeTo( os );
         }
@@ -1279,7 +1274,7 @@ public class ProcessRemoteResourcesMojo
                     if ( appendedResourceFile.exists() )
                     {
                         getLog().info( "Copying appended resource: " + projectResource );
-                        try ( InputStream in = new FileInputStream( appendedResourceFile );
+                        try ( InputStream in = Files.newInputStream( appendedResourceFile.toPath() );
                               OutputStream out = new FileOutputStream( f, true ) )
                         {
                             IOUtil.copy( in, out );
@@ -1374,7 +1369,7 @@ public class ProcessRemoteResourcesMojo
         return groupId.trim() + ":" + artifactId.trim();
     }
 
-    private Map<String, Model> loadSupplements( String models[] )
+    private Map<String, Model> loadSupplements( String[] models )
         throws MojoExecutionException
     {
         if ( models == null )
