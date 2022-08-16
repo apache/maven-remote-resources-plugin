@@ -696,7 +696,7 @@ public class ProcessRemoteResourcesMojo
                 getLog().debug( "Adding project with groupId [" + p.getGroupId() + "]" );
             }
         }
-        projects.sort(new ProjectComparator());
+        projects.sort( new ProjectComparator( ) );
         return projects;
     }
 
@@ -913,8 +913,8 @@ public class ProcessRemoteResourcesMojo
 
         if ( file.exists() )
         {
-            try (InputStream is = Files.newInputStream( file.toPath() );
-                 InputStream newContents = new ByteArrayInputStream( outStream.getData() ))
+            try ( InputStream is = Files.newInputStream( file.toPath() );
+                 InputStream newContents = new ByteArrayInputStream( outStream.getData() ) )
             {
                 needOverwrite = !IOUtil.contentEquals( is, newContents );
                 if ( getLog().isDebugEnabled() )
