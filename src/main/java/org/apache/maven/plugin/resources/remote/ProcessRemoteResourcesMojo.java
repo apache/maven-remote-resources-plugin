@@ -68,6 +68,7 @@ import org.apache.maven.lifecycle.internal.ProjectArtifactFactory;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Resource;
+import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -659,7 +660,11 @@ public class ProcessRemoteResourcesMojo
             try
             {
                 ProjectBuildingRequest req = new DefaultProjectBuildingRequest()
+                        .setValidationLevel( ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL )
+                        .setProcessPlugins( false )
                         .setRepositorySession( mavenSession.getRepositorySession() )
+                        .setSystemProperties( mavenSession.getSystemProperties() )
+                        .setUserProperties( mavenSession.getUserProperties() )
                         .setLocalRepository( localRepository )
                         .setRemoteRepositories( remoteRepo );
                 ProjectBuildingResult res = projectBuilder.build( artifact, req );
