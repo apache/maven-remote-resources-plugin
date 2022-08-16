@@ -22,47 +22,38 @@ package org.apache.maven.plugin.resources.remote;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.repository.LegacyLocalRepositoryManager;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.execution.ReactorManager;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
-import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.codehaus.plexus.DefaultPlexusContainer;
-import org.codehaus.plexus.logging.console.ConsoleLoggerManager;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Properties;
+import java.util.Collections;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.aether.DefaultRepositorySystemSession;
-import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.internal.impl.EnhancedLocalRepositoryManagerFactory;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
-import org.eclipse.aether.repository.LocalRepositoryManager;
 
 
 /**
  * RemoteResources plugin Test Case
  */
-
 public class RemoteResourcesMojoTest
     extends AbstractMojoTestCase
 {
@@ -256,12 +247,12 @@ public class RemoteResourcesMojoTest
         file = new File( file, "UTF-8.bin" );
         assertTrue( file.exists() );
 
-        InputStream in = new FileInputStream( file );
-        byte[] data = IOUtil.toByteArray( in );
-        in.close();
-
-        byte[] expected = "\u00E4\u00F6\u00FC\u00C4\u00D6\u00DC\u00DF".getBytes( "UTF-8" );
-        assertTrue( Arrays.equals( expected, data ) );
+        try (InputStream in = Files.newInputStream( file.toPath( ) ) )
+        {
+            byte[] data = IOUtil.toByteArray( in );
+            byte[] expected = "\u00E4\u00F6\u00FC\u00C4\u00D6\u00DC\u00DF".getBytes( StandardCharsets.UTF_8 );
+            assertTrue( Arrays.equals( expected, data ) );
+        }
     }
 
     public void testVelocityISO88591()
@@ -297,12 +288,13 @@ public class RemoteResourcesMojoTest
         file = new File( file, "ISO-8859-1.bin" );
         assertTrue( file.exists() );
 
-        InputStream in = new FileInputStream( file );
-        byte[] data = IOUtil.toByteArray( in );
-        in.close();
+        try (InputStream in = Files.newInputStream( file.toPath() ) )
+        {
+            byte[] data = IOUtil.toByteArray( in );
+            byte[] expected = "\u00E4\u00F6\u00FC\u00C4\u00D6\u00DC\u00DF".getBytes( StandardCharsets.ISO_8859_1 );
+            assertTrue( Arrays.equals( expected, data ) );
+        }
 
-        byte[] expected = "\u00E4\u00F6\u00FC\u00C4\u00D6\u00DC\u00DF".getBytes( "ISO-8859-1" );
-        assertTrue( Arrays.equals( expected, data ) );
     }
 
     public void testFilteredBundles()
@@ -386,7 +378,7 @@ public class RemoteResourcesMojoTest
 
     protected void buildResourceBundle( String id,
                                        String sourceEncoding,
-                                       String resourceNames[],
+                                       String[] resourceNames,
                                        File jarName )
     throws Exception
     {
@@ -418,21 +410,24 @@ public class RemoteResourcesMojoTest
 
         if ( null != jarName )
         {
-            JarOutputStream jar = new JarOutputStream( new FileOutputStream( jarName ) );
-            jar.putNextEntry( new ZipEntry( "META-INF/maven/remote-resources.xml" ) );
-            jar.write( data.getBytes() );
-            jar.closeEntry();
-
-            for ( String resourceName : resourceNames )
+            try ( OutputStream fos = Files.newOutputStream( jarName.toPath() );
+                  JarOutputStream jar = new JarOutputStream( fos ) )
             {
-                File resource = new File( resourceDir, resourceName );
-                InputStream in = new FileInputStream( resource );
-                jar.putNextEntry( new ZipEntry( resourceName ) );
-                IOUtil.copy( in, jar );
+                jar.putNextEntry( new ZipEntry( "META-INF/maven/remote-resources.xml" ) );
+                jar.write( data.getBytes() );
                 jar.closeEntry();
-                in.close();
+
+                for ( String resourceName : resourceNames )
+                {
+                    File resource = new File( resourceDir, resourceName );
+                    try ( InputStream in = Files.newInputStream( resource.toPath() ) )
+                    {
+                        jar.putNextEntry( new ZipEntry( resourceName ) );
+                        IOUtil.copy( in, jar );
+                        jar.closeEntry();
+                    }
+                }
             }
-            jar.close();
         }
     }
 
@@ -500,7 +495,7 @@ public class RemoteResourcesMojoTest
 
 
     protected ProcessRemoteResourcesMojo lookupProcessMojoWithSettings( final MavenProject project,
-                                                                 String bundles[] )
+                                                                 String[] bundles )
         throws Exception
     {
         return lookupProcessMojoWithSettings( project, new ArrayList<>( Arrays.asList( bundles ) ) );
@@ -522,11 +517,11 @@ public class RemoteResourcesMojoTest
         request = new DefaultMavenExecutionRequest();
         request.setUserProperties( null );
         request.setLocalRepository( localRepository );
-        request.setGoals( Arrays.asList( "install" ) );
+        request.setGoals(Collections.singletonList( "install" ) );
         request.setBaseDirectory( project.getBasedir() );
         request.setStartTime( Calendar.getInstance().getTime() );
         MavenSession session = new MavenSession( getContainer(), reposession, request, new DefaultMavenExecutionResult() );
-        session.setProjects( Arrays.asList( project ) );
+        session.setProjects( Collections.singletonList( project ) );
 
         setVariableValueToObject( mojo, "project", project );
         setVariableValueToObject( mojo, "outputDirectory", new File( project.getBuild().getOutputDirectory() ) );
@@ -540,6 +535,6 @@ public class RemoteResourcesMojoTest
     protected ProcessRemoteResourcesMojo lookupProcessMojoWithDefaultSettings( final MavenProject project )
         throws Exception
     {
-        return lookupProcessMojoWithSettings( project, new ArrayList<String>() );
+        return lookupProcessMojoWithSettings( project, new ArrayList<>() );
     }
 }

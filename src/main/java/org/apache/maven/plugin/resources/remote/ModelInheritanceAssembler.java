@@ -478,9 +478,8 @@ public class ModelInheritanceAssembler
 
             Map<String, ReportSet> childReportSets = child.getReportSetsAsMap();
 
-            for ( Object parentReportSet1 : parentReportSets )
+            for ( ReportSet parentReportSet : parentReportSets )
             {
-                ReportSet parentReportSet = (ReportSet) parentReportSet1;
 
                 if ( !handleAsInheritance || parentIsInherited )
                 {
