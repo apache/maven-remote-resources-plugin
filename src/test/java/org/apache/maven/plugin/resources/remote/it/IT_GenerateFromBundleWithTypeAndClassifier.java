@@ -21,9 +21,9 @@ package org.apache.maven.plugin.resources.remote.it;
 
 import static org.junit.Assert.assertTrue;
 
-import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
+import org.apache.maven.shared.verifier.VerificationException;
+import org.apache.maven.shared.verifier.Verifier;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.Test;
 
@@ -42,9 +42,9 @@ public class IT_GenerateFromBundleWithTypeAndClassifier
         File dir = TestUtils.getTestDir( "generate-from-bundle-with-type-and-classifier" );
         Verifier verifier = TestUtils.newVerifier( dir );
 
-        verifier.executeGoal( "generate-resources" );
+        verifier.addCliArgument( "generate-resources" );
+        verifier.execute();
         verifier.verifyErrorFreeLog();
-        verifier.resetStreams();
 
         File output = new File( dir, "target/maven-shared-archive-resources/DEPENDENCIES" );
         String content = FileUtils.fileRead( output );

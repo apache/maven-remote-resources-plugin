@@ -21,9 +21,9 @@ package org.apache.maven.plugin.resources.remote.it;
 
 import static org.junit.Assert.assertTrue;
 
-import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
+import org.apache.maven.shared.verifier.VerificationException;
+import org.apache.maven.shared.verifier.Verifier;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.Test;
 

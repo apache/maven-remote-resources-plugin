@@ -30,7 +30,7 @@
   </parent>
   
   <artifactId>resource-bundle-with-type-and-classifier</artifactId>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
 
   <name>Resource Bundle with a Type and Classifier</name>
   

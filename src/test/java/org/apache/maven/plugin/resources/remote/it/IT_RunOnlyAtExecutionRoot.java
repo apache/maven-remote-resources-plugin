@@ -23,9 +23,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
-import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
+import org.apache.maven.shared.verifier.VerificationException;
+import org.apache.maven.shared.verifier.Verifier;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.Os;
 import org.junit.Test;
@@ -54,11 +54,10 @@ public class IT_RunOnlyAtExecutionRoot
         Verifier verifier;
 
         verifier = TestUtils.newVerifier( new File( dir, "resource-projects" ) );
-        verifier.executeGoal( "deploy" );
+        verifier.addCliArgument( "deploy" );
+        verifier.execute();
         verifier.setLogFileName( "first.log" );
-        verifier.displayStreamBuffers();
         verifier.verifyErrorFreeLog();
-        verifier.resetStreams();
 
         verifier = TestUtils.newVerifier( dir );
 
@@ -70,10 +69,9 @@ public class IT_RunOnlyAtExecutionRoot
         // Might reconsider how to write a better testcase.
         // verifier.deleteArtifacts( "org.apache.maven.plugin.rresource.it.mrr41" );
 
-        verifier.executeGoal( "generate-resources" );
-        verifier.displayStreamBuffers();
+        verifier.addCliArgument( "generate-resources" );
+        verifier.execute();
         verifier.verifyErrorFreeLog();
-        verifier.resetStreams();
 
         String depResource = "target/maven-shared-archive-resources/DEPENDENCIES";
         File output = new File( dir, depResource );

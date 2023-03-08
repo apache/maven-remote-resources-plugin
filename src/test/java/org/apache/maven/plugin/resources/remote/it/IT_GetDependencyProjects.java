@@ -21,9 +21,9 @@ package org.apache.maven.plugin.resources.remote.it;
 
 import static org.junit.Assert.assertTrue;
 
-import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
+import org.apache.maven.shared.verifier.VerificationException;
+import org.apache.maven.shared.verifier.Verifier;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.Test;
 
@@ -46,9 +46,9 @@ public class IT_GetDependencyProjects
         Verifier verifier;
 
         verifier = TestUtils.newVerifier( dir );
-        verifier.executeGoal( "deploy" );
+        verifier.addCliArgument( "deploy" );
+        verifier.execute();
         verifier.verifyErrorFreeLog();
-        verifier.resetStreams();
 
         verifier = TestUtils.newVerifier( new File( dir, "project" ) );
 
@@ -56,12 +56,11 @@ public class IT_GetDependencyProjects
 
         try
         {
-            verifier.executeGoal( "generate-resources" );
+            verifier.addCliArgument( "generate-resources" );
+            verifier.execute();
         }
         catch ( VerificationException e)
         {
-            verifier.resetStreams();
-
             // We will get an exception from harness in case
             // of execution failure (return code non zero).
             // This is the case if we have missing artifacts
@@ -77,8 +76,5 @@ public class IT_GetDependencyProjects
             assertTrue( content.contains( "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=release -Dversion=1.0 -Dpackaging=jar" ) );
             assertTrue( content.contains( "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=snapshot -Dversion=1.0-SNAPSHOT -Dpackaging=jar" ) );
         }
-
-
     }
-
 }
