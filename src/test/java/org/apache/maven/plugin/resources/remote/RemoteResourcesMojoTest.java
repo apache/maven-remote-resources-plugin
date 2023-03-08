@@ -45,7 +45,6 @@ import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.repository.LocalArtifactRepository;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
