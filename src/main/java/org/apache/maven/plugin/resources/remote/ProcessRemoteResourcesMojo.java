@@ -42,6 +42,7 @@ import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -55,18 +56,10 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.io.output.DeferredFileOutputStream;
-import org.apache.maven.ProjectDependenciesResolver;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.archiver.MavenArchiver;
-//import org.apache.maven.artifact.Artifact;
-//import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
-import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.lifecycle.internal.ProjectArtifactFactory;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Resource;
@@ -114,9 +107,13 @@ import org.codehaus.plexus.util.WriterFactory;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.ArtifactType;
+import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.util.artifact.JavaScopes;
 
 /**
  * <p>
@@ -396,14 +393,6 @@ public class ProcessRemoteResourcesMojo
     @Component
     private ArtifactHandlerManager artifactHandlerManager;
 
-    //TODO: move off from this component
-    @Component
-    private ProjectDependenciesResolver projectDependenciesResolver;
-
-    //TODO: move off from this component
-    @Component
-    private ProjectArtifactFactory projectArtifactFactory;
-
     /**
      * Map of artifacts to supplemental project object models.
      */
@@ -443,7 +432,7 @@ public class ProcessRemoteResourcesMojo
         if ( resolveScopes == null )
         {
             resolveScopes =
-                new String[] { StringUtils.isEmpty( excludeScope ) ? this.includeScope : Artifact.SCOPE_TEST };
+                new String[] { StringUtils.isEmpty( excludeScope ) ? this.includeScope : JavaScopes.TEST };
         }
 
         if ( supplementalModels == null )
@@ -572,7 +561,6 @@ public class ProcessRemoteResourcesMojo
         locator.setOutputDirectory( new File( mavenSession.getCurrentProject().getBuild().getDirectory() ) );
     }
 
-    @SuppressWarnings( "unchecked" )
     protected List<MavenProject> getProjects()
     {
         List<MavenProject> projects = new ArrayList<>();
@@ -580,17 +568,17 @@ public class ProcessRemoteResourcesMojo
         // add filters in well known order, least specific to most specific
         FilterArtifacts filter = new FilterArtifacts();
 
-        Set<Artifact> artifacts = resolveProjectArtifacts();
+        Collection<Artifact> artifacts = resolveProjectArtifacts();
         if ( this.excludeTransitive )
         {
-            Set<Artifact> depArtifacts;
+            Collection<Artifact> depArtifacts;
             if ( runOnlyAtExecutionRoot )
             {
                 depArtifacts = aggregateProjectDependencyArtifacts();
             }
             else
             {
-                depArtifacts = mavenSession.getCurrentProject().getDependencyArtifacts();
+                depArtifacts = RepositoryUtils.toArtifacts( mavenSession.getCurrentProject().getDependencyArtifacts() );
             }
             filter.addFilter( new ProjectTransitivityFilter( depArtifacts, true ) );
         }
@@ -602,7 +590,7 @@ public class ProcessRemoteResourcesMojo
         // perform filtering
         try
         {
-            artifacts = filter.filter( artifacts );
+            artifacts = filter.filter( artifacts ) );
         }
         catch ( ArtifactFilterException e )
         {
@@ -611,13 +599,9 @@ public class ProcessRemoteResourcesMojo
 
         for ( Artifact artifact : artifacts )
         {
-            List<ArtifactRepository> remoteRepo = mavenSession.getCurrentProject().getRemoteArtifactRepositories();
             if ( artifact.isSnapshot() )
             {
-                VersionRange rng = VersionRange.createFromVersion( artifact.getBaseVersion() );
-                artifact = new DefaultArtifact( artifact.getGroupId(), artifact.getArtifactId(), rng,
-                                                artifact.getScope(), artifact.getType(), artifact.getClassifier(),
-                                                artifact.getArtifactHandler(), artifact.isOptional() );
+                artifact = artifact.setVersion( artifact.getBaseVersion() );
             }
 
             getLog().debug( "Building project for " + artifact );
@@ -631,8 +615,8 @@ public class ProcessRemoteResourcesMojo
                         .setSystemProperties( mavenSession.getSystemProperties() )
                         .setUserProperties( mavenSession.getUserProperties() )
                         .setLocalRepository( mavenSession.getLocalRepository() )
-                        .setRemoteRepositories( remoteRepo );
-                ProjectBuildingResult res = projectBuilder.build( artifact, req );
+                        .setRemoteRepositories( mavenSession.getCurrentProject().getRemoteArtifactRepositories() );
+                ProjectBuildingResult res = projectBuilder.build( RepositoryUtils.toArtifact( artifact ), req );
                 p = res.getProject();
             }
             catch ( ProjectBuildingException e )
@@ -651,7 +635,7 @@ public class ProcessRemoteResourcesMojo
                 Model mergedModel = mergeModels( p.getModel(), supplementModels.get( supplementKey ) );
                 MavenProject mergedProject = new MavenProject( mergedModel );
                 projects.add( mergedProject );
-                mergedProject.setArtifact( artifact );
+                mergedProject.setArtifact( RepositoryUtils.toArtifact( artifact ) );
                 mergedProject.setVersion( artifact.getVersion() );
                 getLog().debug( "Adding project with groupId [" + mergedProject.getGroupId() + "] (supplemented)" );
             }
@@ -704,13 +688,13 @@ public class ProcessRemoteResourcesMojo
                     {
                         for ( Artifact artifact : depArtifacts )
                         {
-                            if ( artifact.getVersion() == null && artifact.getVersionRange() != null )
+                            if ( artifact.getVersion() == null )
                             {
                                 // Version is required for equality comparison between artifacts,
                                 // but it is not needed for our purposes of filtering out
                                 // transitive dependencies (which requires only groupId/artifactId).
                                 // Therefore set an arbitrary version if missing.
-                                artifact.setResolvedVersion( Artifact.LATEST_VERSION );
+                                artifact = artifact.setVersion( "LATEST" );
                             }
                             artifacts.add( artifact );
                         }
@@ -1088,17 +1072,17 @@ public class ProcessRemoteResourcesMojo
                 String a = s[1];
                 String v = s[2];
                 String type = ( s.length >= 4 ? s[3] : "jar" );
-                String classifier = ( s.length == 5 ? s[4] : null );
+                ArtifactType artifactType = RepositoryUtils.newArtifactType( type,
+                        artifactHandlerManager.getArtifactHandler( type ) );
+                String classifier = ( s.length == 5 ? s[4] : artifactType.getClassifier() );
 
-                VersionRange rng = VersionRange.createFromVersion( v );
-                Artifact artifact = new DefaultArtifact( g, a, rng,
-                        Artifact.SCOPE_RUNTIME, type, classifier,
-                        artifactHandlerManager.getArtifactHandler( type ), false );
+                DefaultArtifact artifact = new DefaultArtifact(
+                        g, a, classifier, artifactType.getExtension(), v, artifactType );
 
                 try
                 {
                     ArtifactRequest request = new ArtifactRequest(
-                            RepositoryUtils.toArtifact( artifact ),
+                            artifact,
                             RepositoryUtils.toRepos( mavenSession.getCurrentProject().getRemoteArtifactRepositories() ),
                             "remote-resources" );
                     ArtifactResult result = repositorySystem.resolveArtifact(
