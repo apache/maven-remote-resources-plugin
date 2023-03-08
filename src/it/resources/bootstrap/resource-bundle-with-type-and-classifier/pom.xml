@@ -30,7 +30,7 @@
   </parent>
   
   <artifactId>resource-bundle-with-type-and-classifier</artifactId>
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
 
   <name>Resource Bundle with a Type and Classifier</name>
   
@@ -52,9 +52,25 @@
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <classifier>test</classifier>
-        </configuration>
+        <executions>
+          <execution>
+            <id>default-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>default-test-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <classifier>test</classifier>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
