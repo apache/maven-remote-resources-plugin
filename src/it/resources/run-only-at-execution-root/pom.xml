@@ -46,10 +46,10 @@ under the License.
           <execution>
             <id>remote-resources</id>
             <goals>
-              <goal>process</goal>
+              <goal>aggregator-process</goal>
             </goals>
             <configuration>
-              <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
+<!--              <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>-->
               <resourceBundles>
                 <resourceBundle>org.apache.maven.plugin.rresource.it:resource-bundle-with-template:${project.version}</resourceBundle>
               </resourceBundles>

@@ -19,13 +19,14 @@ package org.apache.maven.plugin.resources.remote;
  * under the License.
  */
 
-import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifact;
 
 /**
@@ -40,28 +41,38 @@ import org.apache.maven.project.artifact.ProjectArtifact;
  * </p>
  * Resources that don't end in ".vm" are copied "as is".
  */
-@Mojo( name = "process",
+@Mojo( name = "aggregator-process",
        defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
-       requiresDependencyResolution = ResolutionScope.TEST,
+       aggregator = true,
        threadSafe = true )
-public class ProcessRemoteResourcesMojo
+public class AggregatorProcessRemoteResourcesMojo
     extends AbstractProcessRemoteResourcesMojo
 {
     @Override
     protected Set<Artifact> getProjectArtifacts()
     {
-        return Collections.singleton( new ProjectArtifact( mavenSession.getCurrentProject() ) );
+        return mavenSession.getProjects().stream().map( ProjectArtifact::new ).collect( Collectors.toSet() );
     }
 
     @Override
     protected Set<Artifact> getAllDependencies()
     {
-        return mavenSession.getCurrentProject().getArtifacts();
+        LinkedHashSet<Artifact> result = new LinkedHashSet<>();
+        for ( MavenProject mavenProject : mavenSession.getProjects() )
+        {
+            result.addAll( mavenProject.getArtifacts() );
+        }
+        return result;
     }
 
     @Override
     protected Set<Artifact> getDirectDependencies()
     {
-        return mavenSession.getCurrentProject().getDependencyArtifacts();
+        LinkedHashSet<Artifact> result = new LinkedHashSet<>();
+        for ( MavenProject mavenProject : mavenSession.getProjects() )
+        {
+            result.addAll( mavenProject.getDependencyArtifacts() );
+        }
+        return result;
     }
 }
