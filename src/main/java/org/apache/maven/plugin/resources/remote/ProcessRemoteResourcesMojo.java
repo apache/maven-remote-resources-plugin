@@ -21,7 +21,6 @@ package org.apache.maven.plugin.resources.remote;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -33,7 +32,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -41,13 +39,12 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +55,10 @@ import java.util.TreeMap;
 import org.apache.commons.io.output.DeferredFileOutputStream;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.archiver.MavenArchiver;
+import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.lifecycle.internal.LifecycleDependencyResolver;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Resource;
@@ -80,6 +79,7 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.project.artifact.InvalidDependencyVersionException;
+import org.apache.maven.project.artifact.MavenMetadataSource;
 import org.apache.maven.shared.artifact.filter.collection.ArtifactFilterException;
 import org.apache.maven.shared.artifact.filter.collection.ArtifactIdFilter;
 import org.apache.maven.shared.artifact.filter.collection.FilterArtifacts;
@@ -107,7 +107,6 @@ import org.codehaus.plexus.util.WriterFactory;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.ArtifactType;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.ArtifactRequest;
@@ -394,6 +393,19 @@ public class ProcessRemoteResourcesMojo
     private ArtifactHandlerManager artifactHandlerManager;
 
     /**
+     * TODO: move off this deprecated component.
+     */
+    @Component
+    private ArtifactFactory artifactFactory;
+
+    /**
+     * TODO: this is fishy, the all thing that this Mojo does not require depResolution is fishy. Aggregated stuff
+     * (reason why it DOES NOT DO IT) should be separate mojo just like for any other Mojo.
+     */
+    @Component
+    private LifecycleDependencyResolver lifecycleDependencyResolver;
+
+    /**
      * Map of artifacts to supplemental project object models.
      */
     private Map<String, Model> supplementModels;
@@ -407,7 +419,6 @@ public class ProcessRemoteResourcesMojo
     private VelocityEngine velocity;
 
     @Override
-    @SuppressWarnings( "unchecked" )
     public void execute()
         throws MojoExecutionException
     {
@@ -432,7 +443,7 @@ public class ProcessRemoteResourcesMojo
         if ( resolveScopes == null )
         {
             resolveScopes =
-                new String[] { StringUtils.isEmpty( excludeScope ) ? this.includeScope : JavaScopes.TEST };
+                new String[] { StringUtils.isEmpty( this.includeScope ) ? JavaScopes.TEST : this.includeScope };
         }
 
         if ( supplementalModels == null )
@@ -476,8 +487,8 @@ public class ProcessRemoteResourcesMojo
             Thread.currentThread().setContextClassLoader( classLoader );
 
             velocity = new VelocityEngine();
-            velocity.setProperty( "resource.loader", "classpath" );
-            velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+            velocity.setProperty( "resource.loaders", "classpath" );
+            velocity.setProperty( "resource.loader.classpath.class", ClasspathResourceLoader.class.getName() );
             velocity.init();
 
             VelocityContext context = buildVelocityContext( properties );
@@ -568,17 +579,17 @@ public class ProcessRemoteResourcesMojo
         // add filters in well known order, least specific to most specific
         FilterArtifacts filter = new FilterArtifacts();
 
-        Collection<Artifact> artifacts = resolveProjectArtifacts();
+        Set<org.apache.maven.artifact.Artifact> artifacts = resolveProjectArtifacts();
         if ( this.excludeTransitive )
         {
-            Collection<Artifact> depArtifacts;
+            Set<org.apache.maven.artifact.Artifact> depArtifacts;
             if ( runOnlyAtExecutionRoot )
             {
                 depArtifacts = aggregateProjectDependencyArtifacts();
             }
             else
             {
-                depArtifacts = RepositoryUtils.toArtifacts( mavenSession.getCurrentProject().getDependencyArtifacts() );
+                depArtifacts = mavenSession.getCurrentProject().getDependencyArtifacts();
             }
             filter.addFilter( new ProjectTransitivityFilter( depArtifacts, true ) );
         }
@@ -590,18 +601,20 @@ public class ProcessRemoteResourcesMojo
         // perform filtering
         try
         {
-            artifacts = filter.filter( artifacts ) );
+            artifacts = filter.filter( artifacts );
         }
         catch ( ArtifactFilterException e )
         {
             throw new IllegalStateException( e.getMessage(), e );
         }
 
-        for ( Artifact artifact : artifacts )
+        getLog().debug( "PROJECTS: " + artifacts );
+
+        for ( org.apache.maven.artifact.Artifact artifact : artifacts )
         {
             if ( artifact.isSnapshot() )
             {
-                artifact = artifact.setVersion( artifact.getBaseVersion() );
+                artifact.setVersion( artifact.getBaseVersion() );
             }
 
             getLog().debug( "Building project for " + artifact );
@@ -616,7 +629,7 @@ public class ProcessRemoteResourcesMojo
                         .setUserProperties( mavenSession.getUserProperties() )
                         .setLocalRepository( mavenSession.getLocalRepository() )
                         .setRemoteRepositories( mavenSession.getCurrentProject().getRemoteArtifactRepositories() );
-                ProjectBuildingResult res = projectBuilder.build( RepositoryUtils.toArtifact( artifact ), req );
+                ProjectBuildingResult res = projectBuilder.build( artifact, req );
                 p = res.getProject();
             }
             catch ( ProjectBuildingException e )
@@ -635,7 +648,7 @@ public class ProcessRemoteResourcesMojo
                 Model mergedModel = mergeModels( p.getModel(), supplementModels.get( supplementKey ) );
                 MavenProject mergedProject = new MavenProject( mergedModel );
                 projects.add( mergedProject );
-                mergedProject.setArtifact( RepositoryUtils.toArtifact( artifact ) );
+                mergedProject.setArtifact( artifact );
                 mergedProject.setVersion( artifact.getVersion() );
                 getLog().debug( "Adding project with groupId [" + mergedProject.getGroupId() + "] (supplemented)" );
             }
@@ -649,20 +662,26 @@ public class ProcessRemoteResourcesMojo
         return projects;
     }
 
-    private Set<Artifact> resolveProjectArtifacts()
+    private Set<org.apache.maven.artifact.Artifact> resolveProjectArtifacts()
     {
         try
         {
+            HashSet<org.apache.maven.artifact.Artifact> results = new HashSet<>();
             if ( runOnlyAtExecutionRoot )
             {
-                List<MavenProject> projects = mavenSession.getProjects();
-                return projectDependenciesResolver.resolve( projects, Arrays.asList( resolveScopes ), mavenSession );
+                for ( MavenProject mavenProject : mavenSession.getProjects() )
+                {
+                    results.addAll( MavenMetadataSource.createArtifacts( artifactFactory,
+                            mavenProject.getDependencies(), null, null, mavenProject ) );
+                }
             }
             else
             {
-                return projectDependenciesResolver.resolve( mavenSession.getCurrentProject(),
-                        Arrays.asList( resolveScopes ), mavenSession );
+                MavenProject currentProject = mavenSession.getCurrentProject();
+                results.addAll( MavenMetadataSource.createArtifacts( artifactFactory,
+                        currentProject.getDependencies(), null, null, currentProject ) );
             }
+            return results;
         }
         catch ( Exception e )
         {
@@ -671,9 +690,9 @@ public class ProcessRemoteResourcesMojo
         }
     }
 
-    private Set<Artifact> aggregateProjectDependencyArtifacts()
+    private Set<org.apache.maven.artifact.Artifact> aggregateProjectDependencyArtifacts()
     {
-        Set<Artifact> artifacts = new LinkedHashSet<>();
+        Set<org.apache.maven.artifact.Artifact> artifacts = new LinkedHashSet<>();
 
         List<MavenProject> projects = mavenSession.getProjects();
         for ( MavenProject p : projects )
@@ -682,19 +701,20 @@ public class ProcessRemoteResourcesMojo
             {
                 try
                 {
-                    Set<Artifact> depArtifacts = projectArtifactFactory.createArtifacts( p );
+                    Set<org.apache.maven.artifact.Artifact> depArtifacts =
+                            MavenMetadataSource.createArtifacts( artifactFactory, p.getDependencies(), null, null, p );
 
-                    if ( depArtifacts != null && !depArtifacts.isEmpty() )
+                    if ( !depArtifacts.isEmpty() )
                     {
-                        for ( Artifact artifact : depArtifacts )
+                        for ( org.apache.maven.artifact.Artifact artifact : depArtifacts )
                         {
                             if ( artifact.getVersion() == null )
                             {
                                 // Version is required for equality comparison between artifacts,
                                 // but it is not needed for our purposes of filtering out
                                 // transitive dependencies (which requires only groupId/artifactId).
-                                // Therefore set an arbitrary version if missing.
-                                artifact = artifact.setVersion( "LATEST" );
+                                // Therefore, set an arbitrary version if missing.
+                                artifact.setVersion( "LATEST" );
                             }
                             artifacts.add( artifact );
                         }
@@ -846,7 +866,7 @@ public class ProcessRemoteResourcesMojo
      * <p>Note: the method should be called after {@link org.apache.commons.io.output.DeferredFileOutputStream#close}
      *
      * @param outStream Deferred stream
-     * @throws IOException
+     * @throws IOException On IO error.
      */
     private void fileWriteIfDiffers( DeferredFileOutputStream outStream )
         throws IOException
@@ -978,7 +998,6 @@ public class ProcessRemoteResourcesMojo
     private static final String KEY_PROJECTS_ORGS = "projectsSortedByOrganization";
 
     protected VelocityContext buildVelocityContext( Map<String, Object> properties )
-        throws MojoExecutionException
     {
         // the following properties are expensive to calculate, so we provide them lazily
         VelocityContext context = new VelocityContext( properties )
@@ -1266,7 +1285,7 @@ public class ProcessRemoteResourcesMojo
     }
 
     private Writer getWriter( RemoteResourcesBundle bundle, File f )
-        throws IOException, UnsupportedEncodingException, FileNotFoundException
+        throws IOException
     {
         Writer writer;
         if ( bundle.getSourceEncoding() == null )
@@ -1418,11 +1437,6 @@ public class ProcessRemoteResourcesMojo
             return i;
         }
 
-        public boolean equals( Organization o1, Organization o2 )
-        {
-            return compare( o1, o2 ) == 0;
-        }
-
         private int compareStrings( String s1, String s2 )
         {
             if ( s1 == null && s2 == null )
@@ -1449,11 +1463,6 @@ public class ProcessRemoteResourcesMojo
         public int compare( MavenProject p1, MavenProject p2 )
         {
             return p1.getArtifact().compareTo( p2.getArtifact() );
-        }
-
-        public boolean equals( MavenProject p1, MavenProject p2 )
-        {
-            return p1.getArtifact().equals( p2.getArtifact() );
         }
     }
 
