@@ -58,7 +58,6 @@ import org.apache.maven.archiver.MavenArchiver;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.lifecycle.internal.LifecycleDependencyResolver;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Resource;
@@ -369,9 +368,6 @@ public class ProcessRemoteResourcesMojo
     @Parameter( defaultValue = "${project.build.outputTimestamp}" )
     private String outputTimestamp;
 
-    /**
-     * Repository system, needed to create Artifact and Repository objects.
-     */
     @Component
     protected RepositorySystem repositorySystem;
 
@@ -381,8 +377,6 @@ public class ProcessRemoteResourcesMojo
     @Component
     private MavenFileFilter fileFilter;
 
-    /**
-     */
     @Component
     private ResourceManager locator;
 
@@ -397,13 +391,6 @@ public class ProcessRemoteResourcesMojo
      */
     @Component
     private ArtifactFactory artifactFactory;
-
-    /**
-     * TODO: this is fishy, the all thing that this Mojo does not require depResolution is fishy. Aggregated stuff
-     * (reason why it DOES NOT DO IT) should be separate mojo just like for any other Mojo.
-     */
-    @Component
-    private LifecycleDependencyResolver lifecycleDependencyResolver;
 
     /**
      * Map of artifacts to supplemental project object models.
