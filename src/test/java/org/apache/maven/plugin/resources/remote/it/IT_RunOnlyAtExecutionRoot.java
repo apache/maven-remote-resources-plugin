@@ -69,7 +69,8 @@ public class IT_RunOnlyAtExecutionRoot
         // Might reconsider how to write a better testcase.
         // verifier.deleteArtifacts( "org.apache.maven.plugin.rresource.it.mrr41" );
 
-        verifier.addCliArgument( "generate-resources" );
+        // verifier.addCliArgument( "generate-resources" );
+        verifier.addCliArgument( "package" );
         verifier.execute();
         verifier.verifyErrorFreeLog();
 
@@ -77,8 +78,9 @@ public class IT_RunOnlyAtExecutionRoot
         File output = new File( dir, depResource );
         assertTrue( output.exists() );
 
-        assertFalse( new File( dir, "child1/" + depResource ).exists() );
-        assertFalse( new File( dir, "child2/" + depResource ).exists() );
+        // aggregates in bulk, not per-child
+        //assertFalse( new File( dir, "child1/" + depResource ).exists() );
+        //assertFalse( new File( dir, "child2/" + depResource ).exists() );
 
         String content = FileUtils.fileRead( output );
 

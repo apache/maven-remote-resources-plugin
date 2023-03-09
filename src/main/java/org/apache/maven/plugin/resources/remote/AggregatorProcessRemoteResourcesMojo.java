@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifact;
 
@@ -44,6 +45,7 @@ import org.apache.maven.project.artifact.ProjectArtifact;
 @Mojo( name = "aggregator-process",
        defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
        aggregator = true,
+       requiresDependencyResolution = ResolutionScope.TEST,
        threadSafe = true )
 public class AggregatorProcessRemoteResourcesMojo
     extends AbstractProcessRemoteResourcesMojo
