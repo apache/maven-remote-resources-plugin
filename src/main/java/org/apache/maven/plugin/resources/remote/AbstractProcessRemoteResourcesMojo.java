@@ -121,6 +121,9 @@ import org.slf4j.LoggerFactory;
  * artifact name and it's fed through Velocity to have properties expanded, conditions processed, etc...
  * </p>
  * Resources that don't end in ".vm" are copied "as is".
+ * <p>
+ * This is a support abstract class, with two non-aggregating and aggregating implementations.
+ * </p>
  */
 public abstract class AbstractProcessRemoteResourcesMojo
     extends AbstractMojo
@@ -231,7 +234,6 @@ public abstract class AbstractProcessRemoteResourcesMojo
 
     /**
      * Additional properties to be passed to Velocity.
-     * <p/>
      * Several properties are automatically added:<ul>
      * <li><code>project</code> - the current MavenProject </li>
      * <li><code>projects</code> - the list of dependency projects</li>
