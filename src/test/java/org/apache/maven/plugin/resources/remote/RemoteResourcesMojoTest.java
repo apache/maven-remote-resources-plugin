@@ -526,6 +526,7 @@ public class RemoteResourcesMojoTest
         setVariableValueToObject( mojo, "outputDirectory", new File( project.getBuild().getOutputDirectory() ) );
         setVariableValueToObject( mojo, "resourceBundles", bundles );
         setVariableValueToObject( mojo, "mavenSession", session );
+        setVariableValueToObject( mojo, "project", project );
         return mojo;
     }
 

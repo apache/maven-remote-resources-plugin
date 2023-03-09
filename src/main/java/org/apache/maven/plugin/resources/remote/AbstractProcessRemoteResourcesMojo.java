@@ -54,6 +54,7 @@ import java.util.TreeMap;
 import org.apache.commons.io.output.DeferredFileOutputStream;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.archiver.MavenArchiver;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
@@ -270,6 +271,12 @@ public abstract class AbstractProcessRemoteResourcesMojo
     protected MavenSession mavenSession;
 
     /**
+     * The current project.
+     */
+    @Parameter( defaultValue = "${project}", readonly = true, required = true )
+    protected MavenProject project;
+
+    /**
      * Scope to include. An Empty string indicates all scopes (default is "runtime").
      *
      * @since 1.0
@@ -418,7 +425,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
 
         if ( includeProjectProperties )
         {
-            final Properties projectProperties = mavenSession.getCurrentProject().getProperties();
+            final Properties projectProperties = project.getProperties();
             for ( Object key : projectProperties.keySet() )
             {
                 properties.put( key.toString(), projectProperties.get( key ).toString() );
@@ -457,11 +464,11 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 // MRRESOURCES-61 handle main and test resources separately
                 if ( attachToMain )
                 {
-                    mavenSession.getCurrentProject().getResources().add( resource );
+                    project.getResources().add( resource );
                 }
                 if ( attachToTest )
                 {
-                    mavenSession.getCurrentProject().getTestResources().add( resource );
+                    project.getTestResources().add( resource );
                 }
 
                 // ----------------------------------------------------------------------------
@@ -469,7 +476,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 // ----------------------------------------------------------------------------
                 try
                 {
-                    File dotFile = new File( mavenSession.getCurrentProject().getBuild().getDirectory(), ".plxarc" );
+                    File dotFile = new File( project.getBuild().getDirectory(), ".plxarc" );
                     FileUtils.mkdir( dotFile.getParentFile().getAbsolutePath() );
                     FileUtils.fileWrite( dotFile.getAbsolutePath(), outputDirectory.getName() );
                 }
@@ -513,14 +520,13 @@ public abstract class AbstractProcessRemoteResourcesMojo
 
         }
 
-        locator.addSearchPath( FileResourceLoader.ID, mavenSession.getCurrentProject()
-                .getFile().getParentFile().getAbsolutePath() );
+        locator.addSearchPath( FileResourceLoader.ID, project.getFile().getParentFile().getAbsolutePath() );
         if ( appendedResourcesDirectory != null )
         {
             locator.addSearchPath( FileResourceLoader.ID, appendedResourcesDirectory.getAbsolutePath() );
         }
         locator.addSearchPath( "url", "" );
-        locator.setOutputDirectory( new File( mavenSession.getCurrentProject().getBuild().getDirectory() ) );
+        locator.setOutputDirectory( new File( project.getBuild().getDirectory() ) );
     }
 
     protected List<MavenProject> getProjects()
@@ -530,7 +536,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
         // add filters in well known order, least specific to most specific
         FilterArtifacts filter = new FilterArtifacts();
 
-        Set<org.apache.maven.artifact.Artifact> artifacts = new LinkedHashSet<>();
+        Set<Artifact> artifacts = new LinkedHashSet<>();
         artifacts.addAll( getProjectArtifacts() );
         artifacts.addAll( getAllDependencies() );
         if ( this.excludeTransitive )
@@ -554,7 +560,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
 
         logger.debug( "PROJECTS: {}", artifacts );
 
-        for ( org.apache.maven.artifact.Artifact artifact : artifacts )
+        for ( Artifact artifact : artifacts )
         {
             if ( artifact.isSnapshot() )
             {
@@ -572,7 +578,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
                         .setSystemProperties( mavenSession.getSystemProperties() )
                         .setUserProperties( mavenSession.getUserProperties() )
                         .setLocalRepository( mavenSession.getLocalRepository() )
-                        .setRemoteRepositories( mavenSession.getCurrentProject().getRemoteArtifactRepositories() );
+                        .setRemoteRepositories( project.getRemoteArtifactRepositories() );
                 ProjectBuildingResult res = projectBuilder.build( artifact, req );
                 p = res.getProject();
             }
@@ -607,19 +613,19 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     /**
-     * Returns involved {@link MavenProject}s as {@link org.apache.maven.artifact.Artifact}.
+     * Returns involved {@link MavenProject}s as {@link Artifact}.
      */
-    protected abstract Set<org.apache.maven.artifact.Artifact> getProjectArtifacts();
+    protected abstract Set<Artifact> getProjectArtifacts();
 
     /**
      * Returns all the transitive hull of all the involved maven projects.
      */
-    protected abstract Set<org.apache.maven.artifact.Artifact> getAllDependencies();
+    protected abstract Set<Artifact> getAllDependencies();
 
     /**
      * Returns all the direct dependencies of all the involved maven projects.
      */
-    protected abstract Set<org.apache.maven.artifact.Artifact> getDirectDependencies();
+    protected abstract Set<Artifact> getDirectDependencies();
 
     protected Map<Organization, List<MavenProject>> getProjectsSortedByOrganization( List<MavenProject> projects )
     {
@@ -658,7 +664,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
     protected boolean copyResourceIfExists( File file, String relFileName, VelocityContext context )
         throws IOException, MojoExecutionException
     {
-        for ( Resource resource : mavenSession.getCurrentProject().getResources() )
+        for ( Resource resource : project.getResources() )
         {
             File resourceDirectory = new File( resource.getDirectory() );
 
@@ -803,7 +809,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
         req.setTo( file );
         req.setFiltering( resource.isFiltering() );
 
-        req.setMavenProject( mavenSession.getCurrentProject() );
+        req.setMavenProject( project );
         req.setMavenSession( mavenSession );
         req.setInjectProjectBuildFilters( true );
 
@@ -915,7 +921,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
         MavenArchiver archiver = new MavenArchiver();
         Date outputDate = archiver.parseOutputTimestamp( outputTimestamp );
 
-        String inceptionYear = mavenSession.getCurrentProject().getInceptionYear();
+        String inceptionYear = project.getInceptionYear();
         String year = new SimpleDateFormat( "yyyy" ).format( ( outputDate == null ) ? new Date() : outputDate );
 
         if ( StringUtils.isEmpty( inceptionYear ) )
@@ -927,7 +933,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
 
             inceptionYear = year;
         }
-        context.put( "project", mavenSession.getCurrentProject() );
+        context.put( "project", project );
         context.put( "presentYear", year );
         context.put( "locator", locator );
 
@@ -991,7 +997,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 {
                     ArtifactRequest request = new ArtifactRequest(
                             artifact,
-                            RepositoryUtils.toRepos( mavenSession.getCurrentProject().getRemoteArtifactRepositories() ),
+                            RepositoryUtils.toRepos( project.getRemoteArtifactRepositories() ),
                             "remote-resources" );
                     ArtifactResult result = repositorySystem.resolveArtifact(
                             mavenSession.getRepositorySession(), request );

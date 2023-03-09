@@ -50,18 +50,18 @@ public class ProcessRemoteResourcesMojo
     @Override
     protected Set<Artifact> getProjectArtifacts()
     {
-        return Collections.singleton( new ProjectArtifact( mavenSession.getCurrentProject() ) );
+        return Collections.singleton( new ProjectArtifact( project ) );
     }
 
     @Override
     protected Set<Artifact> getAllDependencies()
     {
-        return mavenSession.getCurrentProject().getArtifacts();
+        return project.getArtifacts();
     }
 
     @Override
     protected Set<Artifact> getDirectDependencies()
     {
-        return mavenSession.getCurrentProject().getDependencyArtifacts();
+        return project.getDependencyArtifacts();
     }
 }
