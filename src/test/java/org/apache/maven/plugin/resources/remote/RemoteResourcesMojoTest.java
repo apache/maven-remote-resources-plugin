@@ -538,7 +538,7 @@ public class RemoteResourcesMojoTest
 
     private String pathOf( Artifact artifact )
     {
-        String path = LOCAL_REPO + artifact.getGroupId().replaceAll( "\\.", "/" ) + "/"
+        String path = LOCAL_REPO + artifact.getGroupId().replace( ".", "/" ) + "/"
                 + artifact.getArtifactId() + "/"
                 + artifact.getBaseVersion() + "/"
                 + artifact.getArtifactId() + "-" + artifact.getVersion();

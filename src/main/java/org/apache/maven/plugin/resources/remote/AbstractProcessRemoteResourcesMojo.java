@@ -107,8 +107,6 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.util.artifact.JavaScopes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * <p>
@@ -126,10 +124,8 @@ import org.slf4j.LoggerFactory;
  * </p>
  */
 public abstract class AbstractProcessRemoteResourcesMojo
-    extends AbstractMojo
+        extends AbstractMojo
 {
-    private final Logger logger = LoggerFactory.getLogger( getClass() );
-
     private static final String TEMPLATE_SUFFIX = ".vm";
 
     /**
@@ -142,7 +138,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
      * <p>
      * So, the default filtering delimiters might be specified as:
      * </p>
-     * 
+     *
      * <pre>
      * &lt;delimiters&gt;
      *   &lt;delimiter&gt;${*}&lt;/delimiter&gt;
@@ -386,24 +382,24 @@ public abstract class AbstractProcessRemoteResourcesMojo
 
     @Override
     public void execute()
-        throws MojoExecutionException
+            throws MojoExecutionException
     {
         if ( skip )
         {
-            logger.info( "Skipping remote resources execution." );
+            getLog().info( "Skipping remote resources execution." );
             return;
         }
 
         if ( StringUtils.isEmpty( encoding ) )
         {
-            logger.warn( "File encoding has not been set, using platform encoding " + ReaderFactory.FILE_ENCODING
-                               + ", i.e. build is platform dependent!" );
+            getLog().warn( "File encoding has not been set, using platform encoding " + ReaderFactory.FILE_ENCODING
+                    + ", i.e. build is platform dependent!" );
         }
 
         if ( resolveScopes == null )
         {
             resolveScopes =
-                new String[] { StringUtils.isEmpty( this.includeScope ) ? JavaScopes.TEST : this.includeScope };
+                    new String[] {StringUtils.isEmpty( this.includeScope ) ? JavaScopes.TEST : this.includeScope};
         }
 
         if ( supplementalModels == null )
@@ -413,12 +409,12 @@ public abstract class AbstractProcessRemoteResourcesMojo
             {
                 try
                 {
-                    supplementalModels = new String[] { sups.toURI().toURL().toString() };
+                    supplementalModels = new String[] {sups.toURI().toURL().toString()};
                 }
                 catch ( MalformedURLException e )
                 {
                     // ignore
-                    logger.debug( "URL issue with supplemental-models.xml: " + e );
+                    getLog().debug( "URL issue with supplemental-models.xml: " + e );
                 }
             }
         }
@@ -495,7 +491,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     private void configureLocator()
-        throws MojoExecutionException
+            throws MojoExecutionException
     {
         if ( supplementalModelArtifacts != null && !supplementalModelArtifacts.isEmpty() )
         {
@@ -560,7 +556,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
             throw new IllegalStateException( e.getMessage(), e );
         }
 
-        logger.debug( "PROJECTS: {}", artifacts );
+        getLog().debug( "PROJECTS: " + artifacts );
 
         for ( Artifact artifact : artifacts )
         {
@@ -569,7 +565,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 artifact.setVersion( artifact.getBaseVersion() );
             }
 
-            logger.debug( "Building project for {}", artifact );
+            getLog().debug( "Building project for " + artifact );
             MavenProject p;
             try
             {
@@ -586,14 +582,14 @@ public abstract class AbstractProcessRemoteResourcesMojo
             }
             catch ( ProjectBuildingException e )
             {
-                logger.warn( "Invalid project model for artifact [" + artifact.getGroupId() + ":"
-                                   + artifact.getArtifactId() + ":" + artifact.getVersion() + "]. "
-                                   + "It will be ignored by the remote resources Mojo." );
+                getLog().warn( "Invalid project model for artifact [" + artifact.getGroupId() + ":"
+                        + artifact.getArtifactId() + ":" + artifact.getVersion() + "]. "
+                        + "It will be ignored by the remote resources Mojo." );
                 continue;
             }
 
             String supplementKey =
-                generateSupplementMapKey( p.getModel().getGroupId(), p.getModel().getArtifactId() );
+                    generateSupplementMapKey( p.getModel().getGroupId(), p.getModel().getArtifactId() );
 
             if ( supplementModels.containsKey( supplementKey ) )
             {
@@ -602,12 +598,12 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 projects.add( mergedProject );
                 mergedProject.setArtifact( artifact );
                 mergedProject.setVersion( artifact.getVersion() );
-                logger.debug( "Adding project with groupId [{}] (supplemented)", mergedProject.getGroupId() );
+                getLog().debug( "Adding project with groupId [" + mergedProject.getGroupId() + "] (supplemented)" );
             }
             else
             {
                 projects.add( p );
-                logger.debug( "Adding project with groupId [{}]", p.getGroupId() );
+                getLog().debug( "Adding project with groupId [" + p.getGroupId() + "]" );
             }
         }
         projects.sort( new ProjectComparator() );
@@ -632,7 +628,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
     protected Map<Organization, List<MavenProject>> getProjectsSortedByOrganization( List<MavenProject> projects )
     {
         Map<Organization, List<MavenProject>> organizations =
-            new TreeMap<>( new OrganizationComparator() );
+                new TreeMap<>( new OrganizationComparator() );
         List<MavenProject> unknownOrganization = new ArrayList<>();
 
         for ( MavenProject p : projects )
@@ -664,7 +660,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     protected boolean copyResourceIfExists( File file, String relFileName, VelocityContext context )
-        throws IOException, MojoExecutionException
+            throws IOException, MojoExecutionException
     {
         for ( Resource resource : project.getResources() )
         {
@@ -688,8 +684,8 @@ public abstract class AbstractProcessRemoteResourcesMojo
             {
                 if ( source == templateSource )
                 {
-                    try ( DeferredFileOutputStream os = 
-                                    new DeferredFileOutputStream( velocityFilterInMemoryThreshold, file ) )
+                    try ( DeferredFileOutputStream os =
+                                  new DeferredFileOutputStream( velocityFilterInMemoryThreshold, file ) )
                     {
                         try ( Reader reader = getReader( source ); Writer writer = getWriter( os ) )
                         {
@@ -742,7 +738,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
             return ReaderFactory.newPlatformReader( source );
         }
     }
-    
+
     private Writer getWriter( OutputStream os ) throws IOException
     {
         if ( encoding != null )
@@ -767,13 +763,14 @@ public abstract class AbstractProcessRemoteResourcesMojo
      * @throws IOException On IO error.
      */
     private void fileWriteIfDiffers( DeferredFileOutputStream outStream )
-        throws IOException
+            throws IOException
     {
         File file = outStream.getFile();
         if ( outStream.isThresholdExceeded() )
         {
-            logger.info( "File {}} was overwritten due to content limit threshold {} reached",
-                    file, outStream.getThreshold() );
+            getLog().info(
+                    "File " + file + " was overwritten due to content limit threshold " + outStream.getThreshold()
+                            + " reached" );
             return;
         }
         boolean needOverwrite = true;
@@ -781,23 +778,23 @@ public abstract class AbstractProcessRemoteResourcesMojo
         if ( file.exists() )
         {
             try ( InputStream is = Files.newInputStream( file.toPath() );
-                 InputStream newContents = new ByteArrayInputStream( outStream.getData() ) )
+                  InputStream newContents = new ByteArrayInputStream( outStream.getData() ) )
             {
                 needOverwrite = !IOUtil.contentEquals( is, newContents );
-                if ( logger.isDebugEnabled() )
+                if ( getLog().isDebugEnabled() )
                 {
-                    logger.debug( "File {} contents {}", file, ( needOverwrite ? "differs" : "does not differ" ) );
+                    getLog().debug( "File " + file + " contents " + ( needOverwrite ? "differs" : "does not differ" ) );
                 }
             }
         }
 
         if ( !needOverwrite )
         {
-            logger.debug( "File {} is up to date", file );
+            getLog().debug( "File " + file + " is up to date" );
             return;
         }
-        logger.debug( "Writing {}", file );
-        
+        getLog().debug( "Writing " + file );
+
         try ( OutputStream os = Files.newOutputStream( file.toPath() ) )
         {
             outStream.writeTo( os );
@@ -847,7 +844,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     protected void validate()
-        throws MojoExecutionException
+            throws MojoExecutionException
     {
         int bundleCount = 1;
 
@@ -879,11 +876,11 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 }
 
                 throw new MojoExecutionException( "The " + position
-                    + " resource bundle configured must specify a groupId, artifactId, "
-                    + " version and, optionally, type and classifier for a remote resource bundle. "
-                    + "Must be of the form <resourceBundle>groupId:artifactId:version</resourceBundle>, "
-                    + "<resourceBundle>groupId:artifactId:version:type</resourceBundle> or "
-                    + "<resourceBundle>groupId:artifactId:version:type:classifier</resourceBundle>" );
+                        + " resource bundle configured must specify a groupId, artifactId, "
+                        + " version and, optionally, type and classifier for a remote resource bundle. "
+                        + "Must be of the form <resourceBundle>groupId:artifactId:version</resourceBundle>, "
+                        + "<resourceBundle>groupId:artifactId:version:type</resourceBundle> or "
+                        + "<resourceBundle>groupId:artifactId:version:type:classifier</resourceBundle>" );
             }
 
             bundleCount++;
@@ -928,9 +925,9 @@ public abstract class AbstractProcessRemoteResourcesMojo
 
         if ( StringUtils.isEmpty( inceptionYear ) )
         {
-            if ( logger.isDebugEnabled() )
+            if ( getLog().isDebugEnabled() )
             {
-                logger.debug( "inceptionYear not specified, defaulting to {}", year );
+                getLog().debug( "inceptionYear not specified, defaulting to " + year );
             }
 
             inceptionYear = year;
@@ -951,13 +948,13 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     private List<File> downloadBundles( List<String> bundles )
-        throws MojoExecutionException
+            throws MojoExecutionException
     {
         List<File> bundleArtifacts = new ArrayList<>();
 
         for ( String artifactDescriptor : bundles )
         {
-            logger.info( "Preparing remote bundle {}", artifactDescriptor );
+            getLog().info( "Preparing remote bundle " + artifactDescriptor );
             // groupId:artifactId:version[:type[:classifier]]
             String[] s = artifactDescriptor.split( ":" );
 
@@ -969,7 +966,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 for ( MavenProject p : list )
                 {
                     if ( s[0].equals( p.getGroupId() ) && s[1].equals( p.getArtifactId() )
-                        && s[2].equals( p.getVersion() ) )
+                            && s[2].equals( p.getVersion() ) )
                     {
                         if ( s.length >= 4 && "test-jar".equals( s[3] ) )
                         {
@@ -1018,7 +1015,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     private ClassLoader initalizeClassloader( List<File> artifacts )
-        throws MojoExecutionException
+            throws MojoExecutionException
     {
         RemoteResourcesClassLoader cl = new RemoteResourcesClassLoader( null );
         try
@@ -1036,10 +1033,10 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     protected void processResourceBundles( ClassLoader classLoader, VelocityContext context )
-        throws MojoExecutionException
+            throws MojoExecutionException
     {
         List<Map.Entry<String, RemoteResourcesBundle>> remoteResources =
-            new ArrayList<>();
+                new ArrayList<>();
         int bundleCount = 0;
         int resourceCount = 0;
 
@@ -1049,14 +1046,14 @@ public abstract class AbstractProcessRemoteResourcesMojo
             RemoteResourcesBundleXpp3Reader bundleReader = new RemoteResourcesBundleXpp3Reader();
 
             for ( Enumeration<URL> e =
-                classLoader.getResources( BundleRemoteResourcesMojo.RESOURCES_MANIFEST ); e.hasMoreElements(); )
+                  classLoader.getResources( BundleRemoteResourcesMojo.RESOURCES_MANIFEST ); e.hasMoreElements(); )
             {
                 URL url = e.nextElement();
                 bundleCount++;
-                logger.debug( "processResourceBundle on bundle#{} {}", bundleCount, url );
+                getLog().debug( "processResourceBundle on bundle#" + bundleCount + " " + url );
 
                 RemoteResourcesBundle bundle;
-                
+
                 try ( InputStream in = url.openStream() )
                 {
                     bundle = bundleReader.read( in );
@@ -1067,7 +1064,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 {
                     n++;
                     resourceCount++;
-                    logger.debug( "bundle#{} resource#{} {}", bundleCount, n, bundleResource );
+                    getLog().debug( "bundle#" + bundleCount + " resource#" + n + " " + bundleResource );
                     remoteResources.add( new AbstractMap.SimpleEntry<>( bundleResource, bundle ) );
                 }
             }
@@ -1081,8 +1078,9 @@ public abstract class AbstractProcessRemoteResourcesMojo
             throw new MojoExecutionException( "Error parsing remote resource bundle descriptor.", xppe );
         }
 
-        logger.info( "Copying {} resource{} from {} bundle{}.",
-                resourceCount, ( resourceCount > 1 ) ? "s" : "", bundleCount, ( bundleCount > 1 ) ? "s" : "" );
+        getLog().info(
+                "Copying " + resourceCount + " resource" + ( ( resourceCount > 1 ) ? "s" : "" ) + " from " + bundleCount
+                        + " bundle" + ( ( bundleCount > 1 ) ? "s" : "" ) + "." );
 
         String velocityResource = null;
         try
@@ -1114,10 +1112,10 @@ public abstract class AbstractProcessRemoteResourcesMojo
                     if ( doVelocity )
                     {
                         try ( DeferredFileOutputStream os =
-                                        new DeferredFileOutputStream( velocityFilterInMemoryThreshold, f ) )
+                                      new DeferredFileOutputStream( velocityFilterInMemoryThreshold, f ) )
                         {
                             try ( Writer writer = bundle.getSourceEncoding() == null ? new OutputStreamWriter( os )
-                                            : new OutputStreamWriter( os, bundle.getSourceEncoding() ) )
+                                    : new OutputStreamWriter( os, bundle.getSourceEncoding() ) )
                             {
                                 if ( bundle.getSourceEncoding() == null )
                                 {
@@ -1128,7 +1126,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
                                 else
                                 {
                                     velocity.mergeTemplate( bundleResource, bundle.getSourceEncoding(), context,
-                                                            writer );
+                                            writer );
                                 }
                             }
                             fileWriteIfDiffers( os );
@@ -1148,20 +1146,20 @@ public abstract class AbstractProcessRemoteResourcesMojo
 
                     if ( appendedResourceFile.exists() )
                     {
-                        logger.info( "Copying appended resource: {}", projectResource );
+                        getLog().info( "Copying appended resource: " + projectResource );
                         try ( InputStream in = Files.newInputStream( appendedResourceFile.toPath() );
                               OutputStream out = new FileOutputStream( f, true ) )
                         {
                             IOUtil.copy( in, out );
                         }
-                        
+
                     }
                     else if ( appendedVmResourceFile.exists() )
                     {
-                        logger.info( "Filtering appended resource: {}.vm", projectResource );
-                        
+                        getLog().info( "Filtering appended resource: " + projectResource + ".vm" );
 
-                        try ( Reader reader = new FileReader( appendedVmResourceFile ); 
+
+                        try ( Reader reader = new FileReader( appendedVmResourceFile );
                               Writer writer = getWriter( bundle, f ) )
                         {
                             Velocity.init();
@@ -1182,7 +1180,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     private Writer getWriter( RemoteResourcesBundle bundle, File f )
-        throws IOException
+            throws IOException
     {
         Writer writer;
         if ( bundle.getSourceEncoding() == null )
@@ -1192,13 +1190,13 @@ public abstract class AbstractProcessRemoteResourcesMojo
         else
         {
             writer = new PrintWriter( new OutputStreamWriter( new FileOutputStream( f, true ),
-                                                              bundle.getSourceEncoding() ) );
+                    bundle.getSourceEncoding() ) );
         }
         return writer;
     }
 
     protected Model getSupplement( Xpp3Dom supplementModelXml )
-        throws MojoExecutionException
+            throws MojoExecutionException
     {
         MavenXpp3Reader modelReader = new MavenXpp3Reader();
         Model model = null;
@@ -1212,22 +1210,22 @@ public abstract class AbstractProcessRemoteResourcesMojo
             if ( groupId == null || groupId.trim().equals( "" ) )
             {
                 throw new MojoExecutionException( "Supplemental project XML "
-                    + "requires that a <groupId> element be present." );
+                        + "requires that a <groupId> element be present." );
             }
 
             if ( artifactId == null || artifactId.trim().equals( "" ) )
             {
                 throw new MojoExecutionException( "Supplemental project XML "
-                    + "requires that a <artifactId> element be present." );
+                        + "requires that a <artifactId> element be present." );
             }
         }
         catch ( IOException e )
         {
-            logger.warn( "Unable to read supplemental XML: {}", e.getMessage(), e );
+            getLog().warn( "Unable to read supplemental XML: " + e.getMessage(), e );
         }
         catch ( XmlPullParserException e )
         {
-            logger.warn( "Unable to parse supplemental XML: {}", e.getMessage(), e );
+            getLog().warn( "Unable to parse supplemental XML: " + e.getMessage(), e );
         }
 
         return model;
@@ -1245,18 +1243,18 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     private Map<String, Model> loadSupplements( String[] models )
-        throws MojoExecutionException
+            throws MojoExecutionException
     {
         if ( models == null )
         {
-            logger.debug( "Supplemental data models won't be loaded. No models specified." );
+            getLog().debug( "Supplemental data models won't be loaded. No models specified." );
             return Collections.emptyMap();
         }
 
         List<Supplement> supplements = new ArrayList<>();
         for ( String set : models )
         {
-            logger.debug( "Preparing ruleset: {}", set );
+            getLog().debug( "Preparing ruleset: " + set );
             try
             {
                 File f = locator.getResourceAsFile( set, getLocationTemp( set ) );
@@ -1268,10 +1266,10 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 if ( !f.canRead() )
                 {
                     throw new MojoExecutionException( "Supplemental data models won't be loaded. " + "File "
-                        + f.getAbsolutePath() + " cannot be read, check permissions on the file." );
+                            + f.getAbsolutePath() + " cannot be read, check permissions on the file." );
                 }
 
-                logger.debug( "Loading supplemental models from {}", f.getAbsolutePath() );
+                getLog().debug( "Loading supplemental models from " + f.getAbsolutePath() );
 
                 SupplementalDataModelXpp3Reader reader = new SupplementalDataModelXpp3Reader();
                 SupplementalDataModel supplementalModel = reader.read( new FileReader( f ) );
@@ -1280,12 +1278,12 @@ public abstract class AbstractProcessRemoteResourcesMojo
             catch ( Exception e )
             {
                 String msg = "Error loading supplemental data models: " + e.getMessage();
-                logger.error( msg, e );
+                getLog().error( msg, e );
                 throw new MojoExecutionException( msg, e );
             }
         }
 
-        logger.debug( "Loading supplements complete." );
+        getLog().debug( "Loading supplements complete." );
 
         Map<String, Model> supplementMap = new HashMap<>();
         for ( Supplement sd : supplements )
@@ -1316,12 +1314,12 @@ public abstract class AbstractProcessRemoteResourcesMojo
         {
             loc = loc.substring( loc.lastIndexOf( '\\' ) + 1 );
         }
-        logger.debug( "Before: {} After: {}", name, loc );
+        getLog().debug( "Before: " + name + " After: " + loc );
         return loc;
     }
 
     static class OrganizationComparator
-        implements Comparator<Organization>
+            implements Comparator<Organization>
     {
         @Override
         public int compare( Organization org1, Organization org2 )
@@ -1354,7 +1352,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
     }
 
     static class ProjectComparator
-        implements Comparator<MavenProject>
+            implements Comparator<MavenProject>
     {
         @Override
         public int compare( MavenProject p1, MavenProject p2 )
