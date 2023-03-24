@@ -21,14 +21,12 @@ package org.apache.maven.plugin.resources.remote;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.artifact.ProjectArtifact;
 
 /**
  * <p>
@@ -50,12 +48,6 @@ import org.apache.maven.project.artifact.ProjectArtifact;
 public class AggregatorProcessRemoteResourcesMojo
     extends AbstractProcessRemoteResourcesMojo
 {
-    @Override
-    protected Set<Artifact> getProjectArtifacts()
-    {
-        return mavenSession.getProjects().stream().map( ProjectArtifact::new ).collect( Collectors.toSet() );
-    }
-
     @Override
     protected Set<Artifact> getAllDependencies()
     {

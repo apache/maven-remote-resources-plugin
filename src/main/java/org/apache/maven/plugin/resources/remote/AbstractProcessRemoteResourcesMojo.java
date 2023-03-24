@@ -535,7 +535,6 @@ public abstract class AbstractProcessRemoteResourcesMojo
         FilterArtifacts filter = new FilterArtifacts();
 
         Set<Artifact> artifacts = new LinkedHashSet<>();
-        artifacts.addAll( getProjectArtifacts() );
         artifacts.addAll( getAllDependencies() );
         if ( this.excludeTransitive )
         {
@@ -609,11 +608,6 @@ public abstract class AbstractProcessRemoteResourcesMojo
         projects.sort( new ProjectComparator() );
         return projects;
     }
-
-    /**
-     * Returns involved {@link MavenProject}s as {@link Artifact}.
-     */
-    protected abstract Set<Artifact> getProjectArtifacts();
 
     /**
      * Returns all the transitive hull of all the involved maven projects.
