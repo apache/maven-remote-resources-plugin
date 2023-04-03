@@ -73,7 +73,7 @@ under the License.
     <project.build.outputTimestamp>2022-07-17T16:33:17Z</project.build.outputTimestamp>
 
     <!-- Used by site documentation as well, do not remove -->
-    <mavenFilteringVersion>3.2.0</mavenFilteringVersion>
+    <mavenFilteringVersion>3.3.1</mavenFilteringVersion>
   </properties>
 
   <dependencies>
