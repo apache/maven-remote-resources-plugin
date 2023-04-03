@@ -1,5 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -18,7 +17,6 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -34,13 +32,11 @@ under the License.
   <packaging>maven-plugin</packaging>
 
   <name>Apache Maven Remote Resources Plugin</name>
-  <description>
-    Process resources packaged in JARs that have been deployed to
+  <description>Process resources packaged in JARs that have been deployed to
     a remote repository. The primary use case being satisfied is the consistent
     inclusion of common resources in a large set of projects. Maven projects at
     Apache use this plug-in to satisfy licensing requirements at Apache where
-    each project must include license and notice files for each release.
-  </description>
+    each project must include license and notice files for each release.</description>
 
   <prerequisites>
     <maven>${mavenVersion}</maven>
@@ -49,8 +45,8 @@ under the License.
   <scm>
     <connection>scm:git:https://gitbox.apache.org/repos/asf/maven-remote-resources-plugin.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/maven-remote-resources-plugin.git</developerConnection>
-    <url>https://github.com/apache/maven-remote-resources-plugin/tree/${project.scm.tag}</url>
     <tag>HEAD</tag>
+    <url>https://github.com/apache/maven-remote-resources-plugin/tree/${project.scm.tag}</url>
   </scm>
   <issueManagement>
     <system>JIRA</system>
@@ -228,10 +224,10 @@ under the License.
         <executions>
           <execution>
             <id>generate-xsd-site-remote-resources</id>
-            <phase>pre-site</phase>
             <goals>
               <goal>xsd</goal>
             </goals>
+            <phase>pre-site</phase>
             <configuration>
               <version>1.1.0</version>
               <outputDirectory>${project.reporting.outputDirectory}/xsd</outputDirectory>
@@ -242,10 +238,10 @@ under the License.
           </execution>
           <execution>
             <id>generate-xsd-site-supplemental-model</id>
-            <phase>pre-site</phase>
             <goals>
               <goal>xsd</goal>
             </goals>
+            <phase>pre-site</phase>
             <configuration>
               <version>1.0.0</version>
               <outputDirectory>${project.reporting.outputDirectory}/xsd</outputDirectory>
@@ -256,10 +252,10 @@ under the License.
           </execution>
           <execution>
             <id>site-docs-remote-resources</id>
-            <phase>pre-site</phase>
             <goals>
               <goal>xdoc</goal>
             </goals>
+            <phase>pre-site</phase>
             <configuration>
               <version>1.1.0</version>
               <models>
@@ -269,10 +265,10 @@ under the License.
           </execution>
           <execution>
             <id>site-docs-supplemental-models</id>
-            <phase>pre-site</phase>
             <goals>
               <goal>xdoc</goal>
             </goals>
+            <phase>pre-site</phase>
             <configuration>
               <version>1.0.0</version>
               <models>
@@ -333,19 +329,21 @@ under the License.
       <build>
         <testResources>
           <testResource>
-            <directory>src/it/resources</directory>
             <filtering>true</filtering>
+            <directory>src/it/resources</directory>
             <excludes>
               <exclude>custom-filter-delim/src/main/resources/**</exclude>
-              <exclude>**/*.jar</exclude> <!-- maven-filtering chokes on JARs -->
+              <exclude>**/*.jar</exclude>
+              <!-- maven-filtering chokes on JARs -->
             </excludes>
           </testResource>
           <testResource>
-            <directory>src/it/resources</directory>
             <filtering>false</filtering>
+            <directory>src/it/resources</directory>
             <includes>
               <include>custom-filter-delim/src/main/resources/**</include>
-              <include>**/*.jar</include> <!-- maven-filtering chokes on JARs -->
+              <include>**/*.jar</include>
+              <!-- maven-filtering chokes on JARs -->
             </includes>
           </testResource>
         </testResources>
@@ -378,10 +376,10 @@ under the License.
             <executions>
               <execution>
                 <id>install-descriptor</id>
-                <phase>pre-integration-test</phase>
                 <goals>
                   <goal>install</goal>
                 </goals>
+                <phase>pre-integration-test</phase>
                 <configuration>
                   <localRepositoryPath>${project.build.directory}/it-repo</localRepositoryPath>
                 </configuration>

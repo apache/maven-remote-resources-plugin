@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.it;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,8 +16,11 @@ package org.apache.maven.plugin.resources.remote.it;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote.it;
 
-import static org.junit.Assert.assertTrue;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
@@ -27,39 +28,30 @@ import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Benjamin Bentmann
  */
-public class IT_GetDependencyProjects
-    extends AbstractIT
-{
+public class IT_GetDependencyProjects extends AbstractIT {
     @Test
-    public void test()
-        throws IOException, URISyntaxException, VerificationException
-    {
-        File dir = TestUtils.getTestDir( "get-dependency-projects" );
+    public void test() throws IOException, URISyntaxException, VerificationException {
+        File dir = TestUtils.getTestDir("get-dependency-projects");
 
         Verifier verifier;
 
-        verifier = TestUtils.newVerifier( dir );
-        verifier.executeGoal( "deploy" );
+        verifier = TestUtils.newVerifier(dir);
+        verifier.executeGoal("deploy");
         verifier.verifyErrorFreeLog();
         verifier.resetStreams();
 
-        verifier = TestUtils.newVerifier( new File( dir, "project" ) );
+        verifier = TestUtils.newVerifier(new File(dir, "project"));
 
-        verifier.deleteArtifacts( "org.apache.maven.plugin.rresource.it.gdp" );
+        verifier.deleteArtifacts("org.apache.maven.plugin.rresource.it.gdp");
 
-        try
-        {
-            verifier.executeGoal( "generate-resources" );
-        }
-        catch ( VerificationException e)
-        {
+        try {
+            verifier.executeGoal("generate-resources");
+        } catch (VerificationException e) {
             verifier.resetStreams();
 
             // We will get an exception from harness in case
@@ -71,14 +63,15 @@ public class IT_GetDependencyProjects
             // So the only reliable way is to check the log output
             // from maven which will print out message according to
             // the missing artifacts.
-            File output = new File( verifier.getBasedir(), "log.txt" );
-            String content = FileUtils.fileRead( output );
+            File output = new File(verifier.getBasedir(), "log.txt");
+            String content = FileUtils.fileRead(output);
 
-            assertTrue( content.contains( "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=release -Dversion=1.0 -Dpackaging=jar" ) );
-            assertTrue( content.contains( "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=snapshot -Dversion=1.0-SNAPSHOT -Dpackaging=jar" ) );
+            assertTrue(
+                    content.contains(
+                            "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=release -Dversion=1.0 -Dpackaging=jar"));
+            assertTrue(
+                    content.contains(
+                            "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=snapshot -Dversion=1.0-SNAPSHOT -Dpackaging=jar"));
         }
-
-
     }
-
 }
