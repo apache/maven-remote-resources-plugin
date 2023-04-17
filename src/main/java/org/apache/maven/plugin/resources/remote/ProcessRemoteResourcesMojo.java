@@ -19,7 +19,6 @@ package org.apache.maven.plugin.resources.remote;
  * under the License.
  */
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -54,7 +53,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.commons.io.output.DeferredFileOutputStream;
 import org.apache.maven.ProjectDependenciesResolver;
 import org.apache.maven.archiver.MavenArchiver;
 import org.apache.maven.artifact.Artifact;
@@ -92,6 +90,7 @@ import org.apache.maven.shared.artifact.filter.collection.FilterArtifacts;
 import org.apache.maven.shared.artifact.filter.collection.GroupIdFilter;
 import org.apache.maven.shared.artifact.filter.collection.ProjectTransitivityFilter;
 import org.apache.maven.shared.artifact.filter.collection.ScopeFilter;
+import org.apache.maven.shared.filtering.FilteringUtils;
 import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenFileFilterRequest;
 import org.apache.maven.shared.filtering.MavenFilteringException;
@@ -116,6 +115,7 @@ import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.WriterFactory;
+import org.codehaus.plexus.util.io.CachingOutputStream;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
@@ -319,8 +319,10 @@ public class ProcessRemoteResourcesMojo
      * typically rely on the modification date.
      *
      * @since 1.6
+     * @deprecated unused, a better mechanism is in place
      */
     @Parameter( defaultValue = "5242880" )
+    @Deprecated
     protected int velocityFilterInMemoryThreshold = 5 * 1024 * 1024;
 
     /**
@@ -821,8 +823,7 @@ public class ProcessRemoteResourcesMojo
             {
                 if ( source == templateSource )
                 {
-                    try ( DeferredFileOutputStream os = 
-                                    new DeferredFileOutputStream( velocityFilterInMemoryThreshold, file ) )
+                    try ( OutputStream os = new CachingOutputStream( file ) )
                     {
                         try ( Reader reader = getReader( source ); Writer writer = getWriter( os ) )
                         {
@@ -832,7 +833,6 @@ public class ProcessRemoteResourcesMojo
                         {
                             throw new MojoExecutionException( "Error rendering velocity resource: " + source, e );
                         }
-                        fileWriteIfDiffers( os );
                     }
                 }
                 else if ( resource.isFiltering() )
@@ -851,7 +851,7 @@ public class ProcessRemoteResourcesMojo
                 }
                 else
                 {
-                    FileUtils.copyFile( source, file );
+                    FilteringUtils.copyFile( source, file, null, null );
                 }
 
                 // exclude the original (so eclipse doesn't complain about duplicate resources)
@@ -885,56 +885,6 @@ public class ProcessRemoteResourcesMojo
         else
         {
             return WriterFactory.newPlatformWriter( os );
-        }
-    }
-
-    /**
-     * If the transformation result fits in memory and the destination file already exists
-     * then both are compared.
-     * <p>If destination file is byte-by-byte equal, then it is not overwritten.
-     * This improves subsequent compilation times since upstream plugins property see that
-     * the resource was not modified.
-     * <p>Note: the method should be called after {@link org.apache.commons.io.output.DeferredFileOutputStream#close}
-     *
-     * @param outStream Deferred stream
-     * @throws IOException
-     */
-    private void fileWriteIfDiffers( DeferredFileOutputStream outStream )
-        throws IOException
-    {
-        File file = outStream.getFile();
-        if ( outStream.isThresholdExceeded() )
-        {
-            getLog().info( "File " + file + " was overwritten due to content limit threshold "
-                    + outStream.getThreshold() + " reached" );
-            return;
-        }
-        boolean needOverwrite = true;
-
-        if ( file.exists() )
-        {
-            try ( InputStream is = Files.newInputStream( file.toPath() );
-                 InputStream newContents = new ByteArrayInputStream( outStream.getData() ) )
-            {
-                needOverwrite = !IOUtil.contentEquals( is, newContents );
-                if ( getLog().isDebugEnabled() )
-                {
-                    getLog().debug( "File " + file + " contents "
-                                        + ( needOverwrite ? "differs" : "does not differ" ) );
-                }
-            }
-        }
-
-        if ( !needOverwrite )
-        {
-            getLog().debug( "File " + file + " is up to date" );
-            return;
-        }
-        getLog().debug( "Writing " + file );
-        
-        try ( OutputStream os = Files.newOutputStream( file.toPath() ) )
-        {
-            outStream.writeTo( os );
         }
     }
 
@@ -1238,8 +1188,7 @@ public class ProcessRemoteResourcesMojo
                 {
                     if ( doVelocity )
                     {
-                        try ( DeferredFileOutputStream os =
-                                        new DeferredFileOutputStream( velocityFilterInMemoryThreshold, f ) )
+                        try ( OutputStream os = new CachingOutputStream( f ) )
                         {
                             try ( Writer writer = bundle.getSourceEncoding() == null ? new OutputStreamWriter( os )
                                             : new OutputStreamWriter( os, bundle.getSourceEncoding() ) )
@@ -1256,7 +1205,6 @@ public class ProcessRemoteResourcesMojo
                                                             writer );
                                 }
                             }
-                            fileWriteIfDiffers( os );
                         }
                     }
                     else

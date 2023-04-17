@@ -73,7 +73,7 @@ under the License.
     <project.build.outputTimestamp>2022-07-17T16:33:17Z</project.build.outputTimestamp>
 
     <!-- Used by site documentation as well, do not remove -->
-    <mavenFilteringVersion>3.2.0</mavenFilteringVersion>
+    <mavenFilteringVersion>3.3.2-SNAPSHOT</mavenFilteringVersion>
   </properties>
 
   <dependencies>
@@ -149,13 +149,13 @@ under the License.
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-utils</artifactId>
+      <version>3.5.1</version>
+    </dependency>
 
     <!-- other -->
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.6</version>
-    </dependency>
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity</artifactId>
