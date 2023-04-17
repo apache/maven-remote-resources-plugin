@@ -674,8 +674,8 @@ public class ProcessRemoteResourcesMojo
             }
             catch ( ProjectBuildingException e )
             {
-                getLog().warn( "Invalid project model for artifact [" + artifact.getArtifactId() + ":"
-                                   + artifact.getGroupId() + ":" + artifact.getVersion() + "]. "
+                getLog().warn( "Invalid project model for artifact [" + artifact.getGroupId() + ":"
+                                   + artifact.getArtifactId() + ":" + artifact.getVersion() + "]. "
                                    + "It will be ignored by the remote resources Mojo." );
                 continue;
             }
