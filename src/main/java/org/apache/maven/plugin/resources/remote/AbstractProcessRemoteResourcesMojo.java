@@ -350,7 +350,7 @@ public abstract class AbstractProcessRemoteResourcesMojo
     private String outputTimestamp;
 
     @Component
-    protected RepositorySystem repositorySystem;
+    protected RepositorySystem repoSystem;
 
     /**
      * Filtering support, for local resources that override those in the remote bundle.
@@ -990,9 +990,9 @@ public abstract class AbstractProcessRemoteResourcesMojo
                 {
                     ArtifactRequest request = new ArtifactRequest(
                             artifact,
-                            RepositoryUtils.toRepos( project.getRemoteArtifactRepositories() ),
+                            project.getRemoteProjectRepositories(),
                             "remote-resources" );
-                    ArtifactResult result = repositorySystem.resolveArtifact(
+                    ArtifactResult result = repoSystem.resolveArtifact(
                             mavenSession.getRepositorySession(), request );
                     artifactFile = result.getArtifact().getFile();
                 }
