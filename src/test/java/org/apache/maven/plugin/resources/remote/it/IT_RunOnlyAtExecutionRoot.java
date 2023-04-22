@@ -79,8 +79,8 @@ public class IT_RunOnlyAtExecutionRoot
         assertTrue( output.exists() );
 
         // aggregates in bulk, not per-child
-        //assertFalse( new File( dir, "child1/" + depResource ).exists() );
-        //assertFalse( new File( dir, "child2/" + depResource ).exists() );
+        assertFalse( new File( dir, "child1/" + depResource ).exists() );
+        assertFalse( new File( dir, "child2/" + depResource ).exists() );
 
         String content = FileUtils.fileRead( output );
 

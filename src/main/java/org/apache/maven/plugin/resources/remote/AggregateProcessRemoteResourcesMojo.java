@@ -40,12 +40,12 @@ import org.apache.maven.project.MavenProject;
  * </p>
  * Resources that don't end in ".vm" are copied "as is".
  */
-@Mojo( name = "aggregator-process",
+@Mojo( name = "aggregate",
        defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
        aggregator = true,
        requiresDependencyResolution = ResolutionScope.TEST,
        threadSafe = true )
-public class AggregatorProcessRemoteResourcesMojo
+public class AggregateProcessRemoteResourcesMojo
     extends AbstractProcessRemoteResourcesMojo
 {
     @Override
