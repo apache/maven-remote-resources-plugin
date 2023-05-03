@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.it;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,8 +16,11 @@ package org.apache.maven.plugin.resources.remote.it;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote.it;
 
-import static org.junit.Assert.assertTrue;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
 import org.apache.maven.shared.verifier.VerificationException;
@@ -27,32 +28,23 @@ import org.apache.maven.shared.verifier.Verifier;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Benjamin Bentmann
  */
-public class IT_BadDependencyPoms
-    extends AbstractIT
-{
+public class IT_BadDependencyPoms extends AbstractIT {
     @Test
-    public void test()
-        throws IOException, URISyntaxException, VerificationException
-    {
-        File dir = TestUtils.getTestDir( "bad-dependency-poms" );
+    public void test() throws IOException, URISyntaxException, VerificationException {
+        File dir = TestUtils.getTestDir("bad-dependency-poms");
 
-        Verifier verifier = TestUtils.newVerifier( dir );
-        verifier.deleteArtifacts( "test" );
-        verifier.getSystemProperties().setProperty( "it.dir", dir.getAbsolutePath() );
+        Verifier verifier = TestUtils.newVerifier(dir);
+        verifier.deleteArtifacts("test");
+        verifier.getSystemProperties().setProperty("it.dir", dir.getAbsolutePath());
 
-        try
-        {
-            verifier.executeGoal( "generate-resources" );
-        }
-        catch ( VerificationException e )
-        {
+        try {
+            verifier.executeGoal("generate-resources");
+        } catch (VerificationException e) {
             verifier.resetStreams();
 
             // We will get an exception from harness in case
@@ -65,14 +57,15 @@ public class IT_BadDependencyPoms
             // from maven which will print out message according to
             // the missing artifacts.
 
-            File output = new File( dir, "log.txt" );
-            String content = FileUtils.fileRead( output );
+            File output = new File(dir, "log.txt");
+            String content = FileUtils.fileRead(output);
 
-            assertTrue( content.contains( "mvn install:install-file -DgroupId=test -DartifactId=pom -Dversion=0.2 -Dpackaging=jar" ) );
-            assertTrue( content.contains( "mvn install:install-file -DgroupId=test -DartifactId=missing -Dversion=0.1 -Dpackaging=jar" ) );
-            assertTrue( content.contains( "mvn install:install-file -DgroupId=test -DartifactId=invalid -Dversion=0.1 -Dpackaging=jar" ) );
+            assertTrue(content.contains(
+                    "mvn install:install-file -DgroupId=test -DartifactId=pom -Dversion=0.2 -Dpackaging=jar"));
+            assertTrue(content.contains(
+                    "mvn install:install-file -DgroupId=test -DartifactId=missing -Dversion=0.1 -Dpackaging=jar"));
+            assertTrue(content.contains(
+                    "mvn install:install-file -DgroupId=test -DartifactId=invalid -Dversion=0.1 -Dpackaging=jar"));
         }
-
     }
-
 }

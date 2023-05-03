@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugin.resources.remote;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote;
 
 import java.util.Set;
 
@@ -38,22 +37,19 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
  * </p>
  * Resources that don't end in ".vm" are copied "as is".
  */
-@Mojo( name = "process",
-       defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
-       requiresDependencyResolution = ResolutionScope.TEST,
-       threadSafe = true )
-public class ProcessRemoteResourcesMojo
-    extends AbstractProcessRemoteResourcesMojo
-{
+@Mojo(
+        name = "process",
+        defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
+        requiresDependencyResolution = ResolutionScope.TEST,
+        threadSafe = true)
+public class ProcessRemoteResourcesMojo extends AbstractProcessRemoteResourcesMojo {
     @Override
-    protected Set<Artifact> getAllDependencies()
-    {
+    protected Set<Artifact> getAllDependencies() {
         return project.getArtifacts();
     }
 
     @Override
-    protected Set<Artifact> getDirectDependencies()
-    {
+    protected Set<Artifact> getDirectDependencies() {
         return project.getDependencyArtifacts();
     }
 }

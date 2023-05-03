@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.stub;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugin.resources.remote.stub;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote.stub;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,9 +31,7 @@ import org.codehaus.plexus.util.FileUtils;
 /**
  * Stub
  */
-public class MavenProjectBuildStub
-    extends MavenProjectBasicStub
-{
+public class MavenProjectBuildStub extends MavenProjectBasicStub {
     public static final int RESOURCES_FILE = 1;
 
     public static final int ROOT_FILE = 2;
@@ -75,10 +72,8 @@ public class MavenProjectBuildStub
 
     protected HashMap<String, String> dataMap;
 
-    public MavenProjectBuildStub( String key )
-        throws Exception
-    {
-        super( key );
+    public MavenProjectBuildStub(String key) throws Exception {
+        super(key);
 
         build = new Build();
         resourcesFileList = new ArrayList<>();
@@ -90,61 +85,50 @@ public class MavenProjectBuildStub
         setupBuild();
     }
 
-    public void addDirectory( String name )
-    {
-        if ( isValidPath( name ) )
-        {
-            directoryList.add( name );
+    public void addDirectory(String name) {
+        if (isValidPath(name)) {
+            directoryList.add(name);
         }
     }
 
-    public void setOutputDirectory( String dir )
-    {
+    public void setOutputDirectory(String dir) {
         outputDirectory = buildDirectory + "/" + dir;
-        build.setOutputDirectory( outputDirectory );
+        build.setOutputDirectory(outputDirectory);
     }
 
-    public void addFile( String name, int type )
-    {
-        if ( isValidPath( name ) )
-        {
-            List<String> list = getList( type );
+    public void addFile(String name, int type) {
+        if (isValidPath(name)) {
+            List<String> list = getList(type);
 
-            list.add( name );
+            list.add(name);
         }
     }
 
-    public void addFile( String name, String data, int type )
-    {
-        File fileName = new File( name );
+    public void addFile(String name, String data, int type) {
+        File fileName = new File(name);
 
-        addFile( name, type );
-        dataMap.put( fileName.getName(), data );
+        addFile(name, type);
+        dataMap.put(fileName.getName(), data);
     }
 
-    public String getOutputDirectory()
-    {
+    public String getOutputDirectory() {
         return outputDirectory;
     }
 
-    public String getTestOutputDirectory()
-    {
+    public String getTestOutputDirectory() {
         return testOutputDirectory;
     }
 
-    public String getResourcesDirectory()
-    {
+    public String getResourcesDirectory() {
         return resourcesDirectory;
     }
 
-    public String getTestResourcesDirectory()
-    {
+    public String getTestResourcesDirectory() {
         return testResourcesDirectory;
     }
 
     @Override
-    public Build getBuild()
-    {
+    public Build getBuild() {
         return build;
     }
 
@@ -157,20 +141,17 @@ public class MavenProjectBuildStub
      * @param path
      * @return
      */
-    private boolean isValidPath( String path )
-    {
+    private boolean isValidPath(String path) {
         boolean bRetVal = true;
 
-        if ( path.startsWith( "c:" ) || path.startsWith( ".." ) || path.startsWith( "/" ) || path.startsWith( "\\" ) )
-        {
+        if (path.startsWith("c:") || path.startsWith("..") || path.startsWith("/") || path.startsWith("\\")) {
             bRetVal = false;
         }
 
         return bRetVal;
     }
 
-    private void setupBuild()
-    {
+    private void setupBuild() {
         // check getBasedir method for the exact path
         // we need to recreate the dir structure in
         // an isolated environment
@@ -181,84 +162,72 @@ public class MavenProjectBuildStub
         resourcesDirectory = srcDirectory + "/main/resources/";
         testResourcesDirectory = srcDirectory + "/test/resources/";
 
-        build.setDirectory( buildDirectory );
-        build.setOutputDirectory( outputDirectory );
-        build.setTestOutputDirectory( testOutputDirectory );
+        build.setDirectory(buildDirectory);
+        build.setOutputDirectory(outputDirectory);
+        build.setTestOutputDirectory(testOutputDirectory);
     }
 
-    public void setupBuildEnvironment()
-        throws Exception
-    {
+    public void setupBuildEnvironment() throws Exception {
         // populate dummy resources and dummy test resources
 
         // setup src dir
-        if ( !FileUtils.fileExists( resourcesDirectory ) )
-        {
-            FileUtils.mkdir( resourcesDirectory );
+        if (!FileUtils.fileExists(resourcesDirectory)) {
+            FileUtils.mkdir(resourcesDirectory);
         }
 
-        if ( !FileUtils.fileExists( testResourcesDirectory ) )
-        {
-            FileUtils.mkdir( testResourcesDirectory );
+        if (!FileUtils.fileExists(testResourcesDirectory)) {
+            FileUtils.mkdir(testResourcesDirectory);
         }
 
-        createDirectories( resourcesDirectory, testResourcesDirectory );
-        createFiles( resourcesDirectory, testResourcesDirectory );
+        createDirectories(resourcesDirectory, testResourcesDirectory);
+        createFiles(resourcesDirectory, testResourcesDirectory);
         setupRootFiles();
 
         // setup target dir
-        if ( !FileUtils.fileExists( outputDirectory ) )
-        {
-            FileUtils.mkdir( outputDirectory );
+        if (!FileUtils.fileExists(outputDirectory)) {
+            FileUtils.mkdir(outputDirectory);
         }
 
-        if ( !FileUtils.fileExists( testOutputDirectory ) )
-        {
-            FileUtils.mkdir( testOutputDirectory );
+        if (!FileUtils.fileExists(testOutputDirectory)) {
+            FileUtils.mkdir(testOutputDirectory);
         }
 
         setupTargetFiles();
     }
 
-    private void createDirectories( String parent, String testparent )
-    {
+    private void createDirectories(String parent, String testparent) {
         File currentDirectory;
 
-        for ( String aDirectoryList : directoryList )
-        {
-            currentDirectory = new File( parent, "/" + aDirectoryList );
+        for (String aDirectoryList : directoryList) {
+            currentDirectory = new File(parent, "/" + aDirectoryList);
 
-            if ( !currentDirectory.exists() )
-            {
+            if (!currentDirectory.exists()) {
                 currentDirectory.mkdirs();
             }
 
             // duplicate dir structure in test resources
-            currentDirectory = new File( testparent, "/" + aDirectoryList );
+            currentDirectory = new File(testparent, "/" + aDirectoryList);
 
-            if ( !currentDirectory.exists() )
-            {
+            if (!currentDirectory.exists()) {
                 currentDirectory.mkdirs();
             }
         }
     }
 
-    private List<String> getList( int type )
-    {
+    private List<String> getList(int type) {
         ArrayList<String> retVal = null;
 
-        switch ( type )
-        {
-            case SOURCE_FILE :
+        switch (type) {
+            case SOURCE_FILE:
                 retVal = sourceFileList;
                 break;
-            case OUTPUT_FILE :
+            case OUTPUT_FILE:
                 retVal = targetClassesList;
                 break;
-            case RESOURCES_FILE :
+            case RESOURCES_FILE:
                 retVal = resourcesFileList;
                 break;
-            case ROOT_FILE :
+            case ROOT_FILE:
                 retVal = rootFileList;
                 break;
         }
@@ -266,75 +235,59 @@ public class MavenProjectBuildStub
         return retVal;
     }
 
-    private void createFiles( String parent, int type )
-    {
+    private void createFiles(String parent, int type) {
         File currentFile;
-        List<String> list = getList( type );
+        List<String> list = getList(type);
 
         // guard
-        if ( list == null )
-        {
+        if (list == null) {
             return;
         }
 
-        for ( String aList : list )
-        {
-            currentFile = new File( parent, aList );
+        for (String aList : list) {
+            currentFile = new File(parent, aList);
 
             // create the necessary parent directories
             // before we create the files
-            if ( !currentFile.getParentFile().exists() )
-            {
+            if (!currentFile.getParentFile().exists()) {
                 currentFile.getParentFile().mkdirs();
             }
 
-            if ( !currentFile.exists() )
-            {
-                try
-                {
+            if (!currentFile.exists()) {
+                try {
                     currentFile.createNewFile();
-                    populateFile( currentFile, RESOURCES_FILE );
-                }
-                catch ( IOException io )
-                {
+                    populateFile(currentFile, RESOURCES_FILE);
+                } catch (IOException io) {
                     // TODO: handle exception
                 }
             }
         }
     }
 
-    private void setupRootFiles()
-    {
-        createFiles( testRootDir, ROOT_FILE );
+    private void setupRootFiles() {
+        createFiles(testRootDir, ROOT_FILE);
     }
 
-    private void setupTargetFiles()
-    {
-        createFiles( getOutputDirectory(), OUTPUT_FILE );
+    private void setupTargetFiles() {
+        createFiles(getOutputDirectory(), OUTPUT_FILE);
     }
 
-    private void createFiles( String parent, String testparent )
-    {
-        createFiles( parent, RESOURCES_FILE );
-        createFiles( testparent, RESOURCES_FILE );
+    private void createFiles(String parent, String testparent) {
+        createFiles(parent, RESOURCES_FILE);
+        createFiles(testparent, RESOURCES_FILE);
     }
 
-    private void populateFile( File file, int type )
-    {
+    private void populateFile(File file, int type) {
         FileOutputStream outputStream;
-        String data = dataMap.get( file.getName() );
+        String data = dataMap.get(file.getName());
 
-        if ( ( data != null ) && file.exists() )
-        {
-            try
-            {
-                outputStream = new FileOutputStream( file );
-                outputStream.write( data.getBytes() );
+        if ((data != null) && file.exists()) {
+            try {
+                outputStream = new FileOutputStream(file);
+                outputStream.write(data.getBytes());
                 outputStream.flush();
                 outputStream.close();
-            }
-            catch ( IOException ex )
-            {
+            } catch (IOException ex) {
                 // TODO: handle exception here
             }
         }

@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.it;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,10 +16,11 @@ package org.apache.maven.plugin.resources.remote.it;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote.it;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
 import org.apache.maven.shared.verifier.VerificationException;
@@ -30,36 +29,33 @@ import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.Os;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Benjamin Bentmann
  */
-public class IT_RunOnlyAtExecutionRoot
-    extends AbstractIT
-{
+public class IT_RunOnlyAtExecutionRoot extends AbstractIT {
     @Test
-    public void test()
-        throws IOException, URISyntaxException, VerificationException
-    {
+    public void test() throws IOException, URISyntaxException, VerificationException {
         // Workaround for Windows + Maven-3.5.x/3.6.0 + Jenkins due to MNG-6261
-        assumeTrue( !( System.getenv( "JENKINS_HOME" ) != null 
-                       && Os.isFamily( Os.FAMILY_WINDOWS ) 
-                       &&  ( System.getenv( "MAVEN_HOME" ).contains( "-3.5." ) || System.getenv( "MAVEN_HOME" ).contains( "-3.6.0" ) ) ) );
+        assumeTrue(!(System.getenv("JENKINS_HOME") != null
+                && Os.isFamily(Os.FAMILY_WINDOWS)
+                && (System.getenv("MAVEN_HOME").contains("-3.5.")
+                        || System.getenv("MAVEN_HOME").contains("-3.6.0"))));
 
-        File dir = TestUtils.getTestDir( "run-only-at-execution-root" );
+        File dir = TestUtils.getTestDir("run-only-at-execution-root");
 
         Verifier verifier;
 
-        verifier = TestUtils.newVerifier( new File( dir, "resource-projects" ) );
-        verifier.addCliArgument( "deploy" );
+        verifier = TestUtils.newVerifier(new File(dir, "resource-projects"));
+        verifier.addCliArgument("deploy");
         verifier.execute();
-        verifier.setLogFileName( "first.log" );
+        verifier.setLogFileName("first.log");
         verifier.verifyErrorFreeLog();
 
-        verifier = TestUtils.newVerifier( dir );
+        verifier = TestUtils.newVerifier(dir);
 
         // I'm not sure what exactly the intention of the test was.
         // Based on the name i assumed to be sure the remote-resources-plugin
@@ -70,22 +66,21 @@ public class IT_RunOnlyAtExecutionRoot
         // verifier.deleteArtifacts( "org.apache.maven.plugin.rresource.it.mrr41" );
 
         // verifier.addCliArgument( "generate-resources" );
-        verifier.addCliArgument( "package" );
+        verifier.addCliArgument("package");
         verifier.execute();
         verifier.verifyErrorFreeLog();
 
         String depResource = "target/maven-shared-archive-resources/DEPENDENCIES";
-        File output = new File( dir, depResource );
-        assertTrue( output.exists() );
+        File output = new File(dir, depResource);
+        assertTrue(output.exists());
 
         // aggregates in bulk, not per-child
-        assertFalse( new File( dir, "child1/" + depResource ).exists() );
-        assertFalse( new File( dir, "child2/" + depResource ).exists() );
+        assertFalse(new File(dir, "child1/" + depResource).exists());
+        assertFalse(new File(dir, "child2/" + depResource).exists());
 
-        String content = FileUtils.fileRead( output );
+        String content = FileUtils.fileRead(output);
 
-        assertTrue( content.contains( "Dependency Id: org.apache.maven.plugin.rresource.it.mrr41:release:1.0" ) );
-        assertTrue( content.contains( "Dependency Id: org.apache.maven.plugin.rresource.it.mrr41:snapshot:1.0-SNAPSHOT" ) );
+        assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.mrr41:release:1.0"));
+        assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.mrr41:snapshot:1.0-SNAPSHOT"));
     }
-
 }
