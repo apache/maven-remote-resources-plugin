@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugin.resources.remote;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -40,32 +39,27 @@ import org.apache.maven.project.MavenProject;
  * </p>
  * Resources that don't end in ".vm" are copied "as is".
  */
-@Mojo( name = "aggregate",
-       defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
-       aggregator = true,
-       requiresDependencyResolution = ResolutionScope.TEST,
-       threadSafe = true )
-public class AggregateProcessRemoteResourcesMojo
-    extends AbstractProcessRemoteResourcesMojo
-{
+@Mojo(
+        name = "aggregate",
+        defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
+        aggregator = true,
+        requiresDependencyResolution = ResolutionScope.TEST,
+        threadSafe = true)
+public class AggregateProcessRemoteResourcesMojo extends AbstractProcessRemoteResourcesMojo {
     @Override
-    protected Set<Artifact> getAllDependencies()
-    {
+    protected Set<Artifact> getAllDependencies() {
         LinkedHashSet<Artifact> result = new LinkedHashSet<>();
-        for ( MavenProject mavenProject : mavenSession.getProjects() )
-        {
-            result.addAll( mavenProject.getArtifacts() );
+        for (MavenProject mavenProject : mavenSession.getProjects()) {
+            result.addAll(mavenProject.getArtifacts());
         }
         return result;
     }
 
     @Override
-    protected Set<Artifact> getDirectDependencies()
-    {
+    protected Set<Artifact> getDirectDependencies() {
         LinkedHashSet<Artifact> result = new LinkedHashSet<>();
-        for ( MavenProject mavenProject : mavenSession.getProjects() )
-        {
-            result.addAll( mavenProject.getDependencyArtifacts() );
+        for (MavenProject mavenProject : mavenSession.getProjects()) {
+            result.addAll(mavenProject.getDependencyArtifacts());
         }
         return result;
     }

@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,25 +16,22 @@ package org.apache.maven.plugin.resources.remote;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote;
 
-import java.net.URLClassLoader;
 import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * @author Jason van Zyl
  */
-public class RemoteResourcesClassLoader
-    extends URLClassLoader
-{
-    public RemoteResourcesClassLoader( ClassLoader parent )
-    {
-        super( new URL[]{} , parent );
+public class RemoteResourcesClassLoader extends URLClassLoader {
+    public RemoteResourcesClassLoader(ClassLoader parent) {
+        super(new URL[] {}, parent);
     }
 
     @Override
-    public void addURL( URL url )
-    {
-        super.addURL( url );
+    public void addURL(URL url) {
+        super.addURL(url);
     }
 
     // don't check the parents for the resources.   Just check the jars
@@ -44,14 +39,11 @@ public class RemoteResourcesClassLoader
     // system classpath jars and stuff instead of the jars
     // we specifically provided
     @Override
-    public URL getResource( String name ) 
-    {
-        URL url = findResource( name );
-        if ( url == null )
-        {
-            url = super.getResource( name );
+    public URL getResource(String name) {
+        URL url = findResource(name);
+        if (url == null) {
+            url = super.getResource(name);
         }
         return url;
     }
-
 }
