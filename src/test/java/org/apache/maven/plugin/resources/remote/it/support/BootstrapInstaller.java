@@ -35,10 +35,9 @@ public class BootstrapInstaller {
 
             Verifier verifier = TestUtils.newVerifier(bootstrapDir);
 
-            verifier.executeGoal("deploy");
-
+            verifier.addCliArgument("deploy");
+            verifier.execute();
             verifier.verifyErrorFreeLog();
-            verifier.resetStreams();
 
             installed = true;
         }

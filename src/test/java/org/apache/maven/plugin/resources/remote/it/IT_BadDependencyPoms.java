@@ -40,32 +40,18 @@ public class IT_BadDependencyPoms extends AbstractIT {
 
         Verifier verifier = TestUtils.newVerifier(dir);
         verifier.deleteArtifacts("test");
-        verifier.getSystemProperties().setProperty("it.dir", dir.getAbsolutePath());
 
-        try {
-            verifier.executeGoal("generate-resources");
-        } catch (VerificationException e) {
-            verifier.resetStreams();
+        verifier.addCliArgument("generate-resources");
+        verifier.execute();
 
-            // We will get an exception from harness in case
-            // of execution failure (return code non zero).
-            // This is the case if we have missing artifacts
-            // as in this test case.
-            // This means we can't test the created file which will never
-            // contain the appropriate data we wan't to check for.
-            // So the only reliable way is to check the log output
-            // from maven which will print out message according to
-            // the missing artifacts.
+        verifier.verifyTextInLog(
+                "[WARNING] Invalid project model for artifact [test:missing:0.1]. It will be ignored by the remote resources Mojo.");
+        verifier.verifyTextInLog(
+                "[WARNING] Invalid project model for artifact [test:invalid:0.1]. It will be ignored by the remote resources Mojo");
 
-            File output = new File(dir, "log.txt");
-            String content = FileUtils.fileRead(output);
+        File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
+        String content = FileUtils.fileRead(output);
 
-            assertTrue(content.contains(
-                    "mvn install:install-file -DgroupId=test -DartifactId=pom -Dversion=0.2 -Dpackaging=jar"));
-            assertTrue(content.contains(
-                    "mvn install:install-file -DgroupId=test -DartifactId=missing -Dversion=0.1 -Dpackaging=jar"));
-            assertTrue(content.contains(
-                    "mvn install:install-file -DgroupId=test -DartifactId=invalid -Dversion=0.1 -Dpackaging=jar"));
-        }
+        assertTrue(content.contains("Dependency Id: test:pom:0.2"));
     }
 }

@@ -378,6 +378,8 @@ under the License.
           </plugin>
           <plugin>
             <artifactId>maven-invoker-plugin</artifactId>
+            <!-- TODO remove with next parent -->
+            <version>3.5.1</version>
             <executions>
               <execution>
                 <id>install-descriptor</id>

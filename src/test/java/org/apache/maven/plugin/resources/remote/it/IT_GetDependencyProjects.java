@@ -45,32 +45,19 @@ public class IT_GetDependencyProjects extends AbstractIT {
         verifier.execute();
         verifier.verifyErrorFreeLog();
 
-        verifier = TestUtils.newVerifier(new File(dir, "project"));
+        File projectDir = new File(dir, "project");
+        verifier = TestUtils.newVerifier(projectDir);
 
         verifier.deleteArtifacts("org.apache.maven.plugin.rresource.it.gdp");
 
-        try {
-            verifier.addCliArgument("generate-resources");
-            verifier.execute();
-        } catch (VerificationException e) {
-            // We will get an exception from harness in case
-            // of execution failure (return code non zero).
-            // This is the case if we have missing artifacts
-            // as in this test case.
-            // This means we can't test the created file which will never
-            // contain the appropriate data we wan't to check for.
-            // So the only reliable way is to check the log output
-            // from maven which will print out message according to
-            // the missing artifacts.
-            File output = new File(verifier.getBasedir(), "log.txt");
-            String content = FileUtils.fileRead(output);
+        verifier.addCliArgument("generate-resources");
+        verifier.execute();
+        verifier.verifyErrorFreeLog();
 
-            assertTrue(
-                    content.contains(
-                            "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=release -Dversion=1.0 -Dpackaging=jar"));
-            assertTrue(
-                    content.contains(
-                            "mvn install:install-file -DgroupId=org.apache.maven.plugin.rresource.it.gdp -DartifactId=snapshot -Dversion=1.0-SNAPSHOT -Dpackaging=jar"));
-        }
+        File output = new File(projectDir, "target/maven-shared-archive-resources/DEPENDENCIES");
+        String content = FileUtils.fileRead(output);
+
+        assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.gdp:release:1.0"));
+        assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.gdp:snapshot:1.0-SNAPSHOT"));
     }
 }

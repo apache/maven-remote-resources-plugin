@@ -34,7 +34,10 @@ under the License.
   <repositories>
     <repository>
       <id>test</id>
-      <url>file:///${it.dir}/repo</url>
+      <url>file:///${project.build.testOutputDirectory}/bad-dependency-poms/repo</url>
+      <releases>
+        <checksumPolicy>ignore</checksumPolicy>
+      </releases>
     </repository>
   </repositories>
 
