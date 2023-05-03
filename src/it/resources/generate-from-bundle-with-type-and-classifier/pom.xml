@@ -29,6 +29,7 @@ under the License.
   </parent>
   
   <artifactId>generate-from-bundle-with-type-and-classifier</artifactId>
+  <packaging>pom</packaging>
   
   <build>
     <plugins>

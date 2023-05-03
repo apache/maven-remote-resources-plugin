@@ -19,12 +19,13 @@ package org.apache.maven.plugin.resources.remote.it.support;
  * under the License.
  */
 
-import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+
+import org.apache.maven.shared.verifier.VerificationException;
+import org.apache.maven.shared.verifier.Verifier;
 
 public class BootstrapInstaller
 {
