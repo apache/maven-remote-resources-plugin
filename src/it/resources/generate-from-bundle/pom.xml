@@ -29,7 +29,15 @@ under the License.
   </parent>
   
   <artifactId>generate-from-bundle</artifactId>
-  
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>1.10.0</version>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>

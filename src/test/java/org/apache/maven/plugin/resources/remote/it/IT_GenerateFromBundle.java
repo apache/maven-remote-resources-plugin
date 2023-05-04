@@ -44,5 +44,6 @@ public class IT_GenerateFromBundle extends AbstractIT {
         String content = FileUtils.fileRead(output);
 
         assertTrue(content.contains("Built-In:"));
+        assertTrue(content.contains("Dependency Id: org.apache.commons:commons-csv:1.10.0"));
     }
 }
