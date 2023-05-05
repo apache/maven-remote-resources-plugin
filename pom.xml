@@ -67,7 +67,7 @@ under the License.
     <javaVersion>8</javaVersion>
     <mavenVersion>3.2.5</mavenVersion>
     <!-- the same version like in Maven 3.2.5 -->
-    <aether.version>1.0.0.v20140518</aether.version>
+    <aether.version>1.1.0</aether.version>
     <project.build.outputTimestamp>2022-07-17T16:33:17Z</project.build.outputTimestamp>
 
     <!-- Used by site documentation as well, do not remove -->
