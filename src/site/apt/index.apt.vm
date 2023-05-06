@@ -45,6 +45,10 @@ ${project.name}
     remote resource bundles, processes them and makes them available to the
     <<<process-resources>>> phase.
 
+  * {{{./aggregate-mojo.html}remote-resources:aggregate}} retrieves the specified
+    remote resource bundles, processes them and makes them available to the
+    <<<process-resources>>> phase in aggregate mode.
+
   []
 
 * Usage

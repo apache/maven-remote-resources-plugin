@@ -25,7 +25,12 @@ under the License.
   <body>
     <menu name="Overview">
       <item name="Introduction" href="index.html"/>
-      <item name="Goals" href="plugin-info.html"/>
+      <item name="Goals" href="plugin-info.html" collapse="true">
+        <item name="remote-resources:aggregate" href="aggregate-mojo.html"/>
+        <item name="remote-resources:bundle" href="bundle-mojo.html"/>
+        <item name="remote-resources:process" href="process-mojo.html"/>
+        <item name="remote-resources:help" href="help-mojo.html"/>
+      </item>
       <item name="Usage" href="usage.html"/>
       <item name="FAQ" href="faq.html"/>
       <!-- According to https://issues.apache.org/jira/browse/MNGSITE-152 -->
