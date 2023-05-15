@@ -384,13 +384,13 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             return;
         }
 
-        if (StringUtils.isEmpty(encoding)) {
+        if (encoding == null || encoding.isEmpty()) {
             getLog().warn("File encoding has not been set, using platform encoding " + ReaderFactory.FILE_ENCODING
                     + ", i.e. build is platform dependent!");
         }
 
         if (resolveScopes == null) {
-            resolveScopes = new String[] {StringUtils.isEmpty(this.includeScope) ? JavaScopes.TEST : this.includeScope};
+            resolveScopes = new String[] {(this.includeScope == null || this.includeScope.isEmpty()) ? JavaScopes.TEST : this.includeScope};
         }
 
         if (supplementalModels == null) {
@@ -804,7 +804,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         String inceptionYear = project.getInceptionYear();
         String year = new SimpleDateFormat("yyyy").format((outputDate == null) ? new Date() : outputDate);
 
-        if (StringUtils.isEmpty(inceptionYear)) {
+        if (inceptionYear == null || inceptionYear.isEmpty()) {
             if (getLog().isDebugEnabled()) {
                 getLog().debug("inceptionYear not specified, defaulting to " + year);
             }
@@ -849,10 +849,10 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                 String g = s[0];
                 String a = s[1];
                 String v = s[2];
-                String type = (s.length >= 4 ? s[3] : "jar");
+                String type = s.length >= 4 ? s[3] : "jar";
                 ArtifactType artifactType =
                         RepositoryUtils.newArtifactType(type, artifactHandlerManager.getArtifactHandler(type));
-                String classifier = (s.length == 5 ? s[4] : artifactType.getClassifier());
+                String classifier = s.length == 5 ? s[4] : artifactType.getClassifier();
 
                 DefaultArtifact artifact =
                         new DefaultArtifact(g, a, classifier, artifactType.getExtension(), v, artifactType);

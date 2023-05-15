@@ -93,7 +93,7 @@ public class BundleRemoteResourcesMojo extends AbstractMojo {
             return;
         }
 
-        if (StringUtils.isEmpty(sourceEncoding)) {
+        if (sourceEncoding == null || sourceEncoding.isEmpty()) {
             getLog().warn("sourceEncoding has not been set, using platform encoding " + ReaderFactory.FILE_ENCODING
                     + ", i.e. build is platform dependent!");
             sourceEncoding = ReaderFactory.FILE_ENCODING;
