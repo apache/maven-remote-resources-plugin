@@ -390,7 +390,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         }
 
         if (resolveScopes == null) {
-            resolveScopes = new String[] {(this.includeScope == null || this.includeScope.isEmpty()) ? JavaScopes.TEST : this.includeScope};
+            resolveScopes = new String[] {
+                (this.includeScope == null || this.includeScope.isEmpty()) ? JavaScopes.TEST : this.includeScope};
         }
 
         if (supplementalModels == null) {
