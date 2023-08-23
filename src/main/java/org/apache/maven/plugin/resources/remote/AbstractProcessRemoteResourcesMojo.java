@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeMap;
 
 import org.apache.commons.io.output.DeferredFileOutputStream;
@@ -804,7 +805,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         Date outputDate = archiver.parseOutputTimestamp(outputTimestamp);
 
         String inceptionYear = project.getInceptionYear();
-        String year = new SimpleDateFormat("yyyy").format((outputDate == null) ? new Date() : outputDate);
+        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+        yearFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String year = yearFormat.format((outputDate == null) ? new Date() : outputDate);
 
         if (inceptionYear == null || inceptionYear.isEmpty()) {
             if (getLog().isDebugEnabled()) {
