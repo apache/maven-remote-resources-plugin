@@ -23,7 +23,7 @@ under the License.
   <parent>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-plugins</artifactId>
-    <version>39</version>
+    <version>40</version>
     <relativePath />
   </parent>
 
@@ -54,7 +54,7 @@ under the License.
   </issueManagement>
   <ciManagement>
     <system>Jenkins</system>
-    <url>https://ci-builds.apache.org/job/Maven/job/maven-box/job/maven-remote-resources-plugin/</url>
+    <url>https://ci-maven.apache.org/job/Maven/job/maven-box/job/maven-remote-resources-plugin/</url>
   </ciManagement>
   <distributionManagement>
     <site>
@@ -351,17 +351,6 @@ under the License.
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <artifactId>maven-plugin-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>generate-descriptor</id>
-            <goals>
-              <goal>descriptor</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 
@@ -410,25 +399,8 @@ under the License.
                       SUREFIRE-1385: Cannot set maven.repo.local directly because it might have been set by the user 
                       on the CLI directly (and it would be preferred)
                     -->
-                    <localRepositoryPath>${project.build.directory}/it-repo</localRepositoryPath>
+                    <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
                   </systemPropertyVariables>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <artifactId>maven-invoker-plugin</artifactId>
-            <!-- TODO remove with next parent -->
-            <version>3.5.1</version>
-            <executions>
-              <execution>
-                <id>install-descriptor</id>
-                <goals>
-                  <goal>install</goal>
-                </goals>
-                <phase>pre-integration-test</phase>
-                <configuration>
-                  <localRepositoryPath>${project.build.directory}/it-repo</localRepositoryPath>
                 </configuration>
               </execution>
             </executions>
