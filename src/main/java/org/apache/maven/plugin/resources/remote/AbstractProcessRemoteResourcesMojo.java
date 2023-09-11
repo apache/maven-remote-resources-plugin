@@ -35,12 +35,13 @@ import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -48,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.TreeMap;
 
 import org.apache.commons.io.output.DeferredFileOutputStream;
@@ -800,14 +800,13 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         context.put(KEY_PROJECTS_ORGS, null);
         // the following properties are cheap to calculate, so we provide them eagerly
 
-        // Reproducible Builds: try to use reproducible output timestamp
-        MavenArchiver archiver = new MavenArchiver();
-        Date outputDate = archiver.parseOutputTimestamp(outputTimestamp);
-
         String inceptionYear = project.getInceptionYear();
-        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
-        yearFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String year = yearFormat.format((outputDate == null) ? new Date() : outputDate);
+
+        // Reproducible Builds: try to use reproducible output timestamp
+        String year = MavenArchiver.parseBuildOutputTimestamp(outputTimestamp)
+                .orElseGet(Instant::now)
+                .atZone(ZoneId.of("UTC+10"))
+                .format(DateTimeFormatter.ofPattern("yyyy"));
 
         if (inceptionYear == null || inceptionYear.isEmpty()) {
             if (getLog().isDebugEnabled()) {
