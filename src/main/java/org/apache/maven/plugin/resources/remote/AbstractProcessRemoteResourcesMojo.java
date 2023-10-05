@@ -620,8 +620,10 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
             if (source.exists() && !source.equals(file)) {
                 if (source == templateSource) {
-                    try (DeferredFileOutputStream os =
-                            new DeferredFileOutputStream(velocityFilterInMemoryThreshold, file)) {
+                    try (DeferredFileOutputStream os = DeferredFileOutputStream.builder()
+                            .setThreshold(velocityFilterInMemoryThreshold)
+                            .setOutputFile(file)
+                            .get()) {
                         try (Reader reader = getReader(source);
                                 Writer writer = getWriter(os)) {
                             velocity.evaluate(context, writer, "", reader);
@@ -951,8 +953,10 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 if (!copyResourceIfExists(f, projectResource, context)) {
                     if (doVelocity) {
-                        try (DeferredFileOutputStream os =
-                                new DeferredFileOutputStream(velocityFilterInMemoryThreshold, f)) {
+                        try (DeferredFileOutputStream os = DeferredFileOutputStream.builder()
+                                .setThreshold(velocityFilterInMemoryThreshold)
+                                .setOutputFile(f)
+                                .get()) {
                             try (Writer writer = bundle.getSourceEncoding() == null
                                     ? new OutputStreamWriter(os)
                                     : new OutputStreamWriter(os, bundle.getSourceEncoding())) {
