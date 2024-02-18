@@ -51,13 +51,6 @@ public class TestUtils {
     public static Verifier newVerifier(File dir) throws VerificationException {
         Verifier verifier = new Verifier(dir.getAbsolutePath());
         verifier.setLocalRepo(System.getProperty("localRepositoryPath"));
-        verifier.getSystemProperties().setProperty("https.protocols", System.getProperty("https.protocols", "TLSv1.2"));
-
-        int javaVersion = Integer.getInteger("java.specification.version", 7);
-        if (javaVersion >= 12) {
-            verifier.setSystemProperty("maven.compiler.source", "7");
-            verifier.setSystemProperty("maven.compiler.target", "7");
-        }
         return verifier;
     }
 }
