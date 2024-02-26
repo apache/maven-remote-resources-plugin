@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.it;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,38 +16,34 @@ package org.apache.maven.plugin.resources.remote.it;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import static org.junit.Assert.assertTrue;
-
-import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
-import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.codehaus.plexus.util.FileUtils;
-import org.junit.Test;
+package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class IT_GenerateFromBundleWithTypeAndClassifier
-    extends AbstractIT
-{
+import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
+import org.apache.maven.shared.verifier.VerificationException;
+import org.apache.maven.shared.verifier.Verifier;
+import org.codehaus.plexus.util.FileUtils;
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
+
+public class IT_GenerateFromBundleWithTypeAndClassifier extends AbstractIT {
     @Test
-    public void test()
-        throws IOException, URISyntaxException, VerificationException
-    {
-        
-        File dir = TestUtils.getTestDir( "generate-from-bundle-with-type-and-classifier" );
-        Verifier verifier = TestUtils.newVerifier( dir );
-        
-        verifier.executeGoal( "generate-resources" );
+    public void test() throws IOException, URISyntaxException, VerificationException {
+
+        File dir = TestUtils.getTestDir("generate-from-bundle-with-type-and-classifier");
+        Verifier verifier = TestUtils.newVerifier(dir);
+
+        verifier.addCliArgument("generate-resources");
+        verifier.execute();
         verifier.verifyErrorFreeLog();
-        verifier.resetStreams();
-        
-        File output = new File( dir, "target/maven-shared-archive-resources/DEPENDENCIES" );
-        String content = FileUtils.fileRead( output );
-        
+
+        File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
+        String content = FileUtils.fileRead(output);
+
         assertTrue(content.contains("Built-In:"));
     }
-
 }

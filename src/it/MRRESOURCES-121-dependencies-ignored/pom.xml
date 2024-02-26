@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -17,33 +17,54 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  
-  <parent>
-    <groupId>org.apache.maven.plugin.rresource.it</groupId>
-    <artifactId>it-parent</artifactId>
-    <version>${project.version}</version>
-    <relativePath>../it-parent/pom.xml</relativePath>
-  </parent>
-  
-  <artifactId>generate-from-bundle-with-type-and-classifier</artifactId>
-  <packaging>pom</packaging>
-  
+  <groupId>org.apache.maven</groupId>
+  <artifactId>MRRESOURCES-121-dependencies-ignored</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <url>http://maven.apache.org</url>
+  <inceptionYear>2001</inceptionYear>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-cipher</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-api</artifactId>
+      <version>1.6.3</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-remote-resources-plugin</artifactId>
+        <version>@project.version@</version>
+<!--        <version>1.7.0</version>-->
         <executions>
           <execution>
-            <id>remote-resources</id>
+            <id>process-resource-bundles</id>
             <goals>
               <goal>process</goal>
             </goals>
             <configuration>
               <resourceBundles>
-                <resourceBundle>org.apache.maven.plugin.rresource.it:resource-bundle-with-type-and-classifier:${project.version}:jar:test</resourceBundle>
+                <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
               </resourceBundles>
             </configuration>
           </execution>
@@ -51,5 +72,4 @@ under the License.
       </plugin>
     </plugins>
   </build>
-  
 </project>

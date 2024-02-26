@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.it;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,16 +16,14 @@ package org.apache.maven.plugin.resources.remote.it;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote.it;
 
 import org.apache.maven.plugin.resources.remote.it.support.BootstrapInstaller;
 import org.junit.Before;
 
-public abstract class AbstractIT
-{
+public abstract class AbstractIT {
     @Before
-    public void setUp()
-        throws Exception
-    {
+    public void setUp() throws Exception {
         BootstrapInstaller.install();
     }
 }

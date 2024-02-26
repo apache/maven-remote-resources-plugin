@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.stub;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugin.resources.remote.stub;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote.stub;
 
 import java.io.File;
 import java.util.HashSet;
@@ -25,6 +24,8 @@ import java.util.LinkedList;
 import java.util.Properties;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.model.Profile;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.PlexusTestCase;
 import org.codehaus.plexus.util.FileUtils;
@@ -32,9 +33,7 @@ import org.codehaus.plexus.util.FileUtils;
 /**
  * Stub
  */
-public class MavenProjectBasicStub
-    extends MavenProject
-{
+public class MavenProjectBasicStub extends MavenProject {
     protected String identifier;
 
     protected String testRootDir;
@@ -49,11 +48,9 @@ public class MavenProjectBasicStub
 
     protected ArtifactStub artifact;
 
-    public MavenProjectBasicStub( String id )
-        throws Exception
-    {
+    public MavenProjectBasicStub(String id) throws Exception {
         // most values are hardcoded to have a controlled environment
-        super( new ModelStub() );
+        super(new ModelStub());
 
         modelStub = (ModelStub) getModel();
         properties = new Properties();
@@ -63,98 +60,91 @@ public class MavenProjectBasicStub
         // set isolated root directory
         testRootDir = PlexusTestCase.getBasedir() + "/target/test-classes/unit/test-dir/" + identifier;
 
-        if ( !FileUtils.fileExists( testRootDir ) )
-        {
-            FileUtils.mkdir( testRootDir );
+        if (!FileUtils.fileExists(testRootDir)) {
+            FileUtils.mkdir(testRootDir);
         }
 
-        artifact.populate( this );
+        artifact.populate(this);
 
-        // this is ugly but needed to ensure that the copy constructor 
+        // this is ugly but needed to ensure that the copy constructor
         // works correctly
         initializeParentFields();
     }
 
-    public String getName()
-    {
+    @Override
+    public String getName() {
         return "Test Project " + identifier;
     }
 
-    public void setDescription( String desc )
-    {
+    @Override
+    public void setDescription(String desc) {
         description = desc;
     }
 
-    public String getDescription()
-    {
-        if ( description == null )
-        {
+    @Override
+    public String getDescription() {
+        if (description == null) {
             return "this is a test project";
-        }
-        else
-        {
+        } else {
             return description;
         }
     }
 
-    public File getBasedir()
-    {
-        // create an isolated environment 
+    @Override
+    public File getBasedir() {
+        // create an isolated environment
         // see setupTestEnvironment for details
-        return new File( testRootDir );
+        return new File(testRootDir);
     }
 
-    public Artifact getArtifact()
-    {
+    @Override
+    public Artifact getArtifact() {
         return artifact;
     }
 
-    public String getGroupId()
-    {
+    @Override
+    public String getGroupId() {
         return "org.apache.maven.plugin.test";
     }
 
-    public String getArtifactId()
-    {
+    @Override
+    public String getArtifactId() {
         return "maven-resource-plugin-test#" + identifier;
     }
 
-    public String getPackaging()
-    {
+    @Override
+    public String getPackaging() {
         return "ejb";
     }
 
-    public String getVersion()
-    {
+    @Override
+    public String getVersion() {
         return identifier;
     }
 
-    public void addProperty( String key, String value )
-    {
-        properties.put( key, value );
+    public void addProperty(String key, String value) {
+        properties.put(key, value);
     }
 
-    public Properties getProperties()
-    {
+    @Override
+    public Properties getProperties() {
         return properties;
     }
 
     // to prevent the MavenProject copy constructor from blowing up
-    private void initializeParentFields()
-    {
-        // the pom should be located in the isolated dummy root         
-        super.setFile( new File( getBasedir(), "pom.xml" ) );
-        super.setDependencyArtifacts( new HashSet<Object>() );
-        super.setArtifacts( new HashSet<Object>() );
-        super.setPluginArtifacts( new HashSet<Object>() );
-        super.setReportArtifacts( new HashSet<Object>() );
-        super.setExtensionArtifacts( new HashSet<Object>() );
-        super.setRemoteArtifactRepositories( new LinkedList<Object>() );
-        super.setPluginArtifactRepositories( new LinkedList<Object>() );
-        super.setCollectedProjects( new LinkedList<Object>() );
-        super.setActiveProfiles( new LinkedList<Object>() );
-        super.setOriginalModel( null );
-        super.setExecutionProject( this );
-        super.setArtifact( artifact );
+    private void initializeParentFields() {
+        // the pom should be located in the isolated dummy root
+        super.setFile(new File(getBasedir(), "pom.xml"));
+        super.setDependencyArtifacts(new HashSet<Artifact>());
+        super.setArtifacts(new HashSet<Artifact>());
+        super.setReportArtifacts(new HashSet<Artifact>());
+        super.setExtensionArtifacts(new HashSet<Artifact>());
+        super.setRemoteArtifactRepositories(new LinkedList<ArtifactRepository>());
+        super.setPluginArtifactRepositories(new LinkedList<ArtifactRepository>());
+        super.setCollectedProjects(new LinkedList<MavenProject>());
+        super.setActiveProfiles(new LinkedList<Profile>());
+        super.setOriginalModel(null);
+        super.setExecutionProject(this);
+        super.setArtifact(artifact);
     }
 }

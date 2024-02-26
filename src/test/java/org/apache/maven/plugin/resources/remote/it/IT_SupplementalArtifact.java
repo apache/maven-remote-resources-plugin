@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.it;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,53 +16,51 @@ package org.apache.maven.plugin.resources.remote.it;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import static org.junit.Assert.assertTrue;
-
-import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
-import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.codehaus.plexus.util.FileUtils;
-import org.junit.Test;
+package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
+import org.apache.maven.shared.verifier.VerificationException;
+import org.apache.maven.shared.verifier.Verifier;
+import org.codehaus.plexus.util.FileUtils;
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author John Casey
  */
-public class IT_SupplementalArtifact
-    extends AbstractIT
-{
+public class IT_SupplementalArtifact extends AbstractIT {
     @Test
-    public void test()
-        throws IOException, URISyntaxException, VerificationException
-    {
-        File dir = TestUtils.getTestDir( "supplemental-artifact" );
-        File resources = new File( dir, "resource-projects" );
+    public void test() throws IOException, URISyntaxException, VerificationException {
+        File dir = TestUtils.getTestDir("supplemental-artifact");
+        File resources = new File(dir, "resource-projects");
 
         Verifier verifier;
 
-        verifier = TestUtils.newVerifier( resources );
-        
-        verifier.deleteArtifacts( "org.apache.maven.plugin.rresource.it.mrr43" );
+        verifier = TestUtils.newVerifier(resources);
 
-        verifier.executeGoal( "deploy" );
+        verifier.deleteArtifacts("org.apache.maven.plugin.rresource.it.mrr43");
+
+        verifier.addCliArgument("deploy");
+        verifier.execute();
         verifier.verifyErrorFreeLog();
-        verifier.resetStreams();
 
-        verifier = TestUtils.newVerifier( dir );
+        verifier = TestUtils.newVerifier(dir);
 
-        verifier.executeGoal( "generate-resources" );
+        verifier.addCliArgument("generate-resources");
+        verifier.execute();
         verifier.verifyErrorFreeLog();
-        verifier.resetStreams();
 
-        File output = new File( dir, "target/maven-shared-archive-resources/DEPENDENCIES" );
-        String content = FileUtils.fileRead( output );
+        File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
+        String content = FileUtils.fileRead(output);
 
         assertTrue(content.contains("From: 'Deficient Tooling, Inc.' (http://www.deficient-tools.us/)"));
-        assertTrue(content.contains("Deficient Dependency (http://www.deficient-tools.us/dep) org.apache.maven.plugin.rresource.it.mrr43:deficient-dep"));
+        assertTrue(
+                content.contains(
+                        "Deficient Dependency (http://www.deficient-tools.us/dep) org.apache.maven.plugin.rresource.it.mrr43:deficient-dep"));
     }
-
 }

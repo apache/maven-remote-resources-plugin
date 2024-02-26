@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.stub;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugin.resources.remote.stub;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote.stub;
 
 import java.util.Properties;
 
@@ -27,55 +26,49 @@ import org.apache.maven.model.Parent;
 /**
  * Stub
  */
-public class ModelStub
-    extends Model
-{
+public class ModelStub extends Model {
     private static final long serialVersionUID = 1L;
 
-    public ModelStub()
-    {
+    public ModelStub() {}
 
-    }
-
-    public String getVersion()
-    {
+    @Override
+    public String getVersion() {
         return "0.0-TEST";
     }
 
-    public String getModelVersion()
-    {
+    @Override
+    public String getModelVersion() {
         return "0.0-TEST";
     }
 
-    public String getName()
-    {
+    @Override
+    public String getName() {
         return "Test Model";
     }
 
-    public String getGroupId()
-    {
+    @Override
+    public String getGroupId() {
         return "org.apache.maven.test";
     }
 
-    public String getPackaging()
-    {
+    @Override
+    public String getPackaging() {
         return "jar";
     }
 
-    public Parent getParent()
-    {
-        //return new Parent();
+    @Override
+    public Parent getParent() {
+        // return new Parent();
         return null;
     }
 
-    public String getArtifactId()
-    {
+    @Override
+    public String getArtifactId() {
         return "maven-test-plugin";
     }
 
-    public Properties getProperties()
-    {
+    @Override
+    public Properties getProperties() {
         return new Properties();
     }
-
 }

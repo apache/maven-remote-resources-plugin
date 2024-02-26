@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.it.support;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,35 +16,30 @@ package org.apache.maven.plugin.resources.remote.it.support;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
+package org.apache.maven.plugin.resources.remote.it.support;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class BootstrapInstaller
-{
-    
+import org.apache.maven.shared.verifier.VerificationException;
+import org.apache.maven.shared.verifier.Verifier;
+
+public class BootstrapInstaller {
+
     private static boolean installed = false;
-    
-    public static void install()
-        throws IOException, URISyntaxException, VerificationException
-    {
-        if ( !installed )
-        {
-            File bootstrapDir = TestUtils.getTestDir( "bootstrap" );
-            
-            Verifier verifier = TestUtils.newVerifier( bootstrapDir );
-            
-            verifier.executeGoal( "deploy" );
-            
+
+    public static void install() throws IOException, URISyntaxException, VerificationException {
+        if (!installed) {
+            File bootstrapDir = TestUtils.getTestDir("bootstrap");
+
+            Verifier verifier = TestUtils.newVerifier(bootstrapDir);
+
+            verifier.addCliArgument("deploy");
+            verifier.execute();
             verifier.verifyErrorFreeLog();
-            verifier.resetStreams();
-            
+
             installed = true;
         }
     }
-
 }

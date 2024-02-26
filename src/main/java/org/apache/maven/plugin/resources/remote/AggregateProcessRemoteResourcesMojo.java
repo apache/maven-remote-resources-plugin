@@ -18,12 +18,14 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 
 /**
  * <p>
@@ -38,18 +40,27 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
  * Resources that don't end in ".vm" are copied "as is".
  */
 @Mojo(
-        name = "process",
+        name = "aggregate",
         defaultPhase = LifecyclePhase.GENERATE_RESOURCES,
+        aggregator = true,
         requiresDependencyResolution = ResolutionScope.TEST,
         threadSafe = true)
-public class ProcessRemoteResourcesMojo extends AbstractProcessRemoteResourcesMojo {
+public class AggregateProcessRemoteResourcesMojo extends AbstractProcessRemoteResourcesMojo {
     @Override
     protected Set<Artifact> getAllDependencies() {
-        return project.getArtifacts();
+        LinkedHashSet<Artifact> result = new LinkedHashSet<>();
+        for (MavenProject mavenProject : mavenSession.getProjects()) {
+            result.addAll(mavenProject.getArtifacts());
+        }
+        return result;
     }
 
     @Override
     protected Set<Artifact> getDirectDependencies() {
-        return project.getDependencyArtifacts();
+        LinkedHashSet<Artifact> result = new LinkedHashSet<>();
+        for (MavenProject mavenProject : mavenSession.getProjects()) {
+            result.addAll(mavenProject.getDependencyArtifacts());
+        }
+        return result;
     }
 }

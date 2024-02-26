@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.it;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,61 +16,42 @@ package org.apache.maven.plugin.resources.remote.it;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import static org.junit.Assert.assertTrue;
-
-import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
-import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.codehaus.plexus.util.FileUtils;
-import org.junit.Test;
+package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
+import org.apache.maven.shared.verifier.VerificationException;
+import org.apache.maven.shared.verifier.Verifier;
+import org.codehaus.plexus.util.FileUtils;
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author Benjamin Bentmann
  */
-public class IT_BadDependencyPoms
-    extends AbstractIT
-{
+public class IT_BadDependencyPoms extends AbstractIT {
     @Test
-    public void test()
-        throws IOException, URISyntaxException, VerificationException
-    {
-        File dir = TestUtils.getTestDir( "bad-dependency-poms" );
+    public void test() throws IOException, URISyntaxException, VerificationException {
+        File dir = TestUtils.getTestDir("bad-dependency-poms");
 
-        Verifier verifier = TestUtils.newVerifier( dir );
-        verifier.deleteArtifacts( "test" );
-        verifier.getSystemProperties().setProperty( "it.dir", dir.getAbsolutePath() );
-        
-        try
-        {
-            verifier.executeGoal( "generate-resources" );
-        }
-        catch ( VerificationException e )
-        {
-            verifier.resetStreams();
+        Verifier verifier = TestUtils.newVerifier(dir);
+        verifier.deleteArtifacts("test");
 
-            // We will get an exception from harness in case
-            // of execution failure (return code non zero).
-            // This is the case if we have missing artifacts
-            // as in this test case.
-            // This means we can't test the created file which will never
-            // contain the appropriate data we wan't to check for. 
-            // So the only reliable way is to check the log output 
-            // from maven which will print out message according to
-            // the missing artifacts.
+        verifier.addCliArgument("generate-resources");
+        verifier.execute();
 
-            File output = new File( dir, "log.txt" );
-            String content = FileUtils.fileRead( output );
-            
-            assertTrue(content.contains("mvn install:install-file -DgroupId=test -DartifactId=pom -Dversion=0.2 -Dpackaging=jar"));
-            assertTrue(content.contains("mvn install:install-file -DgroupId=test -DartifactId=missing -Dversion=0.1 -Dpackaging=jar"));
-            assertTrue(content.contains("mvn install:install-file -DgroupId=test -DartifactId=invalid -Dversion=0.1 -Dpackaging=jar"));
-        }
-        
+        verifier.verifyTextInLog(
+                "[WARNING] Invalid project model for artifact [test:missing:0.1]. It will be ignored by the remote resources Mojo.");
+        verifier.verifyTextInLog(
+                "[WARNING] Invalid project model for artifact [test:invalid:0.1]. It will be ignored by the remote resources Mojo");
+
+        File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
+        String content = FileUtils.fileRead(output);
+
+        assertTrue(content.contains("Dependency Id: test:pom:0.2"));
     }
-
 }

@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote.stub;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugin.resources.remote.stub;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote.stub;
 
 import java.io.File;
 import java.util.Collection;
@@ -34,13 +33,10 @@ import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.OverConstrainedVersionException;
 import org.apache.maven.artifact.versioning.VersionRange;
 
-
 /**
  * Stub
  */
-public class ArtifactStub
-    implements Artifact
-{
+public class ArtifactStub implements Artifact {
 
     boolean hasClassifier;
 
@@ -80,258 +76,231 @@ public class ArtifactStub
 
     VersionRange versionRange;
 
-
-    public ArtifactStub()
-    {
+    public ArtifactStub() {
         type = "testtype";
         scope = "testscope";
         classifier = "testclassifier";
         artifactHandler = new DefaultArtifactHandler();
     }
 
-    public void populate( MavenProjectBasicStub project )
-    {
+    public void populate(MavenProjectBasicStub project) {
         groupId = project.getGroupId();
         artifactId = project.getArtifactId();
         version = project.getVersion();
-        versionRange = VersionRange.createFromVersion( version );
+        versionRange = VersionRange.createFromVersion(version);
     }
 
-    public boolean hasClassifier()
-    {
+    @Override
+    public boolean hasClassifier() {
         return true;
     }
 
-    public String getBaseVersion()
-    {
+    @Override
+    public String getBaseVersion() {
         return "Test Version";
     }
 
-    public void setBaseVersion( String version )
-    {
+    @Override
+    public void setBaseVersion(String version) {
         baseVersion = version;
     }
 
-    public void setFile( File _file )
-    {
+    @Override
+    public void setFile(File _file) {
         file = _file;
     }
 
-    public File getFile()
-    {
-        return new File( "testfile" );
+    @Override
+    public File getFile() {
+        return new File("testfile");
     }
 
-    public String getGroupId()
-    {
+    @Override
+    public String getGroupId() {
         return groupId;
     }
 
-    public String getArtifactId()
-    {
+    @Override
+    public String getArtifactId() {
         return artifactId;
     }
 
-    public String getVersion()
-    {
+    @Override
+    public String getVersion() {
         return version;
     }
 
-    public void setVersion( String _version )
-    {
+    @Override
+    public void setVersion(String _version) {
         version = _version;
     }
 
-    public String getScope()
-    {
+    @Override
+    public String getScope() {
         return scope;
     }
 
-    public String getType()
-    {
+    @Override
+    public String getType() {
         return type;
     }
 
-    public String getClassifier()
-    {
+    @Override
+    public String getClassifier() {
         return classifier;
     }
 
-    public String getId()
-    {
+    @Override
+    public String getId() {
         return identifier;
     }
 
-    public String getDependencyConflictId()
-    {
+    @Override
+    public String getDependencyConflictId() {
         return dependencyConflictId;
     }
 
-    public void addMetadata( ArtifactMetadata metadata )
-    {
+    @Override
+    public void addMetadata(ArtifactMetadata metadata) {}
 
+    @Override
+    public Collection<ArtifactMetadata> getMetadataList() {
+        return new LinkedList<>();
     }
 
-    public Collection<ArtifactMetadata> getMetadataList()
-    {
-        return new LinkedList<ArtifactMetadata>();
-    }
+    @Override
+    public void setRepository(ArtifactRepository remoteRepository) {}
 
-    public void setRepository( ArtifactRepository remoteRepository )
-    {
-
-    }
-
-    public ArtifactRepository getRepository()
-    {
+    @Override
+    public ArtifactRepository getRepository() {
         return null;
     }
 
-    public void updateVersion( String version, ArtifactRepository localRepository )
-    {
+    @Override
+    public void updateVersion(String version, ArtifactRepository localRepository) {}
 
-    }
-
-    public String getDownloadUrl()
-    {
+    @Override
+    public String getDownloadUrl() {
         return downloadUrl;
     }
 
-    public void setDownloadUrl( String _downloadUrl )
-    {
+    @Override
+    public void setDownloadUrl(String _downloadUrl) {
         downloadUrl = _downloadUrl;
     }
 
-    public ArtifactFilter getDependencyFilter()
-    {
+    @Override
+    public ArtifactFilter getDependencyFilter() {
         return null;
     }
 
-    public void setDependencyFilter( ArtifactFilter artifactFilter )
-    {
+    @Override
+    public void setDependencyFilter(ArtifactFilter artifactFilter) {}
 
-    }
-
-    public ArtifactHandler getArtifactHandler()
-    {
+    @Override
+    public ArtifactHandler getArtifactHandler() {
         return artifactHandler;
     }
 
-    public List<String> getDependencyTrail()
-    {
-        return new LinkedList<String>();
+    @Override
+    public List<String> getDependencyTrail() {
+        return new LinkedList<>();
     }
 
-    public void setDependencyTrail(List<String> dependencyTrail)
-    {
+    @Override
+    public void setDependencyTrail(List<String> dependencyTrail) {}
 
-    }
-
-    public void setScope( String _scope )
-    {
+    @Override
+    public void setScope(String _scope) {
         scope = _scope;
     }
 
-    public VersionRange getVersionRange()
-    {
+    @Override
+    public VersionRange getVersionRange() {
         return versionRange;
     }
 
-    public void setVersionRange( VersionRange newRange )
-    {
+    @Override
+    public void setVersionRange(VersionRange newRange) {}
 
-    }
-
-    public void selectVersion( String version )
-    {
+    @Override
+    public void selectVersion(String version) {
         selectedVersion = version;
     }
 
-    public void setGroupId( String _groupId )
-    {
+    @Override
+    public void setGroupId(String _groupId) {
         groupId = _groupId;
     }
 
-    public void setArtifactId( String _artifactId )
-    {
+    @Override
+    public void setArtifactId(String _artifactId) {
         artifactId = _artifactId;
     }
 
-    public boolean isSnapshot()
-    {
+    @Override
+    public boolean isSnapshot() {
         return true;
     }
 
-    public void setResolved( boolean _resolved )
-    {
+    @Override
+    public void setResolved(boolean _resolved) {
         resolved = _resolved;
     }
 
-    public boolean isResolved()
-    {
+    @Override
+    public boolean isResolved() {
         return true;
     }
 
-    public void setResolvedVersion( String version )
-    {
+    @Override
+    public void setResolvedVersion(String version) {
         resolvedVersion = version;
     }
 
+    @Override
+    public void setArtifactHandler(ArtifactHandler handler) {}
 
-    public void setArtifactHandler( ArtifactHandler handler )
-    {
-
-    }
-
-    public boolean isRelease()
-    {
+    @Override
+    public boolean isRelease() {
         return true;
     }
 
-    public void setRelease( boolean _release )
-    {
+    @Override
+    public void setRelease(boolean _release) {
         release = _release;
     }
 
-    public List<ArtifactVersion> getAvailableVersions()
-    {
-        return new LinkedList<ArtifactVersion>();
+    @Override
+    public List<ArtifactVersion> getAvailableVersions() {
+        return new LinkedList<>();
     }
 
-    public void setAvailableVersions(List<ArtifactVersion> versions)
-    {
+    @Override
+    public void setAvailableVersions(List<ArtifactVersion> versions) {}
 
-    }
-
-    public boolean isOptional()
-    {
+    @Override
+    public boolean isOptional() {
         return true;
     }
 
-    public void setOptional( boolean _optional )
-    {
+    @Override
+    public void setOptional(boolean _optional) {
         optional = _optional;
     }
 
-    public ArtifactVersion getSelectedVersion()
-        throws OverConstrainedVersionException
-    {
+    @Override
+    public ArtifactVersion getSelectedVersion() throws OverConstrainedVersionException {
         return null;
     }
 
-    public boolean isSelectedVersionKnown()
-        throws OverConstrainedVersionException
-    {
+    @Override
+    public boolean isSelectedVersionKnown() throws OverConstrainedVersionException {
         return true;
     }
 
+    @Override
     public int compareTo(Artifact o) {
         return 0;
     }
-
-    public ArtifactMetadata getMetadata(Class<?> metadataClass) {
-        return null;
-    }
-
-
 }

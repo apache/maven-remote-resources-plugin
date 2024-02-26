@@ -1,5 +1,3 @@
-package org.apache.maven.plugin.resources.remote;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,14 @@ package org.apache.maven.plugin.resources.remote;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugin.resources.remote;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -27,40 +33,31 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.codehaus.plexus.util.FileUtils;
-import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.StringUtils;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Bundle up resources that should be considered as a remote-resource,
  * generating <code>META-INF/maven/remote-resources.xml</code> descriptor.
  */
-@Mojo( name = "bundle", defaultPhase = LifecyclePhase.GENERATE_RESOURCES, threadSafe = true )
-public class BundleRemoteResourcesMojo
-    extends AbstractMojo
-{
+@Mojo(name = "bundle", defaultPhase = LifecyclePhase.GENERATE_RESOURCES, threadSafe = true)
+public class BundleRemoteResourcesMojo extends AbstractMojo {
     public static final String RESOURCES_MANIFEST = "META-INF/maven/remote-resources.xml";
 
-    private static final String[] DEFAULT_INCLUDES = new String[]{ "**/*.txt", "**/*.vm", };
-
+    private static final String[] DEFAULT_INCLUDES = new String[] {
+        "**/*.txt", "**/*.vm",
+    };
 
     /**
      * The directory which contains the resources you want packaged up in this resource bundle.
      */
-    @Parameter( defaultValue = "${basedir}/src/main/resources" )
+    @Parameter(defaultValue = "${basedir}/src/main/resources")
     private File resourcesDirectory;
 
     /**
      * The directory where you want the resource bundle manifest written to.
      */
-    @Parameter( defaultValue = "${project.build.outputDirectory}", required = true )
+    @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
     private File outputDirectory;
 
     /**
@@ -86,22 +83,19 @@ public class BundleRemoteResourcesMojo
      *
      * @since 1.1
      */
-    @Parameter( defaultValue = "${project.build.sourceEncoding}" )
+    @Parameter(defaultValue = "${project.build.sourceEncoding}")
     private String sourceEncoding;
 
-    public void execute()
-        throws MojoExecutionException
-    {
-        if ( !resourcesDirectory.exists() )
-        {
-            getLog().info( "skip non existing resourceDirectory " + resourcesDirectory.getAbsolutePath() );
+    @Override
+    public void execute() throws MojoExecutionException {
+        if (!resourcesDirectory.exists()) {
+            getLog().info("skip non existing resourceDirectory " + resourcesDirectory.getAbsolutePath());
             return;
         }
 
-        if ( StringUtils.isEmpty( sourceEncoding ) )
-        {
-            getLog().warn( "sourceEncoding has not been set, using platform encoding " + ReaderFactory.FILE_ENCODING
-                               + ", i.e. build is platform dependent!" );
+        if (sourceEncoding == null || sourceEncoding.isEmpty()) {
+            getLog().warn("sourceEncoding has not been set, using platform encoding " + ReaderFactory.FILE_ENCODING
+                    + ", i.e. build is platform dependent!");
             sourceEncoding = ReaderFactory.FILE_ENCODING;
         }
 
@@ -109,63 +103,43 @@ public class BundleRemoteResourcesMojo
         // so that velocity can easily process any resources inside the JAR that need to be processed.
 
         RemoteResourcesBundle remoteResourcesBundle = new RemoteResourcesBundle();
-        remoteResourcesBundle.setSourceEncoding( sourceEncoding );
+        remoteResourcesBundle.setSourceEncoding(sourceEncoding);
 
         DirectoryScanner scanner = new DirectoryScanner();
 
-        scanner.setBasedir( resourcesDirectory );
-        if ( includes != null && includes.length != 0 )
-        {
-            scanner.setIncludes( includes );
-        }
-        else
-        {
-            scanner.setIncludes( DEFAULT_INCLUDES );
+        scanner.setBasedir(resourcesDirectory);
+        if (includes != null && includes.length != 0) {
+            scanner.setIncludes(includes);
+        } else {
+            scanner.setIncludes(DEFAULT_INCLUDES);
         }
 
-        if ( excludes != null && excludes.length != 0 )
-        {
-            scanner.setExcludes( excludes );
+        if (excludes != null && excludes.length != 0) {
+            scanner.setExcludes(excludes);
         }
 
         scanner.addDefaultExcludes();
         scanner.scan();
 
-        List<String> includedFiles = Arrays.asList( scanner.getIncludedFiles() );
+        List<String> includedFiles = Arrays.asList(scanner.getIncludedFiles());
 
-        for ( String resource : includedFiles )
-        {
-            remoteResourcesBundle.addRemoteResource( StringUtils.replace( resource, '\\', '/' ) );
+        for (String resource : includedFiles) {
+            remoteResourcesBundle.addRemoteResource(StringUtils.replace(resource, '\\', '/'));
         }
 
         int n = remoteResourcesBundle.getRemoteResources().size();
-        getLog().info( "Writing " + RESOURCES_MANIFEST + " descriptor with " + n + " entr"
-            + ( ( n > 1 ) ? "ies" : "y" ) );
+        getLog().info("Writing " + RESOURCES_MANIFEST + " descriptor with " + n + " entr" + ((n > 1) ? "ies" : "y"));
 
         RemoteResourcesBundleXpp3Writer w = new RemoteResourcesBundleXpp3Writer();
 
-        Writer writer = null;
-        try
-        {
-            File f = new File( outputDirectory, RESOURCES_MANIFEST );
+        File f = new File(outputDirectory, RESOURCES_MANIFEST);
 
-            FileUtils.mkdir( f.getParentFile()
-                              .getAbsolutePath() );
+        FileUtils.mkdir(f.getParentFile().getAbsolutePath());
 
-            writer = new FileWriter( f );
-
-            w.write( writer, remoteResourcesBundle );
-
-            writer.close();
-            writer = null;
-        }
-        catch ( IOException e )
-        {
-            throw new MojoExecutionException( "Error creating remote resources manifest.", e );
-        }
-        finally
-        {
-            IOUtil.close( writer );
+        try (Writer writer = new FileWriter(f)) {
+            w.write(writer, remoteResourcesBundle);
+        } catch (IOException e) {
+            throw new MojoExecutionException("Error creating remote resources manifest.", e);
         }
     }
 }

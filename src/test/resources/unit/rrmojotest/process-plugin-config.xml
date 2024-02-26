@@ -24,8 +24,8 @@ under the License.
       <plugin>
         <artifactId>maven-remote-resources-plugin</artifactId>
         <configuration>
-          <localRepository>${localRepository}</localRepository>
           <encoding>UTF-8</encoding>
+          <outputTimestamp>2019-01-01T00:00:00Z</outputTimestamp>
         </configuration>
       </plugin>
     </plugins>
