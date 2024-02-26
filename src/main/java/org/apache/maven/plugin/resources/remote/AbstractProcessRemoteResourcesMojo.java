@@ -78,6 +78,7 @@ import org.apache.maven.shared.artifact.filter.collection.FilterArtifacts;
 import org.apache.maven.shared.artifact.filter.collection.GroupIdFilter;
 import org.apache.maven.shared.artifact.filter.collection.ProjectTransitivityFilter;
 import org.apache.maven.shared.artifact.filter.collection.ScopeFilter;
+import org.apache.maven.shared.filtering.FilteringUtils;
 import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenFileFilterRequest;
 import org.apache.maven.shared.filtering.MavenFilteringException;
@@ -639,7 +640,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                         throw new MojoExecutionException("Error filtering resource: " + source, e);
                     }
                 } else {
-                    FileUtils.copyFile(source, file);
+                    FilteringUtils.copyFile(source, file, null, null);
                 }
 
                 // exclude the original (so eclipse doesn't complain about duplicate resources)
