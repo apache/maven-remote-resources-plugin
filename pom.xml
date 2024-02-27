@@ -67,7 +67,7 @@ under the License.
     <javaVersion>8</javaVersion>
     <mavenVersion>3.6.3</mavenVersion>
     <!-- the same version like in Maven 3.6.3 -->
-    <resolverVersion>1.4.1</resolverVersion>
+    <resolverVersion>1.9.18</resolverVersion>
     <project.build.outputTimestamp>2024-02-26T21:22:56Z</project.build.outputTimestamp>
 
     <!-- Used by site documentation as well, do not remove -->
