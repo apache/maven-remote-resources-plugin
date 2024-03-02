@@ -71,7 +71,7 @@ under the License.
     <project.build.outputTimestamp>2024-02-26T21:22:56Z</project.build.outputTimestamp>
 
     <!-- Used by site documentation as well, do not remove -->
-    <mavenFilteringVersion>3.3.1</mavenFilteringVersion>
+    <mavenFilteringVersion>3.3.2</mavenFilteringVersion>
   </properties>
 
   <dependencyManagement>
@@ -171,11 +171,6 @@ under the License.
     </dependency>
 
     <!-- other -->
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.15.1</version>
-    </dependency>
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity-engine-core</artifactId>

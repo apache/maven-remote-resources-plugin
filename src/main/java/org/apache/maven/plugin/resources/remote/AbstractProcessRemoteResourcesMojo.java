@@ -18,7 +18,6 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -51,7 +50,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.commons.io.output.DeferredFileOutputStream;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.archiver.MavenArchiver;
 import org.apache.maven.artifact.Artifact;
@@ -80,6 +78,7 @@ import org.apache.maven.shared.artifact.filter.collection.FilterArtifacts;
 import org.apache.maven.shared.artifact.filter.collection.GroupIdFilter;
 import org.apache.maven.shared.artifact.filter.collection.ProjectTransitivityFilter;
 import org.apache.maven.shared.artifact.filter.collection.ScopeFilter;
+import org.apache.maven.shared.filtering.FilteringUtils;
 import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenFileFilterRequest;
 import org.apache.maven.shared.filtering.MavenFilteringException;
@@ -98,6 +97,7 @@ import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.WriterFactory;
+import org.codehaus.plexus.util.io.CachingOutputStream;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.aether.RepositorySystem;
@@ -255,8 +255,10 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
      * to eliminate unnecessary destination file overwrite. This improves build times since further build steps
      * typically rely on the modification date.
      *
+     * @deprecated not used anymore
      * @since 1.6
      */
+    @Deprecated
     @Parameter(defaultValue = "5242880")
     protected int velocityFilterInMemoryThreshold = 5 * 1024 * 1024;
 
@@ -620,17 +622,13 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
             if (source.exists() && !source.equals(file)) {
                 if (source == templateSource) {
-                    try (DeferredFileOutputStream os = DeferredFileOutputStream.builder()
-                            .setThreshold(velocityFilterInMemoryThreshold)
-                            .setOutputFile(file)
-                            .get()) {
+                    try (CachingOutputStream os = new CachingOutputStream(file)) {
                         try (Reader reader = getReader(source);
                                 Writer writer = getWriter(os)) {
                             velocity.evaluate(context, writer, "", reader);
                         } catch (ParseErrorException | MethodInvocationException | ResourceNotFoundException e) {
                             throw new MojoExecutionException("Error rendering velocity resource: " + source, e);
                         }
-                        fileWriteIfDiffers(os);
                     }
                 } else if (resource.isFiltering()) {
 
@@ -642,7 +640,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                         throw new MojoExecutionException("Error filtering resource: " + source, e);
                     }
                 } else {
-                    FileUtils.copyFile(source, file);
+                    FilteringUtils.copyFile(source, file, null, null);
                 }
 
                 // exclude the original (so eclipse doesn't complain about duplicate resources)
@@ -667,47 +665,6 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             return new OutputStreamWriter(os, encoding);
         } else {
             return WriterFactory.newPlatformWriter(os);
-        }
-    }
-
-    /**
-     * If the transformation result fits in memory and the destination file already exists
-     * then both are compared.
-     * <p>If destination file is byte-by-byte equal, then it is not overwritten.
-     * This improves subsequent compilation times since upstream plugins property see that
-     * the resource was not modified.
-     * <p>Note: the method should be called after {@link DeferredFileOutputStream#close}
-     *
-     * @param outStream Deferred stream
-     * @throws IOException On IO error.
-     */
-    private void fileWriteIfDiffers(DeferredFileOutputStream outStream) throws IOException {
-        File file = outStream.getFile();
-        if (outStream.isThresholdExceeded()) {
-            getLog().info("File " + file + " was overwritten due to content limit threshold " + outStream.getThreshold()
-                    + " reached");
-            return;
-        }
-        boolean needOverwrite = true;
-
-        if (file.exists()) {
-            try (InputStream is = Files.newInputStream(file.toPath());
-                    InputStream newContents = new ByteArrayInputStream(outStream.getData())) {
-                needOverwrite = !IOUtil.contentEquals(is, newContents);
-                if (getLog().isDebugEnabled()) {
-                    getLog().debug("File " + file + " contents " + (needOverwrite ? "differs" : "does not differ"));
-                }
-            }
-        }
-
-        if (!needOverwrite) {
-            getLog().debug("File " + file + " is up to date");
-            return;
-        }
-        getLog().debug("Writing " + file);
-
-        try (OutputStream os = Files.newOutputStream(file.toPath())) {
-            outStream.writeTo(os);
         }
     }
 
@@ -953,10 +910,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 if (!copyResourceIfExists(f, projectResource, context)) {
                     if (doVelocity) {
-                        try (DeferredFileOutputStream os = DeferredFileOutputStream.builder()
-                                .setThreshold(velocityFilterInMemoryThreshold)
-                                .setOutputFile(f)
-                                .get()) {
+                        try (CachingOutputStream os = new CachingOutputStream(f)) {
                             try (Writer writer = bundle.getSourceEncoding() == null
                                     ? new OutputStreamWriter(os)
                                     : new OutputStreamWriter(os, bundle.getSourceEncoding())) {
@@ -968,7 +922,6 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                                     velocity.mergeTemplate(bundleResource, bundle.getSourceEncoding(), context, writer);
                                 }
                             }
-                            fileWriteIfDiffers(os);
                         }
                     } else {
                         URL resUrl = classLoader.getResource(bundleResource);
