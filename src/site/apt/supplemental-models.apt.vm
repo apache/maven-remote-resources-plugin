@@ -25,8 +25,6 @@
 
 Supplementing Missing POM Information
 
-  <<Note:>> This feature was added in version 1.0-alpha-5.
-
  One of Maven's great strengths is that it allows you, the user, to build directly on the work of
  others with minimal effort. For instance, by adding five lines (or less) to your POM, you can 
  declare a dependency on someone else's library, and instruct Maven to use that library during
@@ -44,8 +42,7 @@ Supplementing Missing POM Information
  website. When dependency POMs are missing this information, the dependency notice file
  that the Remote Resources Plugin renders can be invalid.
  
- To compensate for incomplete dependency POMs, you can use the supplemental models support, introduced 
- to the Remote Resources Plugin in version 1.0-alpha-5, and improved in version 1.1.
+ To compensate for incomplete dependency POMs, you can use the supplemental models support.
 
 
 * Fixing Incomplete POMs: Using Supplemental Models
@@ -146,14 +143,12 @@ From: Apache Software Foundation (http://www.apache.org/)
 
 * Publishing and Reusing Supplemental Models
 
-  <<Note:>> This feature was added in version 1.1.
-
  The configuration above is fine for single projects that need to address deficiencies in their dependencies'
  metadata. But what happens when your organization wants to use these same deficient dependencies across multiple
  projects? The configuration we just examined cannot handle reuse of supplemental-model files.
  
- To address this shortcoming, version 1.1 of the Remote Resources Plugin introduces a new parameter: 
- <<<supplementalModelArtifacts>>>. When combined with the <<<supplementalModels>>> parameter used above, this new
+ To address this shortcoming, the Remote Resources Plugin includes the
+ <<<supplementalModelArtifacts>>> parameter. When combined with the <<<supplementalModels>>> parameter used above, this
  parameter allows the Remote Resources Plugin to resolve artifacts containing supplemental model information, then
  search those artifacts for the paths given in the <<<supplementalModels>>> listing.
  
