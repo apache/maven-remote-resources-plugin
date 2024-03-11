@@ -64,7 +64,7 @@ under the License.
                     <licenses>
                       <license>
                         <name>COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0</name>
-                        <url>http://www.sun.com/cddl/cddl.html</url>
+                        <url>https://oss.oracle.com/licenses/CDDL</url>
                       </license>
                     </licenses>
                   </project>
