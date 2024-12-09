@@ -169,12 +169,24 @@ under the License.
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-xml</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.eclipse.sisu</groupId>
+      <artifactId>org.eclipse.sisu.plexus</artifactId>
+      <version>0.9.0.M2</version>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- other -->
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity-engine-core</artifactId>
       <version>2.3</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <version>1</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- test -->
