@@ -18,14 +18,21 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
+import javax.inject.Inject;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.shared.filtering.MavenFileFilter;
+import org.codehaus.plexus.resource.ResourceManager;
+import org.eclipse.aether.RepositorySystem;
 
 /**
  * <p>
@@ -46,6 +53,17 @@ import org.apache.maven.project.MavenProject;
         requiresDependencyResolution = ResolutionScope.TEST,
         threadSafe = true)
 public class AggregateProcessRemoteResourcesMojo extends AbstractProcessRemoteResourcesMojo {
+
+    @Inject
+    public AggregateProcessRemoteResourcesMojo(
+            RepositorySystem repoSystem,
+            MavenFileFilter fileFilter,
+            ResourceManager locator,
+            ProjectBuilder projectBuilder,
+            ArtifactHandlerManager artifactHandlerManager) {
+        super(repoSystem, fileFilter, locator, projectBuilder, artifactHandlerManager);
+    }
+
     @Override
     protected Set<Artifact> getAllDependencies() {
         LinkedHashSet<Artifact> result = new LinkedHashSet<>();

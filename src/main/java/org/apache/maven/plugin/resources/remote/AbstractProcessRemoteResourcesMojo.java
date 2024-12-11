@@ -64,7 +64,6 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.resources.remote.io.xpp3.RemoteResourcesBundleXpp3Reader;
 import org.apache.maven.plugin.resources.remote.io.xpp3.SupplementalDataModelXpp3Reader;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
@@ -349,24 +348,6 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.outputTimestamp}")
     private String outputTimestamp;
 
-    @Component
-    protected RepositorySystem repoSystem;
-
-    /**
-     * Filtering support, for local resources that override those in the remote bundle.
-     */
-    @Component
-    private MavenFileFilter fileFilter;
-
-    @Component
-    private ResourceManager locator;
-
-    @Component
-    private ProjectBuilder projectBuilder;
-
-    @Component
-    private ArtifactHandlerManager artifactHandlerManager;
-
     /**
      * Map of artifacts to supplemental project object models.
      */
@@ -379,6 +360,32 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     private final ModelInheritanceAssembler inheritanceAssembler = new ModelInheritanceAssembler();
 
     private VelocityEngine velocity;
+
+    protected final RepositorySystem repoSystem;
+
+    /**
+     * Filtering support, for local resources that override those in the remote bundle.
+     */
+    private final MavenFileFilter fileFilter;
+
+    private final ResourceManager locator;
+
+    private final ProjectBuilder projectBuilder;
+
+    private final ArtifactHandlerManager artifactHandlerManager;
+
+    protected AbstractProcessRemoteResourcesMojo(
+            RepositorySystem repoSystem,
+            MavenFileFilter fileFilter,
+            ResourceManager locator,
+            ProjectBuilder projectBuilder,
+            ArtifactHandlerManager artifactHandlerManager) {
+        this.repoSystem = repoSystem;
+        this.fileFilter = fileFilter;
+        this.locator = locator;
+        this.projectBuilder = projectBuilder;
+        this.artifactHandlerManager = artifactHandlerManager;
+    }
 
     @Override
     public void execute() throws MojoExecutionException {
