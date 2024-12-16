@@ -74,6 +74,17 @@ under the License.
     <mavenFilteringVersion>3.4.0</mavenFilteringVersion>
   </properties>
 
+  <dependencyManagement>
+    <!-- manage transitive dependencies -->
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>3.17.0</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- maven core -->
     <dependency>
