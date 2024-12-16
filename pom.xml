@@ -23,7 +23,7 @@ under the License.
   <parent>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-plugins</artifactId>
-    <version>41</version>
+    <version>43</version>
     <relativePath />
   </parent>
 
@@ -73,21 +73,6 @@ under the License.
     <!-- Used by site documentation as well, do not remove -->
     <mavenFilteringVersion>3.3.2</mavenFilteringVersion>
   </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-utils</artifactId>
-        <version>4.0.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-xml</artifactId>
-        <version>3.0.0</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <dependencies>
     <!-- maven core -->
@@ -245,44 +230,6 @@ under the License.
               <exclude>src/test/resources/ISO-8859-1.bin.vm</exclude>
               <exclude>src/test/resources/UTF-8.bin.vm</exclude>
             </excludes>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-plugin-report-plugin</artifactId>
-          <configuration>
-            <requirementsHistories>
-              <requirementsHistory>
-                <version>3.2.0</version>
-                <maven>3.6.3</maven>
-                <jdk>1.8</jdk>
-              </requirementsHistory>
-              <requirementsHistory>
-                <version>3.1.0</version>
-                <maven>3.2.5</maven>
-                <jdk>1.8</jdk>
-              </requirementsHistory>
-              <requirementsHistory>
-                <version>3.0.0</version>
-                <maven>3.2.5</maven>
-                <jdk>1.7</jdk>
-              </requirementsHistory>
-              <requirementsHistory>
-                <version>1.7.0</version>
-                <maven>2.2.1</maven>
-                <jdk>1.7</jdk>
-              </requirementsHistory>
-              <requirementsHistory>
-                <version>1.6.0</version>
-                <maven>2.2.1</maven>
-                <jdk>1.6</jdk>
-              </requirementsHistory>
-              <requirementsHistory>
-                <version>1.5</version>
-                <maven>2.2.1</maven>
-                <jdk>1.5</jdk>
-              </requirementsHistory>
-            </requirementsHistories>
           </configuration>
         </plugin>
       </plugins>
