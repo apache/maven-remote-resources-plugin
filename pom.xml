@@ -71,7 +71,7 @@ under the License.
     <project.build.outputTimestamp>2024-03-02T09:21:48Z</project.build.outputTimestamp>
 
     <!-- Used by site documentation as well, do not remove -->
-    <mavenFilteringVersion>3.3.2</mavenFilteringVersion>
+    <mavenFilteringVersion>3.4.0</mavenFilteringVersion>
   </properties>
 
   <dependencies>
