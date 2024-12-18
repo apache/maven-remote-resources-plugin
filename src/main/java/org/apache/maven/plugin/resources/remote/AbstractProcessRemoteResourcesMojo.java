@@ -24,7 +24,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -33,6 +32,7 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -93,9 +93,7 @@ import org.codehaus.plexus.resource.ResourceManager;
 import org.codehaus.plexus.resource.loader.FileResourceLoader;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.StringUtils;
-import org.codehaus.plexus.util.WriterFactory;
 import org.codehaus.plexus.util.io.CachingOutputStream;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
@@ -399,8 +397,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         }
 
         if (encoding == null || encoding.isEmpty()) {
-            getLog().warn("File encoding has not been set, using platform encoding " + ReaderFactory.FILE_ENCODING
+            getLog().warn("File encoding has not been set, using platform encoding " + Charset.defaultCharset()
                     + ", i.e. build is platform dependent!");
+            encoding = Charset.defaultCharset().name();
         }
 
         if (resolveScopes == null) {
@@ -507,8 +506,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         // add filters in well known order, least specific to most specific
         FilterArtifacts filter = new FilterArtifacts();
 
-        Set<Artifact> artifacts = new LinkedHashSet<>();
-        artifacts.addAll(getAllDependencies());
+        Set<Artifact> artifacts = new LinkedHashSet<>(getAllDependencies());
         if (this.excludeTransitive) {
             filter.addFilter(new ProjectTransitivityFilter(getDirectDependencies(), true));
         }
@@ -657,19 +655,11 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     }
 
     private Reader getReader(File source) throws IOException {
-        if (encoding != null) {
-            return new InputStreamReader(Files.newInputStream(source.toPath()), encoding);
-        } else {
-            return ReaderFactory.newPlatformReader(source);
-        }
+        return Files.newBufferedReader(source.toPath(), Charset.forName(encoding));
     }
 
     private Writer getWriter(OutputStream os) throws IOException {
-        if (encoding != null) {
-            return new OutputStreamWriter(os, encoding);
-        } else {
-            return WriterFactory.newPlatformWriter(os);
-        }
+        return new OutputStreamWriter(os, encoding);
     }
 
     private MavenFileFilterRequest setupRequest(Resource resource, File source, File file) {
@@ -682,9 +672,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         req.setMavenSession(mavenSession);
         req.setInjectProjectBuildFilters(true);
 
-        if (encoding != null) {
-            req.setEncoding(encoding);
-        }
+        req.setEncoding(encoding);
 
         if (filterDelimiters != null && !filterDelimiters.isEmpty()) {
             LinkedHashSet<String> delims = new LinkedHashSet<>();
@@ -925,16 +913,12 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                 if (!copyResourceIfExists(f, projectResource, context)) {
                     if (doVelocity) {
                         try (CachingOutputStream os = new CachingOutputStream(f)) {
-                            try (Writer writer = bundle.getSourceEncoding() == null
-                                    ? new OutputStreamWriter(os)
-                                    : new OutputStreamWriter(os, bundle.getSourceEncoding())) {
-                                if (bundle.getSourceEncoding() == null) {
-                                    // TODO: Is this correct? Shouldn't we behave like the rest of maven and fail
-                                    // down to JVM default instead ISO-8859-1 ?
-                                    velocity.mergeTemplate(bundleResource, "ISO-8859-1", context, writer);
-                                } else {
-                                    velocity.mergeTemplate(bundleResource, bundle.getSourceEncoding(), context, writer);
-                                }
+                            String bundleEncoding = bundle.getSourceEncoding();
+                            if (bundleEncoding == null) {
+                                bundleEncoding = encoding;
+                            }
+                            try (Writer writer = new OutputStreamWriter(os, bundleEncoding)) {
+                                velocity.mergeTemplate(bundleResource, bundleEncoding, context, writer);
                             }
                         }
                     } else {
@@ -991,12 +975,12 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             String groupId = model.getGroupId();
             String artifactId = model.getArtifactId();
 
-            if (groupId == null || groupId.trim().equals("")) {
+            if (groupId == null || groupId.trim().isEmpty()) {
                 throw new MojoExecutionException(
                         "Supplemental project XML " + "requires that a <groupId> element be present.");
             }
 
-            if (artifactId == null || artifactId.trim().equals("")) {
+            if (artifactId == null || artifactId.trim().isEmpty()) {
                 throw new MojoExecutionException(
                         "Supplemental project XML " + "requires that a <artifactId> element be present.");
             }
