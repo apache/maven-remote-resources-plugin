@@ -52,6 +52,9 @@ import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.text.StringContainsInOrder.stringContainsInOrder;
+
 /**
  * RemoteResources plugin Test Case
  */
@@ -305,7 +308,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
 
         List<String> expectedOrder = new ArrayList<>(Arrays.asList(resourceNames));
         Collections.sort(expectedOrder);
-        assertContainsAllInOrder(expectedOrder, data);
+        assertThat(data, stringContainsInOrder(expectedOrder));
 
         if (null != jarName) {
             try (OutputStream fos = Files.newOutputStream(jarName.toPath());
@@ -323,15 +326,6 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
                     }
                 }
             }
-        }
-    }
-
-    private static void assertContainsAllInOrder(Iterable<String> items, String data) {
-        int prevIndex = -1;
-        for (String resourceName : items) {
-            int index = data.indexOf(resourceName);
-            assertTrue("Expected order " + items + ", but was " + data, index > prevIndex);
-            prevIndex = index;
         }
     }
 
