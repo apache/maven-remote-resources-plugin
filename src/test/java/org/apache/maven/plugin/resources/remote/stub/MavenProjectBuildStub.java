@@ -133,13 +133,8 @@ public class MavenProjectBuildStub extends MavenProjectBasicStub {
     }
 
     /**
-     * returns true if the path is relative
-     * and false if absolute
-     * also returns false if it is relative to
-     * the parent
-     *
-     * @param path
-     * @return
+     * Returns true if the path is relative and false if absolute.
+     * Also returns false if it is relative to the parent
      */
     private boolean isValidPath(String path) {
         boolean bRetVal = true;
@@ -196,10 +191,8 @@ public class MavenProjectBuildStub extends MavenProjectBasicStub {
     }
 
     private void createDirectories(String parent, String testparent) {
-        File currentDirectory;
-
         for (String aDirectoryList : directoryList) {
-            currentDirectory = new File(parent, "/" + aDirectoryList);
+            File currentDirectory = new File(parent, "/" + aDirectoryList);
 
             if (!currentDirectory.exists()) {
                 currentDirectory.mkdirs();
@@ -235,17 +228,15 @@ public class MavenProjectBuildStub extends MavenProjectBasicStub {
         return retVal;
     }
 
-    private void createFiles(String parent, int type) {
-        File currentFile;
+    private void createFiles(String parent, int type) throws IOException {
         List<String> list = getList(type);
 
-        // guard
         if (list == null) {
             return;
         }
 
         for (String aList : list) {
-            currentFile = new File(parent, aList);
+            File currentFile = new File(parent, aList);
 
             // create the necessary parent directories
             // before we create the files
@@ -254,41 +245,31 @@ public class MavenProjectBuildStub extends MavenProjectBasicStub {
             }
 
             if (!currentFile.exists()) {
-                try {
-                    currentFile.createNewFile();
-                    populateFile(currentFile, RESOURCES_FILE);
-                } catch (IOException io) {
-                    // TODO: handle exception
-                }
+                currentFile.createNewFile();
+                populateFile(currentFile, RESOURCES_FILE);
             }
         }
     }
 
-    private void setupRootFiles() {
+    private void setupRootFiles() throws IOException {
         createFiles(testRootDir, ROOT_FILE);
     }
 
-    private void setupTargetFiles() {
+    private void setupTargetFiles() throws IOException {
         createFiles(getOutputDirectory(), OUTPUT_FILE);
     }
 
-    private void createFiles(String parent, String testparent) {
+    private void createFiles(String parent, String testparent) throws IOException {
         createFiles(parent, RESOURCES_FILE);
         createFiles(testparent, RESOURCES_FILE);
     }
 
-    private void populateFile(File file, int type) {
-        FileOutputStream outputStream;
+    private void populateFile(File file, int type) throws IOException {
         String data = dataMap.get(file.getName());
 
         if ((data != null) && file.exists()) {
-            try {
-                outputStream = new FileOutputStream(file);
+            try (FileOutputStream outputStream = new FileOutputStream(file)) {
                 outputStream.write(data.getBytes());
-                outputStream.flush();
-                outputStream.close();
-            } catch (IOException ex) {
-                // TODO: handle exception here
             }
         }
     }
