@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.List;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
@@ -88,7 +89,9 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
     }
 
     public void testCreateBundle() throws Exception {
-        buildResourceBundle("default-createbundle", null, new String[] {"SIMPLE.txt"}, null);
+        List<String> resources =
+                Arrays.asList("FILTER.txt.vm", "ISO-8859-1.bin.vm", "PROPERTIES.txt.vm", "SIMPLE.txt", "UTF-8.bin.vm");
+        buildResourceBundle("default-createbundle", null, resources.toArray(new String[0]), null);
     }
 
     public void testSimpleBundles() throws Exception {
@@ -299,9 +302,10 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(xmlFile.exists());
 
         String data = FileUtils.fileRead(xmlFile);
-        for (String resourceName1 : resourceNames) {
-            assertTrue(data.contains(resourceName1));
-        }
+
+        List<String> expectedOrder = new ArrayList<>(Arrays.asList(resourceNames));
+        Collections.sort(expectedOrder);
+        assertContainsAllInOrder(expectedOrder, data);
 
         if (null != jarName) {
             try (OutputStream fos = Files.newOutputStream(jarName.toPath());
@@ -319,6 +323,15 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
                     }
                 }
             }
+        }
+    }
+
+    private static void assertContainsAllInOrder(Iterable<String> items, String data) {
+        int prevIndex = -1;
+        for (String resourceName : items) {
+            int index = data.indexOf(resourceName);
+            assertTrue("Expected order " + items + ", but was " + data, index > prevIndex);
+            prevIndex = index;
         }
     }
 
