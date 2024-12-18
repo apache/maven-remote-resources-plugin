@@ -33,7 +33,7 @@ import org.codehaus.plexus.util.FileUtils;
 /**
  * Stub
  */
-public class MavenProjectBasicStub extends MavenProject {
+public class MavenProjectBasicStub extends MavenPreroject {
     protected String identifier;
 
     protected String testRootDir;
