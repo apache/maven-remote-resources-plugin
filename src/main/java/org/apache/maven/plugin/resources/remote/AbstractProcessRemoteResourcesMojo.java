@@ -239,13 +239,17 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
      * javadoc for MavenProject</a> for information about the properties on the MavenProject.
      */
     @Parameter
-    protected Map<String, Object> properties = new HashMap<>();
+    protected Map<String, String> properties = new HashMap<>();
 
     /**
      * Whether to include properties defined in the project when filtering resources.
      *
+     * @deprecated as Maven Project is available in Velocity context we can simply use
+     * <code>$project.properties.propertyName</code>
+     *
      * @since 1.2
      */
+    @Deprecated
     @Parameter(defaultValue = "false")
     protected boolean includeProjectProperties = false;
 
@@ -419,13 +423,6 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         configureLocator();
 
-        if (includeProjectProperties) {
-            final Properties projectProperties = project.getProperties();
-            for (Object key : projectProperties.keySet()) {
-                properties.put(key.toString(), projectProperties.get(key).toString());
-            }
-        }
-
         ClassLoader origLoader = Thread.currentThread().getContextClassLoader();
         try {
             validate();
@@ -442,7 +439,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             velocity.setProperty("resource.loader.classpath.class", ClasspathResourceLoader.class.getName());
             velocity.init();
 
-            VelocityContext context = buildVelocityContext(properties);
+            VelocityContext context = buildVelocityContext();
 
             processResourceBundles(classLoader, context);
 
@@ -745,9 +742,19 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     private static final String KEY_PROJECTS = "projects";
     private static final String KEY_PROJECTS_ORGS = "projectsSortedByOrganization";
 
-    protected VelocityContext buildVelocityContext(Map<String, Object> properties) {
+    protected VelocityContext buildVelocityContext() {
+
+        Map<String, Object> contextProperties = new HashMap<>(properties);
+
+        if (includeProjectProperties) {
+            final Properties projectProperties = project.getProperties();
+            for (String key : projectProperties.stringPropertyNames()) {
+                contextProperties.put(key, projectProperties.getProperty(key));
+            }
+        }
+
         // the following properties are expensive to calculate, so we provide them lazily
-        VelocityContext context = new VelocityContext(properties) {
+        VelocityContext context = new VelocityContext(contextProperties) {
             @Override
             public Object internalGet(String key) {
                 Object result = super.internalGet(key);
