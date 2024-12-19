@@ -52,8 +52,7 @@ import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.text.StringContainsInOrder.stringContainsInOrder;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * RemoteResources plugin Test Case
@@ -308,7 +307,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
 
         List<String> expectedOrder = new ArrayList<>(Arrays.asList(resourceNames));
         Collections.sort(expectedOrder);
-        assertThat(data, stringContainsInOrder(expectedOrder));
+        assertThat(data).containsSubsequence(expectedOrder);
 
         if (null != jarName) {
             try (OutputStream fos = Files.newOutputStream(jarName.toPath());
