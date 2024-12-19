@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.List;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
@@ -50,6 +51,9 @@ import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 
 /**
  * RemoteResources plugin Test Case
@@ -88,7 +92,9 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
     }
 
     public void testCreateBundle() throws Exception {
-        buildResourceBundle("default-createbundle", null, new String[] {"SIMPLE.txt"}, null);
+        List<String> resources =
+                Arrays.asList("FILTER.txt.vm", "ISO-8859-1.bin.vm", "PROPERTIES.txt.vm", "SIMPLE.txt", "UTF-8.bin.vm");
+        buildResourceBundle("default-createbundle", null, resources.toArray(new String[0]), null);
     }
 
     public void testSimpleBundles() throws Exception {
@@ -299,9 +305,10 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(xmlFile.exists());
 
         String data = FileUtils.fileRead(xmlFile);
-        for (String resourceName1 : resourceNames) {
-            assertTrue(data.contains(resourceName1));
-        }
+
+        List<String> expectedOrder = new ArrayList<>(Arrays.asList(resourceNames));
+        Collections.sort(expectedOrder);
+        assertThat(data, stringContainsInOrder(expectedOrder));
 
         if (null != jarName) {
             try (OutputStream fos = Files.newOutputStream(jarName.toPath());
