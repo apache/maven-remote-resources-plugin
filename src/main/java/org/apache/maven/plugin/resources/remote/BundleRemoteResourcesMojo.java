@@ -23,6 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -106,6 +107,7 @@ public class BundleRemoteResourcesMojo extends AbstractMojo {
         remoteResourcesBundle.setSourceEncoding(sourceEncoding);
 
         DirectoryScanner scanner = new DirectoryScanner();
+        scanner.setFilenameComparator(Comparator.naturalOrder());
 
         scanner.setBasedir(resourcesDirectory);
         if (includes != null && includes.length != 0) {
