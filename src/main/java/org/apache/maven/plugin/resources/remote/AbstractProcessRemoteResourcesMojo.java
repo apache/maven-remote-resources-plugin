@@ -162,7 +162,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     /**
      * The directory where processed resources will be placed for packaging.
      */
-    @Parameter(defaultValue = "${project.build.directory}/maven-shared-archive-resources")
+    @Parameter(property = "outputDirectory", defaultValue = "${project.build.directory}/maven-shared-archive-resources")
     private File outputDirectory;
 
     /**
@@ -196,7 +196,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
      * The resource bundles that will be retrieved and processed,
      * expressed with <code>groupId:artifactId:version[:type[:classifier]]</code> format.
      */
-    @Parameter(required = true)
+    @Parameter(property = "resourceBundles", required = true)
     private List<String> resourceBundles;
 
     /**
