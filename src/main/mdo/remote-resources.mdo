@@ -17,8 +17,8 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-<model xmlns="https://codehaus-plexus.github.io/MODELLO/1.8.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="https://codehaus-plexus.github.io/MODELLO/1.8.0 https://codehaus-plexus.github.io/modello/xsd/modello-1.8.0.xsd"
+<model xmlns="http://codehaus-plexus.github.io/MODELLO/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://codehaus-plexus.github.io/MODELLO/2.0.0 https://codehaus-plexus.github.io/modello/xsd/modello-2.0.0.xsd"
        xml.namespace="http://maven.apache.org/remote-resources/${version}"
        xml.schemaLocation="https://maven.apache.org/xsd/remote-resources-${version}.xsd">
   <id>remote-resources</id>
@@ -36,15 +36,13 @@ under the License.
   <classes>
     <class rootElement="true" xml.tagName="remoteResourcesBundle">
       <name>RemoteResourcesBundle</name>
-      <version>1.1.0</version>
+      <version>1.1.0+</version>
       <description>Root element of the remote-resources.xml file.</description>
       <fields>
         <field>
           <name>remoteResources</name>
-          <version>1.1.0</version>
-          <description><![CDATA[
-            Remote resources that are contained in a remote resources bundle.
-          ]]></description>
+          <version>1.1.0+</version>
+          <description>Remote resources that are contained in a remote resources bundle.</description>
           <association>
             <type>String</type>
             <multiplicity>*</multiplicity>
@@ -52,11 +50,18 @@ under the License.
         </field>
         <field>
           <name>sourceEncoding</name>
-          <version>1.1.0</version>
-          <description><![CDATA[
-            Source encoding of the remote resources contained in the bundle.
-          ]]></description>
+          <version>1.1.0+</version>
+          <description>Source encoding of the remote resources contained in the bundle.</description>
           <type>String</type>
+        </field>
+        <field>
+          <name>requiredProjectProperties</name>
+          <version>1.2.0+</version>
+          <description>Project properties needed to process Velocity template by this resource bundle.</description>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
         </field>
       </fields>
     </class>

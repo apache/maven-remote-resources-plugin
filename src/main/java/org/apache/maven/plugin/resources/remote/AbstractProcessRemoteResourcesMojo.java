@@ -871,6 +871,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                     bundle = bundleReader.read(in);
                 }
 
+                verifyRequiredProperties(bundle, url);
+
                 int n = 0;
                 for (String bundleResource : bundle.getRemoteResources()) {
                     n++;
@@ -953,6 +955,20 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             throw new MojoExecutionException("Error reading remote resource", ioe);
         } catch (VelocityException e) {
             throw new MojoExecutionException("Error rendering Velocity resource '" + velocityResource + "'", e);
+        }
+    }
+
+    private void verifyRequiredProperties(RemoteResourcesBundle bundle, URL url) throws MojoExecutionException {
+        if (bundle.getRequiredProjectProperties() == null
+                || bundle.getRequiredProjectProperties().isEmpty()) {
+            return;
+        }
+
+        for (String requiredProperty : bundle.getRequiredProjectProperties()) {
+            if (!project.getProperties().containsKey(requiredProperty)) {
+                throw new MojoExecutionException(
+                        "Required project property: '" + requiredProperty + "' is not present for bundle: " + url);
+            }
         }
     }
 
