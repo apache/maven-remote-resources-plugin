@@ -23,7 +23,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -87,6 +86,15 @@ public class BundleRemoteResourcesMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.sourceEncoding}")
     private String sourceEncoding;
 
+    /**
+     * List of project properties needed to process Velocity
+     * template by this resource bundle.
+     *
+     * @since 3.3.0
+     */
+    @Parameter(property = "bundle.requiredProjectProperties")
+    private List<String> requiredProjectProperties;
+
     @Override
     public void execute() throws MojoExecutionException {
         if (!resourcesDirectory.exists()) {
@@ -105,6 +113,7 @@ public class BundleRemoteResourcesMojo extends AbstractMojo {
 
         RemoteResourcesBundle remoteResourcesBundle = new RemoteResourcesBundle();
         remoteResourcesBundle.setSourceEncoding(sourceEncoding);
+        remoteResourcesBundle.setRequiredProjectProperties(requiredProjectProperties);
 
         DirectoryScanner scanner = new DirectoryScanner();
         scanner.setFilenameComparator(Comparator.naturalOrder());
@@ -123,7 +132,7 @@ public class BundleRemoteResourcesMojo extends AbstractMojo {
         scanner.addDefaultExcludes();
         scanner.scan();
 
-        List<String> includedFiles = Arrays.asList(scanner.getIncludedFiles());
+        String[] includedFiles = scanner.getIncludedFiles();
 
         for (String resource : includedFiles) {
             remoteResourcesBundle.addRemoteResource(StringUtils.replace(resource, '\\', '/'));

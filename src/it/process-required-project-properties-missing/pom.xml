@@ -23,19 +23,13 @@ under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.apache.maven.its</groupId>
-  <artifactId>mrrp-bundle-parent</artifactId>
+  <artifactId>mrrp-process-required-properties</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <modules>
-    <module>mrrp-bundle-a</module>
-    <module>mrrp-bundle-b</module>
-    <module>mrrp-bundle-c</module>
-  </modules>
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.test.skip>true</maven.test.skip>
+    <testProperty1>test1</testProperty1>
   </properties>
 
   <build>
@@ -44,10 +38,15 @@ under the License.
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-remote-resources-plugin</artifactId>
         <version>@project.version@</version>
+        <configuration>
+          <resourceBundles>
+            <resourceBundle>org.apache.maven.its:mrrp-bundle-c:1.0-SNAPSHOT</resourceBundle>
+          </resourceBundles>
+        </configuration>
         <executions>
           <execution>
             <goals>
-              <goal>bundle</goal>
+              <goal>process</goal>
             </goals>
           </execution>
         </executions>
