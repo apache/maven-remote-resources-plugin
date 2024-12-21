@@ -21,12 +21,10 @@ package org.apache.maven.plugin.resources.remote;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
@@ -351,6 +349,14 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     private String outputTimestamp;
 
     /**
+     * Indicate if project workspace files with the same name should be used instead of the ones from the bundle.
+     *
+     * @since 3.3.0
+     */
+    @Parameter(defaultValue = "false")
+    private boolean useProjectFiles;
+
+    /**
      * Map of artifacts to supplemental project object models.
      */
     private Map<String, Model> supplementModels;
@@ -605,7 +611,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         return organizations;
     }
 
-    protected boolean copyResourceIfExists(File file, String relFileName, VelocityContext context)
+    protected boolean copyResourceIfExists(
+            File outputFile, String bundleResourceName, VelocityContext context, String encoding)
             throws IOException, MojoExecutionException {
         for (Resource resource : project.getResources()) {
             File resourceDirectory = new File(resource.getDirectory());
@@ -615,26 +622,27 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
 
             // TODO - really should use the resource includes/excludes and name mapping
-            File source = new File(resourceDirectory, relFileName);
-            File templateSource = new File(resourceDirectory, relFileName + TEMPLATE_SUFFIX);
+            File source = new File(resourceDirectory, bundleResourceName);
+            File templateSource = new File(resourceDirectory, bundleResourceName + TEMPLATE_SUFFIX);
 
             if (!source.exists() && templateSource.exists()) {
                 source = templateSource;
             }
 
-            if (source.exists() && !source.equals(file)) {
+            if (source.exists() && !source.equals(outputFile)) {
                 if (source == templateSource) {
-                    try (CachingOutputStream os = new CachingOutputStream(file)) {
-                        try (Reader reader = getReader(source);
-                                Writer writer = getWriter(os)) {
-                            velocity.evaluate(context, writer, "", reader);
-                        } catch (ParseErrorException | MethodInvocationException | ResourceNotFoundException e) {
-                            throw new MojoExecutionException("Error rendering velocity resource: " + source, e);
-                        }
+                    getLog().debug("Use project resource '" + source + "' as resource with Velocity");
+                    try (CachingOutputStream os = new CachingOutputStream(outputFile);
+                            Writer writer = getWriter(encoding, os);
+                            Reader reader = getReader(encoding, source)) {
+                        velocity.evaluate(context, writer, "", reader);
+                    } catch (ParseErrorException | MethodInvocationException | ResourceNotFoundException e) {
+                        throw new MojoExecutionException("Error rendering velocity resource: " + source, e);
                     }
                 } else if (resource.isFiltering()) {
+                    getLog().debug("Use project resource '" + source + "' as resource with filtering");
 
-                    MavenFileFilterRequest req = setupRequest(resource, source, file);
+                    MavenFileFilterRequest req = setupRequest(resource, source, outputFile);
 
                     try {
                         fileFilter.copyFile(req);
@@ -642,11 +650,12 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                         throw new MojoExecutionException("Error filtering resource: " + source, e);
                     }
                 } else {
-                    FilteringUtils.copyFile(source, file, null, null);
+                    getLog().debug("Use project resource '" + source + "' as resource");
+                    FilteringUtils.copyFile(source, outputFile, null, null);
                 }
 
                 // exclude the original (so eclipse doesn't complain about duplicate resources)
-                resource.addExclude(relFileName);
+                resource.addExclude(bundleResourceName);
 
                 return true;
             }
@@ -654,12 +663,28 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         return false;
     }
 
-    private Reader getReader(File source) throws IOException {
-        return Files.newBufferedReader(source.toPath(), Charset.forName(encoding));
+    private boolean copyProjectRootIfExists(File outputFile, String bundleResourceName) throws IOException {
+        if (!useProjectFiles) {
+            return false;
+        }
+
+        File source = new File(project.getBasedir(), bundleResourceName);
+        if (source.exists()) {
+            getLog().debug("Use project file '" + source + "' as resource");
+            FilteringUtils.copyFile(source, outputFile, null, null);
+            return true;
+        }
+
+        return false;
     }
 
-    private Writer getWriter(OutputStream os) throws IOException {
-        return new OutputStreamWriter(os, encoding);
+    private Reader getReader(String readerEncoding, File file) throws IOException {
+        return Files.newBufferedReader(
+                file.toPath(), Charset.forName(readerEncoding != null ? readerEncoding : encoding));
+    }
+
+    private Writer getWriter(String writerEncoding, OutputStream outputStream) throws IOException {
+        return new OutputStreamWriter(outputStream, writerEncoding != null ? writerEncoding : encoding);
     }
 
     private MavenFileFilterRequest setupRequest(Resource resource, File source, File file) {
@@ -908,46 +933,54 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 // Don't overwrite resource that are already being provided.
 
-                File f = new File(outputDirectory, projectResource);
+                File outputFile = new File(outputDirectory, projectResource);
 
-                FileUtils.mkdir(f.getParentFile().getAbsolutePath());
+                FileUtils.mkdir(outputFile.getParentFile().getAbsolutePath());
 
-                if (!copyResourceIfExists(f, projectResource, context)) {
-                    if (doVelocity) {
-                        try (CachingOutputStream os = new CachingOutputStream(f)) {
-                            String bundleEncoding = bundle.getSourceEncoding();
-                            if (bundleEncoding == null) {
-                                bundleEncoding = encoding;
-                            }
-                            try (Writer writer = new OutputStreamWriter(os, bundleEncoding)) {
-                                velocity.mergeTemplate(bundleResource, bundleEncoding, context, writer);
-                            }
-                        }
-                    } else {
-                        URL resUrl = classLoader.getResource(bundleResource);
-                        if (resUrl != null) {
-                            FileUtils.copyURLToFile(resUrl, f);
-                        }
+                // resource exists in project resources
+                if (copyResourceIfExists(outputFile, projectResource, context, bundle.getSourceEncoding())) {
+                    continue;
+                }
+
+                if (copyProjectRootIfExists(outputFile, projectResource)) {
+                    continue;
+                }
+
+                if (doVelocity) {
+                    String bundleEncoding = bundle.getSourceEncoding();
+                    if (bundleEncoding == null) {
+                        bundleEncoding = encoding;
                     }
 
-                    File appendedResourceFile = new File(appendedResourcesDirectory, projectResource);
-                    File appendedVmResourceFile = new File(appendedResourcesDirectory, projectResource + ".vm");
+                    try (CachingOutputStream os = new CachingOutputStream(outputFile);
+                            Writer writer = getWriter(bundleEncoding, os)) {
+                        velocity.mergeTemplate(bundleResource, bundleEncoding, context, writer);
+                    }
+                } else {
+                    URL bundleResourceUrl = classLoader.getResource(bundleResource);
+                    if (bundleResourceUrl != null) {
+                        FileUtils.copyURLToFile(bundleResourceUrl, outputFile);
+                    }
+                }
 
-                    if (appendedResourceFile.exists()) {
-                        getLog().info("Copying appended resource: " + projectResource);
-                        try (InputStream in = Files.newInputStream(appendedResourceFile.toPath());
-                                OutputStream out = new FileOutputStream(f, true)) {
-                            IOUtil.copy(in, out);
-                        }
+                File appendedResourceFile = new File(appendedResourcesDirectory, projectResource);
+                File appendedVmResourceFile = new File(appendedResourcesDirectory, projectResource + ".vm");
 
-                    } else if (appendedVmResourceFile.exists()) {
-                        getLog().info("Filtering appended resource: " + projectResource + ".vm");
+                if (appendedResourceFile.exists()) {
+                    getLog().info("Copying appended resource: " + projectResource);
+                    try (InputStream in = Files.newInputStream(appendedResourceFile.toPath());
+                            OutputStream out = new FileOutputStream(outputFile, true)) {
+                        IOUtil.copy(in, out);
+                    }
 
-                        try (Reader reader = new FileReader(appendedVmResourceFile);
-                                Writer writer = getWriter(bundle, f)) {
-                            Velocity.init();
-                            Velocity.evaluate(context, writer, "remote-resources", reader);
-                        }
+                } else if (appendedVmResourceFile.exists()) {
+                    getLog().info("Filtering appended resource: " + projectResource + ".vm");
+
+                    try (CachingOutputStream os = new CachingOutputStream(outputFile);
+                            Reader reader = getReader(bundle.getSourceEncoding(), appendedVmResourceFile);
+                            Writer writer = getWriter(bundle.getSourceEncoding(), os)) {
+                        Velocity.init();
+                        Velocity.evaluate(context, writer, "remote-resources", reader);
                     }
                 }
             }
@@ -970,16 +1003,6 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                         "Required project property: '" + requiredProperty + "' is not present for bundle: " + url);
             }
         }
-    }
-
-    private Writer getWriter(RemoteResourcesBundle bundle, File f) throws IOException {
-        Writer writer;
-        if (bundle.getSourceEncoding() == null) {
-            writer = new PrintWriter(new FileWriter(f, true));
-        } else {
-            writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(f, true), bundle.getSourceEncoding()));
-        }
-        return writer;
     }
 
     protected Model getSupplement(Xpp3Dom supplementModelXml) throws MojoExecutionException {
