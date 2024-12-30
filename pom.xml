@@ -28,7 +28,7 @@ under the License.
   </parent>
 
   <artifactId>maven-remote-resources-plugin</artifactId>
-  <version>3.2.1-SNAPSHOT</version>
+  <version>3.3.0</version>
   <packaging>maven-plugin</packaging>
 
   <name>Apache Maven Remote Resources Plugin</name>
@@ -45,7 +45,7 @@ under the License.
   <scm>
     <connection>scm:git:https://gitbox.apache.org/repos/asf/maven-remote-resources-plugin.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/maven-remote-resources-plugin.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>maven-remote-resources-plugin-3.3.0</tag>
     <url>https://github.com/apache/maven-remote-resources-plugin/tree/${project.scm.tag}</url>
   </scm>
   <issueManagement>
@@ -68,7 +68,7 @@ under the License.
     <mavenVersion>3.6.3</mavenVersion>
     <!-- the same version like in Maven 3.6.3 -->
     <resolverVersion>1.4.1</resolverVersion>
-    <project.build.outputTimestamp>2024-03-02T09:21:48Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2024-12-30T10:44:57Z</project.build.outputTimestamp>
 
     <!-- Used by site documentation as well, do not remove -->
     <mavenFilteringVersion>3.4.0</mavenFilteringVersion>
