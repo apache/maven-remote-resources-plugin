@@ -184,11 +184,9 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         file = new File(file, "UTF-8.bin");
         assertTrue(file.exists());
 
-        try (InputStream in = Files.newInputStream(file.toPath())) {
-            byte[] data = IOUtil.toByteArray(in);
-            byte[] expected = "\u00E4\u00F6\u00FC\u00C4\u00D6\u00DC\u00DF".getBytes(StandardCharsets.UTF_8);
-            assertTrue(Arrays.equals(expected, data));
-        }
+        byte[] data = Files.readAllBytes(file.toPath());
+        byte[] expected = "\u00E4\u00F6\u00FC\u00C4\u00D6\u00DC\u00DF".getBytes(StandardCharsets.UTF_8);
+        assertTrue(Arrays.equals(expected, data));
     }
 
     public void testVelocityISO88591() throws Exception {
@@ -210,11 +208,9 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         file = new File(file, "ISO-8859-1.bin");
         assertTrue(file.exists());
 
-        try (InputStream in = Files.newInputStream(file.toPath())) {
-            byte[] data = IOUtil.toByteArray(in);
-            byte[] expected = "\u00E4\u00F6\u00FC\u00C4\u00D6\u00DC\u00DF".getBytes(StandardCharsets.ISO_8859_1);
-            assertTrue(Arrays.equals(expected, data));
-        }
+        byte[] data = Files.readAllBytes(file.toPath());
+        byte[] expected = "\u00E4\u00F6\u00FC\u00C4\u00D6\u00DC\u00DF".getBytes(StandardCharsets.ISO_8859_1);
+        assertTrue(Arrays.equals(expected, data));
     }
 
     public void testFilteredBundles() throws Exception {
