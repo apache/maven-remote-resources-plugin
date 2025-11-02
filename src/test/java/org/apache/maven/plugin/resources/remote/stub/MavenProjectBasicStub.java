@@ -60,7 +60,7 @@ public class MavenProjectBasicStub extends MavenProject {
         // set isolated root directory
         testRootDir = PlexusTestCase.getBasedir() + "/target/test-classes/unit/test-dir/" + identifier;
 
-        if (!FileUtils.fileExists(testRootDir)) {
+        if (!new File(testRootDir).exists()) {
             FileUtils.mkdir(testRootDir);
         }
 
