@@ -51,9 +51,14 @@ import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.stringContainsInOrder;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * RemoteResources plugin Test Case
@@ -64,12 +69,12 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
 
     private final String LOCAL_REPO = "target/local-repo/";
 
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
     }
 
-    @Override
+    @AfterEach
     public void tearDown() throws Exception {}
 
     /**
@@ -77,11 +82,13 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
      *
      * @throws Exception if any exception occurs
      */
+    @Test
     public void testTestEnvironment() throws Exception {
         // Perform lookup on the Mojo to make sure everything is ok
         lookupProcessMojo();
     }
 
+    @Test
     public void testNoBundles() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-nobundles");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
@@ -91,12 +98,14 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         mojo.execute();
     }
 
+    @Test
     public void testCreateBundle() throws Exception {
         List<String> resources =
                 Arrays.asList("FILTER.txt.vm", "ISO-8859-1.bin.vm", "PROPERTIES.txt.vm", "SIMPLE.txt", "UTF-8.bin.vm");
         buildResourceBundle("default-createbundle", null, resources.toArray(new String[0]), null);
     }
 
+    @Test
     public void testSimpleBundles() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-simplebundles");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.0"});
@@ -117,6 +126,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(file.exists());
     }
 
+    @Test
     public void testSimpleBundlesWithType() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-simplebundles");
         final ProcessRemoteResourcesMojo mojo =
@@ -138,6 +148,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(file.exists());
     }
 
+    @Test
     public void testSimpleBundlesWithClassifier() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-simplebundles");
         final ProcessRemoteResourcesMojo mojo =
@@ -165,6 +176,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(file.exists());
     }
 
+    @Test
     public void testVelocityUTF8() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-utf8");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.2"});
@@ -189,6 +201,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(Arrays.equals(expected, data));
     }
 
+    @Test
     public void testVelocityISO88591() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-iso88591");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.3"});
@@ -213,6 +226,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(Arrays.equals(expected, data));
     }
 
+    @Test
     public void testFilteredBundles() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-filterbundles");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.1"});
@@ -241,6 +255,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(data.contains("projectsSortedByOrganization: {"));
     }
 
+    @Test
     public void testFilteredBundlesWithProjectProperties() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-filterbundles-two");
         final ProcessRemoteResourcesMojo mojo =
