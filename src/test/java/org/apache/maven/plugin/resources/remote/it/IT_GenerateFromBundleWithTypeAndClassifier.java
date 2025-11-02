@@ -26,9 +26,9 @@ import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
 import org.apache.maven.shared.verifier.VerificationException;
 import org.apache.maven.shared.verifier.Verifier;
 import org.codehaus.plexus.util.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class IT_GenerateFromBundleWithTypeAndClassifier extends AbstractIT {
     @Test
