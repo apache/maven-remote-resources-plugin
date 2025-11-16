@@ -30,10 +30,10 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-public class IT_GenerateFromOverride extends AbstractIT {
+public class ITGenerateFromBundle extends AbstractIT {
     @Test
     public void test() throws IOException, URISyntaxException, VerificationException {
-        File dir = TestUtils.getTestDir("generate-from-override");
+        File dir = TestUtils.getTestDir("generate-from-bundle");
         Verifier verifier = TestUtils.newVerifier(dir);
 
         verifier.addCliArgument("generate-resources");
@@ -43,6 +43,7 @@ public class IT_GenerateFromOverride extends AbstractIT {
         File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
         String content = FileUtils.fileRead(output);
 
-        assertTrue(content.contains("Override:"));
+        assertTrue(content.contains("Built-In:"));
+        assertTrue(content.contains("Dependency Id: org.apache.commons:commons-csv:1.10.0"));
     }
 }

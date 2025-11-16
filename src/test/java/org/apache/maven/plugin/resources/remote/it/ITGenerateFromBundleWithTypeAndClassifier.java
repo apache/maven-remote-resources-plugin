@@ -30,10 +30,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-public class IT_FilterLocalOverride extends AbstractIT {
+public class ITGenerateFromBundleWithTypeAndClassifier extends AbstractIT {
     @Test
     public void test() throws IOException, URISyntaxException, VerificationException {
-        File dir = TestUtils.getTestDir("filter-local-override");
+
+        File dir = TestUtils.getTestDir("generate-from-bundle-with-type-and-classifier");
         Verifier verifier = TestUtils.newVerifier(dir);
 
         verifier.addCliArgument("generate-resources");
@@ -43,6 +44,6 @@ public class IT_FilterLocalOverride extends AbstractIT {
         File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
         String content = FileUtils.fileRead(output);
 
-        assertTrue(content.contains("Override: filter-local-override"));
+        assertTrue(content.contains("Built-In:"));
     }
 }

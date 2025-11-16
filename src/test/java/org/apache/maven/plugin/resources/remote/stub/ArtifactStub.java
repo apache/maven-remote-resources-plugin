@@ -106,8 +106,8 @@ public class ArtifactStub implements Artifact {
     }
 
     @Override
-    public void setFile(File _file) {
-        file = _file;
+    public void setFile(File file) {
+        this.file = file;
     }
 
     @Override
@@ -131,8 +131,8 @@ public class ArtifactStub implements Artifact {
     }
 
     @Override
-    public void setVersion(String _version) {
-        version = _version;
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     @Override
@@ -185,8 +185,8 @@ public class ArtifactStub implements Artifact {
     }
 
     @Override
-    public void setDownloadUrl(String _downloadUrl) {
-        downloadUrl = _downloadUrl;
+    public void setDownloadUrl(String downloadUrl) {
+        this.downloadUrl = downloadUrl;
     }
 
     @Override
@@ -211,8 +211,8 @@ public class ArtifactStub implements Artifact {
     public void setDependencyTrail(List<String> dependencyTrail) {}
 
     @Override
-    public void setScope(String _scope) {
-        scope = _scope;
+    public void setScope(String scope) {
+        this.scope = scope;
     }
 
     @Override
@@ -229,13 +229,13 @@ public class ArtifactStub implements Artifact {
     }
 
     @Override
-    public void setGroupId(String _groupId) {
-        groupId = _groupId;
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
     }
 
     @Override
-    public void setArtifactId(String _artifactId) {
-        artifactId = _artifactId;
+    public void setArtifactId(String artifactId) {
+        this.artifactId = artifactId;
     }
 
     @Override
@@ -244,8 +244,8 @@ public class ArtifactStub implements Artifact {
     }
 
     @Override
-    public void setResolved(boolean _resolved) {
-        resolved = _resolved;
+    public void setResolved(boolean resolved) {
+        this.resolved = resolved;
     }
 
     @Override
@@ -267,8 +267,8 @@ public class ArtifactStub implements Artifact {
     }
 
     @Override
-    public void setRelease(boolean _release) {
-        release = _release;
+    public void setRelease(boolean release) {
+        this.release = release;
     }
 
     @Override
@@ -285,8 +285,8 @@ public class ArtifactStub implements Artifact {
     }
 
     @Override
-    public void setOptional(boolean _optional) {
-        optional = _optional;
+    public void setOptional(boolean optional) {
+        this.optional = optional;
     }
 
     @Override

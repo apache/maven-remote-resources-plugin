@@ -30,21 +30,19 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-public class IT_CustomFilterDelimiter extends AbstractIT {
+public class ITFilterLocalOverride extends AbstractIT {
     @Test
     public void test() throws IOException, URISyntaxException, VerificationException {
-        File dir = TestUtils.getTestDir("custom-filter-delim");
+        File dir = TestUtils.getTestDir("filter-local-override");
         Verifier verifier = TestUtils.newVerifier(dir);
 
-        verifier.addCliArgument("-X");
-        verifier.addCliArgument("validate");
-
+        verifier.addCliArgument("generate-resources");
         verifier.execute();
         verifier.verifyErrorFreeLog();
 
         File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
         String content = FileUtils.fileRead(output);
 
-        assertTrue(content.contains("Override: custom-filter-delim"));
+        assertTrue(content.contains("Override: filter-local-override"));
     }
 }

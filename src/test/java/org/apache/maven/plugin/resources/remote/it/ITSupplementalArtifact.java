@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author John Casey
  */
-public class IT_SupplementalArtifact extends AbstractIT {
+public class ITSupplementalArtifact extends AbstractIT {
     @Test
     public void test() throws IOException, URISyntaxException, VerificationException {
         File dir = TestUtils.getTestDir("supplemental-artifact");
