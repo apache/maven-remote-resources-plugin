@@ -30,20 +30,21 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-public class IT_GenerateFromBundleWithTypeAndClassifier extends AbstractIT {
+public class ITCustomFilterDelimiter extends AbstractIT {
     @Test
     public void test() throws IOException, URISyntaxException, VerificationException {
-
-        File dir = TestUtils.getTestDir("generate-from-bundle-with-type-and-classifier");
+        File dir = TestUtils.getTestDir("custom-filter-delim");
         Verifier verifier = TestUtils.newVerifier(dir);
 
-        verifier.addCliArgument("generate-resources");
+        verifier.addCliArgument("-X");
+        verifier.addCliArgument("validate");
+
         verifier.execute();
         verifier.verifyErrorFreeLog();
 
         File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
         String content = FileUtils.fileRead(output);
 
-        assertTrue(content.contains("Built-In:"));
+        assertTrue(content.contains("Override: custom-filter-delim"));
     }
 }

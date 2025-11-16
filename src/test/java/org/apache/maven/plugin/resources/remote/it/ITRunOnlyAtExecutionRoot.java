@@ -36,7 +36,7 @@ import static org.junit.Assume.assumeTrue;
 /**
  * @author Benjamin Bentmann
  */
-public class IT_RunOnlyAtExecutionRoot extends AbstractIT {
+public class ITRunOnlyAtExecutionRoot extends AbstractIT {
     @Test
     public void test() throws IOException, URISyntaxException, VerificationException {
         // Workaround for Windows + Maven-3.5.x/3.6.0 + Jenkins due to MNG-6261

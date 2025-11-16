@@ -23,7 +23,7 @@ under the License.
   <parent>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-plugins</artifactId>
-    <version>43</version>
+    <version>45</version>
     <relativePath />
   </parent>
 
@@ -72,6 +72,8 @@ under the License.
 
     <!-- Used by site documentation as well, do not remove -->
     <mavenFilteringVersion>3.4.0</mavenFilteringVersion>
+
+    <version.maven-invoker-plugin>3.9.1</version.maven-invoker-plugin>
   </properties>
 
   <dependencyManagement>
@@ -143,6 +145,7 @@ under the License.
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
+      <version>${version.maven-plugin-tools}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -180,7 +183,6 @@ under the License.
     <dependency>
       <groupId>org.eclipse.sisu</groupId>
       <artifactId>org.eclipse.sisu.plexus</artifactId>
-      <version>0.9.0.M4</version>
       <scope>provided</scope>
     </dependency>
 
@@ -419,7 +421,7 @@ under the License.
                   <systemPropertyVariables>
                     <!--
                       The tests have to pick the right repository.
-                      SUREFIRE-1385: Cannot set maven.repo.local directly because it might have been set by the user 
+                      SUREFIRE-1385: Cannot set maven.repo.local directly because it might have been set by the user
                       on the CLI directly (and it would be preferred)
                     -->
                     <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>

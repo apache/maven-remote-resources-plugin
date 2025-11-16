@@ -223,6 +223,8 @@ public class MavenProjectBuildStub extends MavenProjectBasicStub {
             case ROOT_FILE:
                 retVal = rootFileList;
                 break;
+            default:
+                break;
         }
 
         return retVal;

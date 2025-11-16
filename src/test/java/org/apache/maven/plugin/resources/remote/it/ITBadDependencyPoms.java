@@ -33,31 +33,25 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Benjamin Bentmann
  */
-public class IT_GetDependencyProjects extends AbstractIT {
+public class ITBadDependencyPoms extends AbstractIT {
     @Test
     public void test() throws IOException, URISyntaxException, VerificationException {
-        File dir = TestUtils.getTestDir("get-dependency-projects");
+        File dir = TestUtils.getTestDir("bad-dependency-poms");
 
-        Verifier verifier;
-
-        verifier = TestUtils.newVerifier(dir);
-        verifier.addCliArgument("deploy");
-        verifier.execute();
-        verifier.verifyErrorFreeLog();
-
-        File projectDir = new File(dir, "project");
-        verifier = TestUtils.newVerifier(projectDir);
-
-        verifier.deleteArtifacts("org.apache.maven.plugin.rresource.it.gdp");
+        Verifier verifier = TestUtils.newVerifier(dir);
+        verifier.deleteArtifacts("test");
 
         verifier.addCliArgument("generate-resources");
         verifier.execute();
-        verifier.verifyErrorFreeLog();
 
-        File output = new File(projectDir, "target/maven-shared-archive-resources/DEPENDENCIES");
+        verifier.verifyTextInLog(
+                "[WARNING] Invalid project model for artifact [test:missing:0.1]. It will be ignored by the remote resources Mojo.");
+        verifier.verifyTextInLog(
+                "[WARNING] Invalid project model for artifact [test:invalid:0.1]. It will be ignored by the remote resources Mojo");
+
+        File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
         String content = FileUtils.fileRead(output);
 
-        assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.gdp:release:1.0"));
-        assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.gdp:snapshot:1.0-SNAPSHOT"));
+        assertTrue(content.contains("Dependency Id: test:pom:0.2"));
     }
 }

@@ -62,7 +62,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
     static final String DEFAULT_BUNDLE_POM_PATH = "target/test-classes/unit/rrmojotest/bundle-plugin-config.xml";
     static final String DEFAULT_PROCESS_POM_PATH = "target/test-classes/unit/rrmojotest/process-plugin-config.xml";
 
-    private final String LOCAL_REPO = "target/local-repo/";
+    private static final String LOCAL_REPO = "target/local-repo/";
 
     @Override
     public void setUp() throws Exception {
