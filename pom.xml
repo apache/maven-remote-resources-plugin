@@ -71,7 +71,7 @@ under the License.
     <project.build.outputTimestamp>2024-12-30T10:45:13Z</project.build.outputTimestamp>
 
     <!-- Used by site documentation as well, do not remove -->
-    <mavenFilteringVersion>3.4.0</mavenFilteringVersion>
+    <mavenFilteringVersion>3.5.0</mavenFilteringVersion>
 
     <version.maven-invoker-plugin>3.9.1</version.maven-invoker-plugin>
   </properties>
