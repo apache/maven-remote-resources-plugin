@@ -18,6 +18,7 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
+import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -593,7 +594,7 @@ public class ModelInheritanceAssembler {
 
         String resolved;
         try {
-            resolved = Paths.get(uncleanPath).normalize().toString();
+            resolved = Paths.get(uncleanPath).normalize().toString().replace(File.separatorChar, '/');
         } catch (InvalidPathException e) {
             resolved = uncleanPath;
         }
