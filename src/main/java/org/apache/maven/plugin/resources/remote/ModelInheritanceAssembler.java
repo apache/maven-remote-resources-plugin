@@ -18,13 +18,13 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 import org.apache.maven.model.Build;
@@ -41,6 +41,7 @@ import org.apache.maven.model.Reporting;
 import org.apache.maven.model.Resource;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.Site;
+import org.apache.maven.plugin.logging.Log;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
@@ -48,6 +49,12 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
  * DefaultModelInheritanceAssembler
  */
 public class ModelInheritanceAssembler {
+    private Log log;
+
+    public void setLog(Log log) {
+        this.log = log;
+    }
+
     // TODO Remove this!
     public void assembleBuildInheritance(Build childBuild, Build parentBuild, boolean handleAsInheritance) {
         // The build has been set but we want to step in here and fill in
@@ -568,51 +575,58 @@ public class ModelInheritanceAssembler {
             uncleanPath = uncleanPath.substring(protocolIdx + 3);
         }
 
-        if (uncleanPath.startsWith("/")) {
-            cleanedPath += "/";
-        }
-
         return cleanedPath + resolvePath(uncleanPath);
     }
 
-    // TODO Move this to plexus-utils' PathTool.
-    private static String resolvePath(String uncleanPath) {
-        LinkedList<String> pathElements = new LinkedList<>();
+    /**
+     * Normalizes the path part of an SCM URL using {@link java.nio.file.Path#normalize()}.
+     * <ul>
+     *   <li>Trailing separators are significant (e.g. {@code http://host/repo/} is not
+     *       {@code http://host/repo}) and are preserved.</li>
+     *   <li>Redundant separators, {@code "."} and resolvable {@code ".."} segments are collapsed.</li>
+     *   <li>Excess {@code ".."} segments that would climb above the path root are left to the
+     *       normalizer and a warning is emitted instead of silently dropping path elements.</li>
+     * </ul>
+     */
+    private String resolvePath(String uncleanPath) {
+        boolean trailingSeparator = uncleanPath.endsWith("/");
 
-        StringTokenizer tokenizer = new StringTokenizer(uncleanPath, "/");
+        String resolved;
+        try {
+            resolved = Paths.get(uncleanPath).normalize().toString();
+        } catch (InvalidPathException e) {
+            resolved = uncleanPath;
+        }
 
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
+        if (trailingSeparator && !resolved.endsWith("/")) {
+            resolved += "/";
+        }
 
-            switch (token) {
-                case "":
-                    // Empty path entry ("...//.."), remove.
-                    break;
-                case "..":
-                    if (pathElements.isEmpty()) {
-                        // FIXME: somehow report to the user
-                        // that there are too many '..' elements.
-                        // For now, ignore the extra '..'.
-                    } else {
-                        pathElements.removeLast();
-                    }
-                    break;
-                default:
-                    pathElements.addLast(token);
-                    break;
+        warnOnExcessParentDirectory(uncleanPath);
+
+        return resolved;
+    }
+
+    private void warnOnExcessParentDirectory(String uncleanPath) {
+        int depth = 0;
+        int excess = 0;
+
+        for (String segment : uncleanPath.split("/")) {
+            if ("..".equals(segment)) {
+                if (depth == 0) {
+                    excess++;
+                } else {
+                    depth--;
+                }
+            } else if (!segment.isEmpty() && !".".equals(segment)) {
+                depth++;
             }
         }
 
-        StringBuilder cleanedPath = new StringBuilder();
-
-        while (!pathElements.isEmpty()) {
-            cleanedPath.append(pathElements.removeFirst());
-            if (!pathElements.isEmpty()) {
-                cleanedPath.append('/');
-            }
+        if ((excess > 0) && (log != null)) {
+            log.warn("Path '" + uncleanPath + "' contains " + excess + " excess '..' segment(s) pointing above "
+                    + "the path root; the normalized path may not match the original.");
         }
-
-        return cleanedPath.toString();
     }
 
     private static void mergeExtensionLists(Build childBuild, Build parentBuild) {

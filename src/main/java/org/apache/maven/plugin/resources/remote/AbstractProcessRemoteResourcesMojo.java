@@ -1031,6 +1031,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     }
 
     protected Model mergeModels(Model parent, Model child) {
+        inheritanceAssembler.setLog(getLog());
         inheritanceAssembler.assembleModelInheritance(child, parent);
         return child;
     }
