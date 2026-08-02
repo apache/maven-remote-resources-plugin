@@ -250,7 +250,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     protected boolean includeProjectProperties = false;
 
     /**
-     * This parameter is not used, it is kept for backward compatibility only.
+     * This parameter is not used. It is kept for backward compatibility only.
      *
      * @deprecated not used anymore
      * @since 1.6
