@@ -41,6 +41,7 @@ import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
@@ -91,7 +92,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         mojo.execute();
     }
 
-    public void testMalformedSupplementalModelDoesNotBreakBuild() throws Exception {
+    public void testMalformedSupplementalModelFailsWithMojoExecutionException() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-malformedsupplement");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
 
@@ -113,7 +114,12 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
 
         setVariableValueToObject(mojo, "supplementalModels", new String[] {supplementalModelsFile.getAbsolutePath()});
 
-        mojo.execute();
+        try {
+            mojo.execute();
+            fail("Expected a MojoExecutionException for a malformed supplemental model entry");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Unable to parse supplemental XML"));
+        }
     }
 
     public void testCreateBundle() throws Exception {

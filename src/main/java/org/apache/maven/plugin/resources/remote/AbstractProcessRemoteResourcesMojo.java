@@ -1007,7 +1007,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
     protected Model getSupplement(Xpp3Dom supplementModelXml) throws MojoExecutionException {
         MavenXpp3Reader modelReader = new MavenXpp3Reader();
-        Model model = null;
+        Model model;
 
         try {
             model = modelReader.read(new StringReader(supplementModelXml.toString()));
@@ -1024,9 +1024,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                         "Supplemental project XML " + "requires that a <artifactId> element be present.");
             }
         } catch (IOException e) {
-            getLog().warn("Unable to read supplemental XML: " + e.getMessage(), e);
+            throw new MojoExecutionException("Unable to read supplemental XML: " + e.getMessage(), e);
         } catch (XmlPullParserException e) {
-            getLog().warn("Unable to parse supplemental XML: " + e.getMessage(), e);
+            throw new MojoExecutionException("Unable to parse supplemental XML: " + e.getMessage(), e);
         }
 
         return model;
@@ -1080,10 +1080,6 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             Xpp3Dom dom = (Xpp3Dom) sd.getProject();
 
             Model m = getSupplement(dom);
-            if (m == null) {
-                getLog().warn("Skipping malformed supplemental model entry.");
-                continue;
-            }
             supplementMap.put(generateSupplementMapKey(m.getGroupId(), m.getArtifactId()), m);
         }
 
