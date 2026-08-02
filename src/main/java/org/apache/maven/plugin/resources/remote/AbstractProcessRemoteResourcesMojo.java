@@ -250,9 +250,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     protected boolean includeProjectProperties = false;
 
     /**
-     * When the result of velocity transformation fits in memory, it is compared with the actual contents on disk
-     * to eliminate unnecessary destination file overwrite. This improves build times since further build steps
-     * typically rely on the modification date.
+     * This parameter is not used. It is kept for backward compatibility only.
      *
      * @deprecated not used anymore
      * @since 1.6
