@@ -208,22 +208,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         }
     }
 
-    public void testConfigureLocatorRequiresProjectFile() throws Exception {
-        final MavenProjectResourcesStub project = createTestProject("default-null-pom");
-        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
-
-        setupDefaultProject(project);
-        project.setFile(null);
-
-        try {
-            mojo.execute();
-            fail("expected MojoExecutionException when the project has no POM file");
-        } catch (MojoExecutionException e) {
-            assertTrue(e.getMessage().contains("no POM file"));
-        }
-    }
-
-    public void testMalformedSupplementalModelDoesNotBreakBuild() throws Exception {
+    public void testMalformedSupplementalModelFailsWithMojoExecutionException() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-malformedsupplement");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
 
@@ -245,7 +230,27 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
 
         setVariableValueToObject(mojo, "supplementalModels", new String[] {supplementalModelsFile.getAbsolutePath()});
 
-        mojo.execute();
+        try {
+            mojo.execute();
+            fail("Expected a MojoExecutionException for a malformed supplemental model entry");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Unable to parse supplemental XML"));
+        }
+    }
+
+    public void testConfigureLocatorRequiresProjectFile() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-null-pom");
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
+
+        setupDefaultProject(project);
+        project.setFile(null);
+
+        try {
+            mojo.execute();
+            fail("expected MojoExecutionException when the project has no POM file");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("no POM file"));
+        }
     }
 
     public void testCreateBundle() throws Exception {
