@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
@@ -46,6 +47,7 @@ import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.resources.remote.stub.ArtifactStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
@@ -347,6 +349,27 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertNotNull(classLoader);
         // resources from the bundle jars must no longer be served by the closed classloader
         assertNull(classLoader.getResource("SIMPLE.txt"));
+    }
+
+    public void testProjectsDoesNotMutateProjectArtifactVersions() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-nomutate");
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
+
+        setupDefaultProject(project);
+
+        setVariableValueToObject(mojo, "supplementModels", new HashMap<>());
+
+        ArtifactStub snapshotArtifact = new ArtifactStub();
+        snapshotArtifact.setGroupId("org.example");
+        snapshotArtifact.setArtifactId("snapshot-dep");
+        snapshotArtifact.setVersion("1.0-SNAPSHOT");
+
+        project.setArtifacts(Collections.singleton(snapshotArtifact));
+
+        mojo.getProjects();
+
+        assertEquals("1.0-SNAPSHOT", snapshotArtifact.getVersion());
+        assertSame(snapshotArtifact, project.getArtifacts().iterator().next());
     }
 
     public void testVelocityUTF8() throws Exception {
