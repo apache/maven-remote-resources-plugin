@@ -165,6 +165,31 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(file.exists());
     }
 
+    public void testUseProjectFilesRendersVelocityTemplate() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-useprojectfiles");
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.4"});
+
+        setupDefaultProject(project);
+
+        FileUtils.fileWrite(
+                new File(project.getBasedir(), "FILTER.txt.vm").getAbsolutePath(), "local override: $project.name");
+
+        String path = pathOf(new DefaultArtifact(
+                "test", "test", VersionRange.createFromVersion("1.4"), null, "jar", "", new DefaultArtifactHandler()));
+
+        File file = new File(path);
+        file.getParentFile().mkdirs();
+        buildResourceBundle("default-useprojectfiles-create", null, new String[] {"FILTER.txt.vm"}, file);
+
+        setVariableValueToObject(mojo, "useProjectFiles", true);
+
+        mojo.execute();
+
+        File outputFile = new File((File) getVariableValueFromObject(mojo, "outputDirectory"), "FILTER.txt");
+        String data = FileUtils.fileRead(outputFile);
+        assertTrue(data.contains("local override: Test Project default-useprojectfiles"));
+    }
+
     public void testVelocityUTF8() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-utf8");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.2"});

@@ -663,15 +663,34 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         return false;
     }
 
-    private boolean copyProjectRootIfExists(File outputFile, String bundleResourceName) throws IOException {
+    private boolean copyProjectRootIfExists(
+            File outputFile, String bundleResourceName, VelocityContext context, String encoding)
+            throws IOException, MojoExecutionException {
         if (!useProjectFiles) {
             return false;
         }
 
         File source = new File(project.getBasedir(), bundleResourceName);
+        File templateSource = new File(project.getBasedir(), bundleResourceName + TEMPLATE_SUFFIX);
+
+        if (!source.exists() && templateSource.exists()) {
+            source = templateSource;
+        }
+
         if (source.exists()) {
-            getLog().debug("Use project file '" + source + "' as resource");
-            FilteringUtils.copyFile(source, outputFile, null, null);
+            if (source == templateSource) {
+                getLog().debug("Use project file '" + source + "' as resource with Velocity");
+                try (CachingOutputStream os = new CachingOutputStream(outputFile);
+                        Writer writer = getWriter(encoding, os);
+                        Reader reader = getReader(encoding, source)) {
+                    velocity.evaluate(context, writer, "", reader);
+                } catch (ParseErrorException | MethodInvocationException | ResourceNotFoundException e) {
+                    throw new MojoExecutionException("Error rendering velocity resource: " + source, e);
+                }
+            } else {
+                getLog().debug("Use project file '" + source + "' as resource");
+                FilteringUtils.copyFile(source, outputFile, null, null);
+            }
             return true;
         }
 
@@ -942,7 +961,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                     continue;
                 }
 
-                if (copyProjectRootIfExists(outputFile, projectResource)) {
+                if (copyProjectRootIfExists(outputFile, projectResource, context, bundle.getSourceEncoding())) {
                     continue;
                 }
 
