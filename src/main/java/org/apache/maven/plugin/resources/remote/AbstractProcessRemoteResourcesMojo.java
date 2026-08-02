@@ -532,7 +532,20 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         for (Artifact artifact : artifacts) {
             if (artifact.isSnapshot()) {
-                artifact.setVersion(artifact.getBaseVersion());
+                // build a new artifact from the base version instead of mutating the shared
+                // artifact instances (e.g. the ones from project.getArtifacts())
+                org.apache.maven.artifact.DefaultArtifact snapshotArtifact =
+                        new org.apache.maven.artifact.DefaultArtifact(
+                                artifact.getGroupId(),
+                                artifact.getArtifactId(),
+                                artifact.getBaseVersion(),
+                                artifact.getScope(),
+                                artifact.getType(),
+                                artifact.getClassifier(),
+                                artifact.getArtifactHandler());
+                snapshotArtifact.setFile(artifact.getFile());
+                snapshotArtifact.setResolved(artifact.isResolved());
+                artifact = snapshotArtifact;
             }
 
             getLog().debug("Building project for " + artifact);
