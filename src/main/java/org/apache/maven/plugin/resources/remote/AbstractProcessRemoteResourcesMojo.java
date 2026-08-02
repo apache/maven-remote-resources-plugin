@@ -1080,6 +1080,10 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             Xpp3Dom dom = (Xpp3Dom) sd.getProject();
 
             Model m = getSupplement(dom);
+            if (m == null) {
+                getLog().warn("Skipping malformed supplemental model entry.");
+                continue;
+            }
             supplementMap.put(generateSupplementMapKey(m.getGroupId(), m.getArtifactId()), m);
         }
 
