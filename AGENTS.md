@@ -19,8 +19,7 @@
 
 # AGENTS.md
 
-This file provides guidance for AI coding agents (for example opencode,
-Claude Code, or other agents) that work in this repository.
+This file provides guidance for AI coding agents that work in this repository.
 
 ## Build and verification
 
