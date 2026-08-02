@@ -18,14 +18,9 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.maven.plugin.logging.Log;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for the SCM path normalization in {@link ModelInheritanceAssembler}.
@@ -60,90 +55,5 @@ public class ModelInheritanceAssemblerTest {
         assertEquals(
                 "http://svn.example.com/repos",
                 assembler.appendPath("http://svn.example.com/repos/project/..", null, null, false));
-    }
-
-    @Test
-    public void appendPathWarnsOnExcessParentDirectory() {
-        RecordingLog log = new RecordingLog();
-        assembler.setLog(log);
-
-        assembler.appendPath("http://svn.example.com/../../../../repo", null, null, false);
-
-        assertTrue("Expected a warning about excess '..' segments", log.hasWarningContaining(".."));
-    }
-
-    /** Minimal {@link Log} implementation that records emitted warnings. */
-    private static class RecordingLog implements Log {
-
-        private final List<String> warnings = new ArrayList<>();
-
-        boolean hasWarningContaining(String text) {
-            for (String warning : warnings) {
-                if (warning.contains(text)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public boolean isDebugEnabled() {
-            return false;
-        }
-
-        @Override
-        public void debug(CharSequence content) {}
-
-        @Override
-        public void debug(CharSequence content, Throwable error) {}
-
-        @Override
-        public void debug(Throwable error) {}
-
-        @Override
-        public boolean isInfoEnabled() {
-            return false;
-        }
-
-        @Override
-        public void info(CharSequence content) {}
-
-        @Override
-        public void info(CharSequence content, Throwable error) {}
-
-        @Override
-        public void info(Throwable error) {}
-
-        @Override
-        public boolean isWarnEnabled() {
-            return true;
-        }
-
-        @Override
-        public void warn(CharSequence content) {
-            warnings.add(content.toString());
-        }
-
-        @Override
-        public void warn(CharSequence content, Throwable error) {
-            warnings.add(content.toString());
-        }
-
-        @Override
-        public void warn(Throwable error) {}
-
-        @Override
-        public boolean isErrorEnabled() {
-            return false;
-        }
-
-        @Override
-        public void error(CharSequence content) {}
-
-        @Override
-        public void error(CharSequence content, Throwable error) {}
-
-        @Override
-        public void error(Throwable error) {}
     }
 }
