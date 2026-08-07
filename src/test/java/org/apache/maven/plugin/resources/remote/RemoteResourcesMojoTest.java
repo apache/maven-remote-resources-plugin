@@ -41,6 +41,7 @@ import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
@@ -89,6 +90,36 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         setupDefaultProject(project);
 
         mojo.execute();
+    }
+
+    public void testMalformedSupplementalModelFailsWithMojoExecutionException() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-malformedsupplement");
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
+
+        setupDefaultProject(project);
+
+        File supplementalModelsFile = new File(project.getBasedir(), "supplemental-models.xml");
+        FileUtils.fileWrite(
+                supplementalModelsFile.getAbsolutePath(),
+                "<supplementalDataModels>"
+                        + "<supplement>"
+                        + "<project>"
+                        + "<groupId>test</groupId>"
+                        + "<artifactId>test</artifactId>"
+                        + "<version>1.0</version>"
+                        + "<notAValidElement>whatever</notAValidElement>"
+                        + "</project>"
+                        + "</supplement>"
+                        + "</supplementalDataModels>");
+
+        setVariableValueToObject(mojo, "supplementalModels", new String[] {supplementalModelsFile.getAbsolutePath()});
+
+        try {
+            mojo.execute();
+            fail("Expected a MojoExecutionException for a malformed supplemental model entry");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Unable to parse supplemental XML"));
+        }
     }
 
     public void testCreateBundle() throws Exception {
