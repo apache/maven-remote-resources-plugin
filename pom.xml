@@ -65,9 +65,9 @@ under the License.
 
   <properties>
     <javaVersion>8</javaVersion>
-    <mavenVersion>3.6.3</mavenVersion>
+    <mavenVersion>3.9.12</mavenVersion>
     <!-- the same version like in Maven 3.6.3 -->
-    <resolverVersion>1.4.1</resolverVersion>
+    <resolverVersion>1.9.25</resolverVersion>
     <project.build.outputTimestamp>2024-12-30T10:45:13Z</project.build.outputTimestamp>
 
     <!-- Used by site documentation as well, do not remove -->
@@ -232,13 +232,6 @@ under the License.
     </dependency>
     <dependency>
       <!-- needed in tests runtime -->
-      <groupId>org.apache.maven</groupId>
-      <artifactId>maven-compat</artifactId>
-      <version>${mavenVersion}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <!-- needed in tests runtime -->
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <version>1.7.36</version>
@@ -371,7 +364,7 @@ under the License.
             </goals>
             <configuration>
               <failOnWarning>true</failOnWarning>
-              <ignoredDependencies>org.apache.maven:maven-compat:*,org.slf4j:slf4j-simple:*</ignoredDependencies>
+              <ignoredDependencies>org.slf4j:slf4j-simple:*</ignoredDependencies>
             </configuration>
           </execution>
         </executions>
