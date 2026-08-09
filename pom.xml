@@ -73,7 +73,6 @@ under the License.
     <!-- Used by site documentation as well, do not remove -->
     <mavenFilteringVersion>3.5.1</mavenFilteringVersion>
 
-    <version.maven-invoker-plugin>3.9.1</version.maven-invoker-plugin>
   </properties>
 
   <dependencyManagement>
