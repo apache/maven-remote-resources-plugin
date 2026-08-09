@@ -205,6 +205,7 @@ under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
+      <!-- still required by AbstractMojoTestCase (deprecated, PlexusTestCase/JUnit 3 based); see RemoteResourcesMojoTest -->
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13.2</version>
@@ -215,6 +216,17 @@ under the License.
           <artifactId>hamcrest-core</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- runs RemoteResourcesMojoTest (AbstractMojoTestCase/PlexusTestCase, JUnit 3 style) on the JUnit Platform -->
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.plugin-testing</groupId>
@@ -362,7 +374,13 @@ under the License.
             </goals>
             <configuration>
               <failOnWarning>true</failOnWarning>
-              <ignoredDependencies>org.slf4j:slf4j-simple:*</ignoredDependencies>
+              <ignoredDependencies>
+                <ignoredDependency>org.slf4j:slf4j-simple:*</ignoredDependency>
+                <!-- still needed at test runtime by the deprecated AbstractMojoTestCase/PlexusTestCase (JUnit 3) -->
+                <ignoredDependency>junit:junit:*</ignoredDependency>
+                <!-- JUnit Platform test engines, discovered via ServiceLoader, never referenced from bytecode -->
+                <ignoredDependency>org.junit.vintage:junit-vintage-engine:*</ignoredDependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>
