@@ -723,9 +723,11 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         for (String artifactDescriptor : resourceBundles) {
             // groupId:artifactId:version, groupId:artifactId:version:type
             // or groupId:artifactId:version:type:classifier
-            String[] s = StringUtils.split(artifactDescriptor, ":");
+            // use the same splitting as downloadBundles() so both are consistent;
+            // also reject empty groupId/artifactId/version (e.g. a missing segment)
+            String[] s = artifactDescriptor.split(":");
 
-            if (s.length < 3 || s.length > 5) {
+            if (s.length < 3 || s.length > 5 || s[0].isEmpty() || s[1].isEmpty() || s[2].isEmpty()) {
                 String position;
 
                 if (bundleCount == 1) {

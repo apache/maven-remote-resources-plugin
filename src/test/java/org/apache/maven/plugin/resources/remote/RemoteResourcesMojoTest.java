@@ -41,6 +41,7 @@ import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
@@ -277,6 +278,19 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         String data = FileUtils.fileRead(file);
         assertTrue(data.contains("maven"));
         assertTrue(data.contains("rules"));
+    }
+
+    public void testValidateRejectsDescriptorWithEmptySegment() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-validate");
+        final ProcessRemoteResourcesMojo mojo =
+                lookupProcessMojoWithSettings(project, new String[] {"org.example:dep::jar"});
+
+        try {
+            mojo.validate();
+            fail("Expected validate() to reject a resource bundle descriptor with a missing version");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("resource bundle"));
+        }
     }
 
     protected void buildResourceBundle(String id, String sourceEncoding, String[] resourceNames, File jarName)
