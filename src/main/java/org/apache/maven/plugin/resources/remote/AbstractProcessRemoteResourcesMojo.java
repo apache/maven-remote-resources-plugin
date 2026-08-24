@@ -424,10 +424,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
         }
 
-        configureLocator();
-
         ClassLoader origLoader = Thread.currentThread().getContextClassLoader();
         try {
+            configureLocator();
             validate();
 
             List<File> resourceBundleArtifacts = downloadBundles(resourceBundles);
@@ -495,8 +494,12 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
         }
 
-        locator.addSearchPath(
-                FileResourceLoader.ID, project.getFile().getParentFile().getAbsolutePath());
+        File projectFile = project.getFile();
+        if (projectFile == null) {
+            throw new MojoExecutionException(
+                    "The current project has no POM file; cannot configure the resource locator.");
+        }
+        locator.addSearchPath(FileResourceLoader.ID, projectFile.getParentFile().getAbsolutePath());
         if (appendedResourcesDirectory != null) {
             locator.addSearchPath(FileResourceLoader.ID, appendedResourcesDirectory.getAbsolutePath());
         }

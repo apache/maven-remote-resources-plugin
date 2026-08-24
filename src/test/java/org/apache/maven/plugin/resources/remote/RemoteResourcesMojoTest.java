@@ -41,6 +41,7 @@ import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
@@ -89,6 +90,21 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         setupDefaultProject(project);
 
         mojo.execute();
+    }
+
+    public void testConfigureLocatorRequiresProjectFile() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-null-pom");
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
+
+        setupDefaultProject(project);
+        project.setFile(null);
+
+        try {
+            mojo.execute();
+            fail("expected MojoExecutionException when the project has no POM file");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("no POM file"));
+        }
     }
 
     public void testCreateBundle() throws Exception {
