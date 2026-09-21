@@ -24,9 +24,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import org.apache.maven.shared.verifier.VerificationException;
-import org.apache.maven.shared.verifier.Verifier;
-
 public class TestUtils {
     public static File getTestDir(final String name) throws IOException, URISyntaxException {
         ClassLoader cloader = Thread.currentThread().getContextClassLoader();
@@ -48,8 +45,8 @@ public class TestUtils {
         }
     }
 
-    public static Verifier newVerifier(File dir) throws VerificationException {
-        Verifier verifier = new Verifier(dir.getAbsolutePath());
+    public static MavenRunner newVerifier(File dir) {
+        MavenRunner verifier = new MavenRunner(dir);
         verifier.setLocalRepo(System.getProperty("localRepositoryPath"));
         return verifier;
     }
