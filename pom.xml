@@ -223,9 +223,9 @@ under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.maven.shared</groupId>
-      <artifactId>maven-verifier</artifactId>
-      <version>2.0.0-M1</version>
+      <groupId>org.apache.maven.executor</groupId>
+      <artifactId>maven-executor</artifactId>
+      <version>1.0.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -422,6 +422,11 @@ under the License.
                       on the CLI directly (and it would be preferred)
                     -->
                     <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+                    <!--
+                      maven-executor needs the Maven installation directory explicitly; the forked
+                      test JVM does not inherit the outer Maven process' maven.home system property.
+                    -->
+                    <maven.home>${maven.home}</maven.home>
                   </systemPropertyVariables>
                 </configuration>
               </execution>

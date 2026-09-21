@@ -22,9 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.apache.maven.shared.verifier.VerificationException;
-import org.apache.maven.shared.verifier.Verifier;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.jupiter.api.Test;
 
@@ -35,10 +34,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class ITGetDependencyProjects extends AbstractIT {
     @Test
-    public void test() throws IOException, URISyntaxException, VerificationException {
+    public void test() throws IOException, URISyntaxException {
         File dir = TestUtils.getTestDir("get-dependency-projects");
 
-        Verifier verifier;
+        MavenRunner verifier;
 
         verifier = TestUtils.newVerifier(dir);
         verifier.addCliArgument("deploy");

@@ -22,9 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.apache.maven.shared.verifier.VerificationException;
-import org.apache.maven.shared.verifier.Verifier;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.jupiter.api.Test;
 
@@ -32,9 +31,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ITFilterLocalOverride extends AbstractIT {
     @Test
-    public void test() throws IOException, URISyntaxException, VerificationException {
+    public void test() throws IOException, URISyntaxException {
         File dir = TestUtils.getTestDir("filter-local-override");
-        Verifier verifier = TestUtils.newVerifier(dir);
+        MavenRunner verifier = TestUtils.newVerifier(dir);
 
         verifier.addCliArgument("generate-resources");
         verifier.execute();
