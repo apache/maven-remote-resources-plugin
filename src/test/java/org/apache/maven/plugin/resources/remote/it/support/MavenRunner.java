@@ -74,8 +74,9 @@ public class MavenRunner {
         }
         args.addAll(cliArguments);
 
+        // forked on purpose: embedding Maven 4 inside the test JVM hangs (apache/maven-executor#47)
         try (ExecutorHelper executorHelper = ExecutorHelper.forMavenInstallation(
-                ExecutorRequest.discoverInstallationDirectory(), ExecutorHelper.Mode.AUTO)) {
+                ExecutorRequest.discoverInstallationDirectory(), ExecutorHelper.Mode.FORKED)) {
             ExecutorRequest request = ExecutorRequest.mavenBuilder()
                     .cwd(basedir.toPath())
                     .arguments(args.toArray(new String[0]))
