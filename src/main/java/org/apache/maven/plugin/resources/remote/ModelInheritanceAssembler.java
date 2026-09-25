@@ -18,13 +18,14 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
+import java.io.File;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 import org.apache.maven.model.Build;
@@ -568,51 +569,34 @@ public class ModelInheritanceAssembler {
             uncleanPath = uncleanPath.substring(protocolIdx + 3);
         }
 
-        if (uncleanPath.startsWith("/")) {
-            cleanedPath += "/";
-        }
-
         return cleanedPath + resolvePath(uncleanPath);
     }
 
-    // TODO Move this to plexus-utils' PathTool.
-    private static String resolvePath(String uncleanPath) {
-        LinkedList<String> pathElements = new LinkedList<>();
+    /**
+     * Normalizes the path part of an SCM URL using {@link java.nio.file.Path#normalize()}.
+     * <ul>
+     *   <li>Trailing separators are significant (e.g. {@code http://host/repo/} is not
+     *       {@code http://host/repo}) and are preserved.</li>
+     *   <li>Redundant separators, {@code "."} and resolvable {@code ".."} segments are collapsed.</li>
+     *   <li>Excess {@code ".."} segments that would climb above the path root are left to the
+     *       normalizer instead of being silently dropped.</li>
+     * </ul>
+     */
+    private String resolvePath(String uncleanPath) {
+        boolean trailingSeparator = uncleanPath.endsWith("/");
 
-        StringTokenizer tokenizer = new StringTokenizer(uncleanPath, "/");
-
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-
-            switch (token) {
-                case "":
-                    // Empty path entry ("...//.."), remove.
-                    break;
-                case "..":
-                    if (pathElements.isEmpty()) {
-                        // FIXME: somehow report to the user
-                        // that there are too many '..' elements.
-                        // For now, ignore the extra '..'.
-                    } else {
-                        pathElements.removeLast();
-                    }
-                    break;
-                default:
-                    pathElements.addLast(token);
-                    break;
-            }
+        String resolved;
+        try {
+            resolved = Paths.get(uncleanPath).normalize().toString().replace(File.separatorChar, '/');
+        } catch (InvalidPathException e) {
+            resolved = uncleanPath;
         }
 
-        StringBuilder cleanedPath = new StringBuilder();
-
-        while (!pathElements.isEmpty()) {
-            cleanedPath.append(pathElements.removeFirst());
-            if (!pathElements.isEmpty()) {
-                cleanedPath.append('/');
-            }
+        if (trailingSeparator && !resolved.endsWith("/")) {
+            resolved += "/";
         }
 
-        return cleanedPath.toString();
+        return resolved;
     }
 
     private static void mergeExtensionLists(Build childBuild, Build parentBuild) {
