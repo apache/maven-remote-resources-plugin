@@ -80,7 +80,6 @@ import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenFileFilterRequest;
 import org.apache.maven.shared.filtering.MavenFilteringException;
 import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.exception.MethodInvocationException;
 import org.apache.velocity.exception.ParseErrorException;
@@ -980,8 +979,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                     try (CachingOutputStream os = new CachingOutputStream(outputFile);
                             Reader reader = getReader(bundle.getSourceEncoding(), appendedVmResourceFile);
                             Writer writer = getWriter(bundle.getSourceEncoding(), os)) {
-                        Velocity.init();
-                        Velocity.evaluate(context, writer, "remote-resources", reader);
+                        velocity.evaluate(context, writer, "remote-resources", reader);
                     }
                 }
             }
