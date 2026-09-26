@@ -934,7 +934,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 // Don't overwrite resource that are already being provided.
 
-                File outputFile = new File(outputDirectory, projectResource);
+                File outputFile = resolveOutputFile(outputDirectory, projectResource);
 
                 FileUtils.mkdir(outputFile.getParentFile().getAbsolutePath());
 
@@ -990,6 +990,20 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         } catch (VelocityException e) {
             throw new MojoExecutionException("Error rendering Velocity resource '" + velocityResource + "'", e);
         }
+    }
+
+    static File resolveOutputFile(File outputDirectory, String resourceName)
+            throws IOException, MojoExecutionException {
+        if (new File(resourceName).isAbsolute()) {
+            throw new MojoExecutionException("Remote resource is outside the output directory: " + resourceName);
+        }
+        File canonicalOutputDirectory = outputDirectory.getCanonicalFile();
+        File outputFile = new File(outputDirectory, resourceName).getCanonicalFile();
+        if (outputFile.equals(canonicalOutputDirectory)
+                || !outputFile.toPath().startsWith(canonicalOutputDirectory.toPath())) {
+            throw new MojoExecutionException("Remote resource is outside the output directory: " + resourceName);
+        }
+        return outputFile;
     }
 
     private void verifyRequiredProperties(RemoteResourcesBundle bundle, URL url) throws MojoExecutionException {
