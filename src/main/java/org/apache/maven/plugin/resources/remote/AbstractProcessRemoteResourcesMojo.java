@@ -532,28 +532,30 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         getLog().debug("PROJECTS: " + artifacts);
 
         for (Artifact artifact : artifacts) {
-            if (artifact.isSnapshot()) {
-                artifact.setVersion(artifact.getBaseVersion());
-            }
+            MavenProject p = findReactorProject(artifact, mavenSession);
+            if (p == null) {
+                if (artifact.isSnapshot()) {
+                    artifact.setVersion(artifact.getBaseVersion());
+                }
 
-            getLog().debug("Building project for " + artifact);
-            MavenProject p;
-            try {
-                ProjectBuildingRequest req = new DefaultProjectBuildingRequest()
-                        .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
-                        .setProcessPlugins(false)
-                        .setRepositorySession(mavenSession.getRepositorySession())
-                        .setSystemProperties(mavenSession.getSystemProperties())
-                        .setUserProperties(mavenSession.getUserProperties())
-                        .setLocalRepository(mavenSession.getLocalRepository())
-                        .setRemoteRepositories(project.getRemoteArtifactRepositories());
-                ProjectBuildingResult res = projectBuilder.build(artifact, req);
-                p = res.getProject();
-            } catch (ProjectBuildingException e) {
-                getLog().warn("Invalid project model for artifact [" + artifact.getGroupId() + ":"
-                        + artifact.getArtifactId() + ":" + artifact.getVersion() + "]. "
-                        + "It will be ignored by the remote resources Mojo.");
-                continue;
+                getLog().debug("Building project for " + artifact);
+                try {
+                    ProjectBuildingRequest req = new DefaultProjectBuildingRequest()
+                            .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
+                            .setProcessPlugins(false)
+                            .setRepositorySession(mavenSession.getRepositorySession())
+                            .setSystemProperties(mavenSession.getSystemProperties())
+                            .setUserProperties(mavenSession.getUserProperties())
+                            .setLocalRepository(mavenSession.getLocalRepository())
+                            .setRemoteRepositories(project.getRemoteArtifactRepositories());
+                    ProjectBuildingResult res = projectBuilder.build(artifact, req);
+                    p = res.getProject();
+                } catch (ProjectBuildingException e) {
+                    getLog().warn("Invalid project model for artifact [" + artifact.getGroupId() + ":"
+                            + artifact.getArtifactId() + ":" + artifact.getVersion() + "]. "
+                            + "It will be ignored by the remote resources Mojo.");
+                    continue;
+                }
             }
 
             String supplementKey = generateSupplementMapKey(
@@ -573,6 +575,31 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         }
         projects.sort(new ProjectComparator());
         return projects;
+    }
+
+    private static MavenProject findReactorProject(Artifact artifact, MavenSession session) {
+        if (session == null) {
+            return null;
+        }
+        return findReactorProject(artifact, session.getProjects());
+    }
+
+    static MavenProject findReactorProject(Artifact artifact, List<MavenProject> reactorProjects) {
+        for (MavenProject reactorProject : reactorProjects) {
+            if (!artifact.getGroupId().equals(reactorProject.getGroupId())
+                    || !artifact.getArtifactId().equals(reactorProject.getArtifactId())
+                    || !artifactVersionMatches(artifact, reactorProject)) {
+                continue;
+            }
+            return reactorProject;
+        }
+        return null;
+    }
+
+    private static boolean artifactVersionMatches(Artifact artifact, MavenProject reactorProject) {
+        String projectVersion = reactorProject.getVersion();
+        return artifact.getVersion().equals(projectVersion)
+                || (artifact.getBaseVersion() != null && artifact.getBaseVersion().equals(projectVersion));
     }
 
     /**

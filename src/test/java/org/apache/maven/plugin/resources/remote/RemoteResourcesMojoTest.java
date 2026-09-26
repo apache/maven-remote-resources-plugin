@@ -89,6 +89,36 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         mojo.execute();
     }
 
+    public void testReactorProjectIsReusedWithoutBuildingItsModel() throws Exception {
+        MavenProject reactorProject = new MavenProject(new org.apache.maven.model.Model());
+        reactorProject.setGroupId("com.example");
+        reactorProject.setArtifactId("reactor-project");
+        reactorProject.setVersion("1.0-SNAPSHOT");
+
+        Artifact artifact = new DefaultArtifact(
+                "com.example",
+                "reactor-project",
+                VersionRange.createFromVersion("1.0-20260926.120000-1"),
+                null,
+                "jar",
+                "",
+                new DefaultArtifactHandler());
+
+        assertSame(reactorProject, AbstractProcessRemoteResourcesMojo.findReactorProject(
+                artifact, Collections.singletonList(reactorProject)));
+
+        Artifact externalArtifact = new DefaultArtifact(
+                "com.example",
+                "external-project",
+                VersionRange.createFromVersion("1.0"),
+                null,
+                "jar",
+                "",
+                new DefaultArtifactHandler());
+        assertNull(AbstractProcessRemoteResourcesMojo.findReactorProject(
+                externalArtifact, Collections.singletonList(reactorProject)));
+    }
+
     public void testConfigureLocatorRequiresProjectFile() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-null-pom");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
