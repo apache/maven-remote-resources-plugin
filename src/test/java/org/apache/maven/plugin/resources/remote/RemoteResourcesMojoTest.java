@@ -89,6 +89,28 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         mojo.execute();
     }
 
+    public void testRemoteResourceCannotEscapeOutputDirectory() throws Exception {
+        File outputDirectory = new File("target/remote-resource-output");
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(outputDirectory, "../outside.txt");
+            fail("expected a resource outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("outside the output directory"));
+        }
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    outputDirectory, new File(outputDirectory.getParentFile(), "absolute.txt").getAbsolutePath());
+            fail("expected an absolute resource path outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("outside the output directory"));
+        }
+
+        File outputFile = AbstractProcessRemoteResourcesMojo.resolveOutputFile(outputDirectory, "nested/resource.txt");
+        assertEquals(new File(outputDirectory, "nested/resource.txt").getCanonicalFile(), outputFile);
+    }
+
     public void testConfigureLocatorRequiresProjectFile() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-null-pom");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
