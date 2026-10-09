@@ -22,18 +22,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import org.apache.maven.shared.verifier.VerificationException;
-import org.apache.maven.shared.verifier.Verifier;
-
 public class BootstrapInstaller {
 
     private static boolean installed = false;
 
-    public static void install() throws IOException, URISyntaxException, VerificationException {
+    public static void install() throws IOException, URISyntaxException {
         if (!installed) {
             File bootstrapDir = TestUtils.getTestDir("bootstrap");
 
-            Verifier verifier = TestUtils.newVerifier(bootstrapDir);
+            MavenRunner verifier = TestUtils.newVerifier(bootstrapDir);
 
             verifier.addCliArgument("deploy");
             verifier.execute();
