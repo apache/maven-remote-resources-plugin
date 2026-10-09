@@ -918,6 +918,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         String velocityResource = null;
         try {
+            File canonicalOutputDirectory = outputDirectory.getCanonicalFile();
 
             for (Map.Entry<String, RemoteResourcesBundle> entry : remoteResources) {
                 String bundleResource = entry.getKey();
@@ -934,7 +935,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 // Don't overwrite resource that are already being provided.
 
-                File outputFile = new File(outputDirectory, projectResource);
+                File outputFile = resolveOutputFile(outputDirectory, canonicalOutputDirectory, projectResource);
 
                 FileUtils.mkdir(outputFile.getParentFile().getAbsolutePath());
 
@@ -990,6 +991,25 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         } catch (VelocityException e) {
             throw new MojoExecutionException("Error rendering Velocity resource '" + velocityResource + "'", e);
         }
+    }
+
+    static File resolveOutputFile(File outputDirectory, String resourceName)
+            throws IOException, MojoExecutionException {
+        return resolveOutputFile(outputDirectory, outputDirectory.getCanonicalFile(), resourceName);
+    }
+
+    private static File resolveOutputFile(File outputDirectory, File canonicalOutputDirectory, String resourceName)
+            throws IOException, MojoExecutionException {
+        if (new File(resourceName).isAbsolute()) {
+            throw new MojoExecutionException("Absolute remote resource paths are not allowed: " + resourceName);
+        }
+        File outputFile = new File(outputDirectory, resourceName).getCanonicalFile();
+        if (outputFile.equals(canonicalOutputDirectory)
+                || !outputFile.toPath().startsWith(canonicalOutputDirectory.toPath())) {
+            throw new MojoExecutionException(
+                    "Remote resource path must remain within the output directory: " + resourceName);
+        }
+        return outputFile;
     }
 
     private void verifyRequiredProperties(RemoteResourcesBundle bundle, URL url) throws MojoExecutionException {
