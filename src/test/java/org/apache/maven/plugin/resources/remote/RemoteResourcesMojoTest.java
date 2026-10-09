@@ -274,7 +274,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         appendedResourcesDirectory.mkdirs();
         FileUtils.fileWrite(
                 new File(appendedResourcesDirectory, "APPENDED_FILTER.txt.vm").getAbsolutePath(),
-                "appended: $project.name");
+                "appended: $project.name\n#parse('BUNDLE_FILTER.txt.vm')");
         setVariableValueToObject(mojo, "appendedResourcesDirectory", appendedResourcesDirectory);
 
         mojo.execute();
@@ -282,6 +282,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         File outputDirectory = (File) getVariableValueFromObject(mojo, "outputDirectory");
         String appendedData = FileUtils.fileRead(new File(outputDirectory, "APPENDED_FILTER.txt"));
         assertTrue(appendedData.contains("appended: Test Project default-appended-filtered-resource"));
+        assertTrue(appendedData.contains("project.name: Test Project default-appended-filtered-resource"));
         String bundleData = FileUtils.fileRead(new File(outputDirectory, "BUNDLE_FILTER.txt"));
         assertTrue(bundleData.contains("project.name: Test Project default-appended-filtered-resource"));
     }
