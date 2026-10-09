@@ -96,7 +96,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
             AbstractProcessRemoteResourcesMojo.resolveOutputFile(outputDirectory, "../outside.txt");
             fail("expected a resource outside the output directory to be rejected");
         } catch (MojoExecutionException e) {
-            assertTrue(e.getMessage().contains("must be relative and within the output directory"));
+            assertTrue(e.getMessage().contains("must remain within the output directory"));
         }
 
         try {
@@ -104,7 +104,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
                     outputDirectory, new File(outputDirectory.getParentFile(), "absolute.txt").getAbsolutePath());
             fail("expected an absolute resource path outside the output directory to be rejected");
         } catch (MojoExecutionException e) {
-            assertTrue(e.getMessage().contains("must be relative and within the output directory"));
+            assertTrue(e.getMessage().contains("Absolute remote resource paths are not allowed"));
         }
 
         File outputFile = AbstractProcessRemoteResourcesMojo.resolveOutputFile(outputDirectory, "nested/resource.txt");
