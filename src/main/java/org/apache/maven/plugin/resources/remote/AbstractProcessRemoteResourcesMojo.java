@@ -250,9 +250,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     protected boolean includeProjectProperties = false;
 
     /**
-     * When the result of velocity transformation fits in memory, it is compared with the actual contents on disk
-     * to eliminate unnecessary destination file overwrite. This improves build times since further build steps
-     * typically rely on the modification date.
+     * This parameter is not used. It is kept for backward compatibility only.
      *
      * @deprecated not used anymore
      * @since 1.6
@@ -426,10 +424,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
         }
 
-        configureLocator();
-
         ClassLoader origLoader = Thread.currentThread().getContextClassLoader();
         try {
+            configureLocator();
             validate();
 
             List<File> resourceBundleArtifacts = downloadBundles(resourceBundles);
@@ -497,8 +494,12 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
         }
 
-        locator.addSearchPath(
-                FileResourceLoader.ID, project.getFile().getParentFile().getAbsolutePath());
+        File projectFile = project.getFile();
+        if (projectFile == null) {
+            throw new MojoExecutionException(
+                    "The current project has no POM file; cannot configure the resource locator.");
+        }
+        locator.addSearchPath(FileResourceLoader.ID, projectFile.getParentFile().getAbsolutePath());
         if (appendedResourcesDirectory != null) {
             locator.addSearchPath(FileResourceLoader.ID, appendedResourcesDirectory.getAbsolutePath());
         }
