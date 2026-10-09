@@ -120,6 +120,8 @@ import org.eclipse.aether.util.artifact.JavaScopes;
  */
 public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     private static final String TEMPLATE_SUFFIX = ".vm";
+    private static final String INVALID_REMOTE_RESOURCE_PATH_MESSAGE =
+            "Remote resource path must be relative and within the output directory: ";
 
     /**
      * <p>
@@ -918,6 +920,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         String velocityResource = null;
         try {
+            File canonicalOutputDirectory = outputDirectory.getCanonicalFile();
 
             for (Map.Entry<String, RemoteResourcesBundle> entry : remoteResources) {
                 String bundleResource = entry.getKey();
@@ -934,7 +937,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 // Don't overwrite resource that are already being provided.
 
-                File outputFile = resolveOutputFile(outputDirectory, projectResource);
+                File outputFile = resolveOutputFile(outputDirectory, canonicalOutputDirectory, projectResource);
 
                 FileUtils.mkdir(outputFile.getParentFile().getAbsolutePath());
 
@@ -994,14 +997,18 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
     static File resolveOutputFile(File outputDirectory, String resourceName)
             throws IOException, MojoExecutionException {
+        return resolveOutputFile(outputDirectory, outputDirectory.getCanonicalFile(), resourceName);
+    }
+
+    private static File resolveOutputFile(File outputDirectory, File canonicalOutputDirectory, String resourceName)
+            throws IOException, MojoExecutionException {
         if (new File(resourceName).isAbsolute()) {
-            throw new MojoExecutionException("Remote resource is outside the output directory: " + resourceName);
+            throw new MojoExecutionException(INVALID_REMOTE_RESOURCE_PATH_MESSAGE + resourceName);
         }
-        File canonicalOutputDirectory = outputDirectory.getCanonicalFile();
         File outputFile = new File(outputDirectory, resourceName).getCanonicalFile();
         if (outputFile.equals(canonicalOutputDirectory)
                 || !outputFile.toPath().startsWith(canonicalOutputDirectory.toPath())) {
-            throw new MojoExecutionException("Remote resource is outside the output directory: " + resourceName);
+            throw new MojoExecutionException(INVALID_REMOTE_RESOURCE_PATH_MESSAGE + resourceName);
         }
         return outputFile;
     }
