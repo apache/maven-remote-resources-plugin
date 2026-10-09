@@ -572,6 +572,9 @@ public class ModelInheritanceAssembler {
 
     /**
      * Normalizes the path part of an SCM URL.
+     *
+     * @throws IllegalArgumentException if the path contains a {@code ".."} segment that
+     *     resolves above the root of an absolute path
      */
     private static String resolvePath(String uncleanPath) {
         boolean trailingSeparator = uncleanPath.endsWith("/");
@@ -588,7 +591,11 @@ public class ModelInheritanceAssembler {
                 case "..":
                     if (!pathElements.isEmpty() && !"..".equals(pathElements.getLast())) {
                         pathElements.removeLast();
-                    } else if (!absolute) {
+                    } else if (absolute) {
+                        // An absolute path cannot resolve ".." above its root.
+                        throw new IllegalArgumentException(
+                                "Unresolvable '..' segment in absolute path: " + uncleanPath);
+                    } else {
                         // A ".." that cannot be resolved against a preceding element is kept.
                         pathElements.addLast(token);
                     }
