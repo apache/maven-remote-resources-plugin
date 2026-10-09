@@ -26,26 +26,22 @@ under the License.
 # Frequently Asked Questions
 
 1. [Why do I need to use this plugin?](#question1)
-2. [The generated files have a lot of missing information. Looking at the POMs from the dependencies, the information isn't there either. What can I do?](#question2)
+2. [The generated files have missing information. The POMs from dependencies do not contain this information. What should I do?](#question2)
 
 <a id="question1"></a>
 
 ### Why do I need to use this plugin?
 
-This plugin greatly reduces the pain associated with consistent packaging concerns across a large set of
-projects, or an entire organization. Any project can specify the use of a remote resource bundle and have the
-resources incorporated into their packaging. This means that you can create standard settings in a parent POM
-somewhere in the project hierarchy and have all projects use packaged common resources in a standard way like
-licenses, other legal notices and disclaimers, or anything else that may be common.
+This plugin reduces the pain of consistent packaging across many projects. Any project can specify a remote resource bundle. The resources get incorporated into their packaging. You can create standard settings in a parent POM and have all projects use packaged common resources.
 
 <a id="question2"></a>
 
-### The generated files have a lot of missing information. Looking at the POMs from the dependencies, the information isn't there either. What can I do?
+### The generated files have missing information. The POMs from dependencies do not contain this information. What should I do?
 
-There are two solutions:
+You can do one of these two things:
 
 1. File bugs with the projects that produced those artifacts to get them to fix them.
-2. Use a supplemental data file. You can create a file that contains the missing metadata. For example:
+2. Use a supplemental data file. For example:
 
     ```xml
     <supplementalDataModels>
@@ -69,6 +65,4 @@ There are two solutions:
     </supplementalDataModels>
     ```
 
-    That location of that file can then be configured with the `supplementalModels` configuration element for
-    the `process` goal. The supplemental information is merged with the information provided from the
-    repository.
+    You configure the `supplementalModels` configuration element for the `process` goal with that location. The supplemental information merges with the repository data.
