@@ -120,10 +120,6 @@ import org.eclipse.aether.util.artifact.JavaScopes;
  */
 public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     private static final String TEMPLATE_SUFFIX = ".vm";
-    private static final String ABSOLUTE_REMOTE_RESOURCE_PATH_MESSAGE =
-            "Absolute remote resource paths are not allowed: ";
-    private static final String REMOTE_RESOURCE_OUTSIDE_OUTPUT_DIRECTORY_MESSAGE =
-            "Remote resource path must remain within the output directory: ";
 
     /**
      * <p>
@@ -1005,12 +1001,13 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     private static File resolveOutputFile(File outputDirectory, File canonicalOutputDirectory, String resourceName)
             throws IOException, MojoExecutionException {
         if (new File(resourceName).isAbsolute()) {
-            throw new MojoExecutionException(ABSOLUTE_REMOTE_RESOURCE_PATH_MESSAGE + resourceName);
+            throw new MojoExecutionException("Absolute remote resource paths are not allowed: " + resourceName);
         }
         File outputFile = new File(outputDirectory, resourceName).getCanonicalFile();
         if (outputFile.equals(canonicalOutputDirectory)
                 || !outputFile.toPath().startsWith(canonicalOutputDirectory.toPath())) {
-            throw new MojoExecutionException(REMOTE_RESOURCE_OUTSIDE_OUTPUT_DIRECTORY_MESSAGE + resourceName);
+            throw new MojoExecutionException(
+                    "Remote resource path must remain within the output directory: " + resourceName);
         }
         return outputFile;
     }
