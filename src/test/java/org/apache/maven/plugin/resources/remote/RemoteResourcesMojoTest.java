@@ -89,7 +89,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         mojo.execute();
     }
 
-    public void testReactorProjectIsReusedWithoutBuildingItsModel() throws Exception {
+    public void testFindReactorProjectMatchesTimestampedSnapshot() throws Exception {
         MavenProject reactorProject = new MavenProject(new org.apache.maven.model.Model());
         reactorProject.setGroupId("com.example");
         reactorProject.setArtifactId("reactor-project");
@@ -104,8 +104,10 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
                 "",
                 new DefaultArtifactHandler());
 
-        assertSame(reactorProject, AbstractProcessRemoteResourcesMojo.findReactorProject(
-                artifact, Collections.singletonList(reactorProject)));
+        assertSame(
+                reactorProject,
+                AbstractProcessRemoteResourcesMojo.findReactorProject(
+                        artifact, Collections.singletonList(reactorProject)));
 
         Artifact externalArtifact = new DefaultArtifact(
                 "com.example",

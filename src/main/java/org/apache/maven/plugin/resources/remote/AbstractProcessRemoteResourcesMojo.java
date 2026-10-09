@@ -532,15 +532,16 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         getLog().debug("PROJECTS: " + artifacts);
 
         for (Artifact artifact : artifacts) {
-            MavenProject p = findReactorProject(artifact, mavenSession);
-            if (p == null) {
-                if (artifact.isSnapshot()) {
-                    artifact.setVersion(artifact.getBaseVersion());
-                }
+            if (artifact.isSnapshot()) {
+                artifact.setVersion(artifact.getBaseVersion());
+            }
+
+            MavenProject reactorProject = findReactorProject(artifact, mavenSession);
+            if (reactorProject == null) {
 
                 getLog().debug("Building project for " + artifact);
                 try {
-                    ProjectBuildingRequest req = new DefaultProjectBuildingRequest()
+                    ProjectBuildingRequest projectBuildingRequest = new DefaultProjectBuildingRequest()
                             .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
                             .setProcessPlugins(false)
                             .setRepositorySession(mavenSession.getRepositorySession())
@@ -548,8 +549,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                             .setUserProperties(mavenSession.getUserProperties())
                             .setLocalRepository(mavenSession.getLocalRepository())
                             .setRemoteRepositories(project.getRemoteArtifactRepositories());
-                    ProjectBuildingResult res = projectBuilder.build(artifact, req);
-                    p = res.getProject();
+                    ProjectBuildingResult buildingResult = projectBuilder.build(artifact, projectBuildingRequest);
+                    reactorProject = buildingResult.getProject();
                 } catch (ProjectBuildingException e) {
                     getLog().warn("Invalid project model for artifact [" + artifact.getGroupId() + ":"
                             + artifact.getArtifactId() + ":" + artifact.getVersion() + "]. "
@@ -559,18 +560,19 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
 
             String supplementKey = generateSupplementMapKey(
-                    p.getModel().getGroupId(), p.getModel().getArtifactId());
+                    reactorProject.getModel().getGroupId(),
+                    reactorProject.getModel().getArtifactId());
 
             if (supplementModels.containsKey(supplementKey)) {
-                Model mergedModel = mergeModels(p.getModel(), supplementModels.get(supplementKey));
+                Model mergedModel = mergeModels(reactorProject.getModel(), supplementModels.get(supplementKey));
                 MavenProject mergedProject = new MavenProject(mergedModel);
                 projects.add(mergedProject);
                 mergedProject.setArtifact(artifact);
                 mergedProject.setVersion(artifact.getVersion());
                 getLog().debug("Adding project with groupId [" + mergedProject.getGroupId() + "] (supplemented)");
             } else {
-                projects.add(p);
-                getLog().debug("Adding project with groupId [" + p.getGroupId() + "]");
+                projects.add(reactorProject);
+                getLog().debug("Adding project with groupId [" + reactorProject.getGroupId() + "]");
             }
         }
         projects.sort(new ProjectComparator());
@@ -599,7 +601,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     private static boolean artifactVersionMatches(Artifact artifact, MavenProject reactorProject) {
         String projectVersion = reactorProject.getVersion();
         return artifact.getVersion().equals(projectVersion)
-                || (artifact.getBaseVersion() != null && artifact.getBaseVersion().equals(projectVersion));
+                || (artifact.getBaseVersion() != null
+                        && artifact.getBaseVersion().equals(projectVersion));
     }
 
     /**
