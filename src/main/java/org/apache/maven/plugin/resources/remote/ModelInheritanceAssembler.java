@@ -24,7 +24,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 import org.apache.maven.model.Build;
@@ -568,33 +567,37 @@ public class ModelInheritanceAssembler {
             uncleanPath = uncleanPath.substring(protocolIdx + 3);
         }
 
-        if (uncleanPath.startsWith("/")) {
-            cleanedPath += "/";
-        }
-
         return cleanedPath + resolvePath(uncleanPath);
     }
 
-    // TODO Move this to plexus-utils' PathTool.
+    /**
+     * Normalizes the path part of an SCM URL.
+     *
+     * @throws IllegalArgumentException if the path contains a {@code ".."} segment that
+     *     resolves above the root of an absolute path
+     */
     private static String resolvePath(String uncleanPath) {
+        boolean trailingSeparator = uncleanPath.endsWith("/");
+        boolean absolute = uncleanPath.startsWith("/");
+
         LinkedList<String> pathElements = new LinkedList<>();
 
-        StringTokenizer tokenizer = new StringTokenizer(uncleanPath, "/");
-
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-
+        for (String token : uncleanPath.split("/", -1)) {
             switch (token) {
                 case "":
-                    // Empty path entry ("...//.."), remove.
+                case ".":
+                    // Redundant separators and current-directory (".") segments are removed.
                     break;
                 case "..":
-                    if (pathElements.isEmpty()) {
-                        // FIXME: somehow report to the user
-                        // that there are too many '..' elements.
-                        // For now, ignore the extra '..'.
-                    } else {
+                    if (!pathElements.isEmpty() && !"..".equals(pathElements.getLast())) {
                         pathElements.removeLast();
+                    } else if (absolute) {
+                        // An absolute path cannot resolve ".." above its root.
+                        throw new IllegalArgumentException(
+                                "Unresolvable '..' segment in absolute path: " + uncleanPath);
+                    } else {
+                        // A ".." that cannot be resolved against a preceding element is kept.
+                        pathElements.addLast(token);
                     }
                     break;
                 default:
@@ -604,12 +607,19 @@ public class ModelInheritanceAssembler {
         }
 
         StringBuilder cleanedPath = new StringBuilder();
+        if (absolute) {
+            cleanedPath.append('/');
+        }
 
         while (!pathElements.isEmpty()) {
             cleanedPath.append(pathElements.removeFirst());
             if (!pathElements.isEmpty()) {
                 cleanedPath.append('/');
             }
+        }
+
+        if (trailingSeparator && cleanedPath.length() > 0 && cleanedPath.charAt(cleanedPath.length() - 1) != '/') {
+            cleanedPath.append('/');
         }
 
         return cleanedPath.toString();
