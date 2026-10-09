@@ -18,11 +18,9 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
-import java.io.File;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -573,30 +571,61 @@ public class ModelInheritanceAssembler {
     }
 
     /**
-     * Normalizes the path part of an SCM URL using {@link java.nio.file.Path#normalize()}.
+     * Normalizes the path part of an SCM URL using pure string manipulation, independent of the
+     * host file system rules. This matters because SCM URLs routinely contain characters that are
+     * illegal in a filesystem path on some platforms, e.g. the {@code ':'} of a port
+     * ({@code host:8080/repo}), and must normalize identically everywhere.
      * <ul>
      *   <li>Trailing separators are significant (e.g. {@code http://host/repo/} is not
      *       {@code http://host/repo}) and are preserved.</li>
      *   <li>Redundant separators, {@code "."} and resolvable {@code ".."} segments are collapsed.</li>
-     *   <li>Excess {@code ".."} segments that would climb above the path root are left to the
-     *       normalizer instead of being silently dropped.</li>
+     *   <li>Excess {@code ".."} segments that would climb above the path root are preserved
+     *       instead of being silently dropped.</li>
      * </ul>
      */
-    private String resolvePath(String uncleanPath) {
+    private static String resolvePath(String uncleanPath) {
         boolean trailingSeparator = uncleanPath.endsWith("/");
+        boolean absolute = uncleanPath.startsWith("/");
 
-        String resolved;
-        try {
-            resolved = Paths.get(uncleanPath).normalize().toString().replace(File.separatorChar, '/');
-        } catch (InvalidPathException e) {
-            resolved = uncleanPath;
+        LinkedList<String> pathElements = new LinkedList<>();
+
+        for (String token : uncleanPath.split("/", -1)) {
+            switch (token) {
+                case "":
+                case ".":
+                    // Redundant separators and current-directory (".") segments are removed.
+                    break;
+                case "..":
+                    if (!pathElements.isEmpty() && !"..".equals(pathElements.getLast())) {
+                        pathElements.removeLast();
+                    } else if (!absolute) {
+                        // A ".." that cannot be resolved against a preceding element is kept.
+                        pathElements.addLast(token);
+                    }
+                    break;
+                default:
+                    pathElements.addLast(token);
+                    break;
+            }
         }
 
-        if (trailingSeparator && !resolved.endsWith("/")) {
-            resolved += "/";
+        StringBuilder cleanedPath = new StringBuilder();
+        if (absolute) {
+            cleanedPath.append('/');
         }
 
-        return resolved;
+        while (!pathElements.isEmpty()) {
+            cleanedPath.append(pathElements.removeFirst());
+            if (!pathElements.isEmpty()) {
+                cleanedPath.append('/');
+            }
+        }
+
+        if (trailingSeparator && cleanedPath.length() > 0 && cleanedPath.charAt(cleanedPath.length() - 1) != '/') {
+            cleanedPath.append('/');
+        }
+
+        return cleanedPath.toString();
     }
 
     private static void mergeExtensionLists(Build childBuild, Build parentBuild) {

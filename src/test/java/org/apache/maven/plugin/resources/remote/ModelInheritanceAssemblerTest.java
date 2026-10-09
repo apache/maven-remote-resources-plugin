@@ -56,4 +56,26 @@ public class ModelInheritanceAssemblerTest {
                 "http://svn.example.com/repos",
                 assembler.appendPath("http://svn.example.com/repos/project/..", null, null, false));
     }
+
+    @Test
+    public void appendPathCollapsesRedundantSeparators() {
+        assertEquals(
+                "http://svn.example.com/repo/child",
+                assembler.appendPath("http://svn.example.com/repo//child", null, null, false));
+    }
+
+    @Test
+    public void appendPathPreservesExcessParentDirectory() {
+        assertEquals("../x", assembler.appendPath("a/../../x", null, null, false));
+    }
+
+    /**
+     * A segment containing {@code ':'} (a port, as common in SVN/git SCM URLs) is an illegal
+     * path on Windows, where {@code Paths.get(...)} throws {@link java.nio.file.InvalidPathException}.
+     * Normalization must not depend on the filesystem rules of the host OS.
+     */
+    @Test
+    public void appendPathNormalizesUrlWithPort() {
+        assertEquals("http://host:8080/x", assembler.appendPath("http://host:8080/repo/../x", null, null, false));
+    }
 }
