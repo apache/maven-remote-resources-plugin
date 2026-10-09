@@ -70,9 +70,8 @@ public class ModelInheritanceAssemblerTest {
     }
 
     /**
-     * A segment containing {@code ':'} (a port, as common in SVN/git SCM URLs) is an illegal
-     * path on Windows, where {@code Paths.get(...)} throws {@link java.nio.file.InvalidPathException}.
-     * Normalization must not depend on the filesystem rules of the host OS.
+     * A segment containing {@code ':'} (a port, as common in SVN/git SCM URLs) must normalize
+     * identically on every platform.
      */
     @Test
     public void appendPathNormalizesUrlWithPort() {

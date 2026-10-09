@@ -571,17 +571,7 @@ public class ModelInheritanceAssembler {
     }
 
     /**
-     * Normalizes the path part of an SCM URL using pure string manipulation, independent of the
-     * host file system rules. This matters because SCM URLs routinely contain characters that are
-     * illegal in a filesystem path on some platforms, e.g. the {@code ':'} of a port
-     * ({@code host:8080/repo}), and must normalize identically everywhere.
-     * <ul>
-     *   <li>Trailing separators are significant (e.g. {@code http://host/repo/} is not
-     *       {@code http://host/repo}) and are preserved.</li>
-     *   <li>Redundant separators, {@code "."} and resolvable {@code ".."} segments are collapsed.</li>
-     *   <li>Excess {@code ".."} segments that would climb above the path root are preserved
-     *       instead of being silently dropped.</li>
-     * </ul>
+     * Normalizes the path part of an SCM URL.
      */
     private static String resolvePath(String uncleanPath) {
         boolean trailingSeparator = uncleanPath.endsWith("/");
