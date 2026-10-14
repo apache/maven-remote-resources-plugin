@@ -75,6 +75,7 @@ import org.apache.maven.shared.artifact.filter.collection.FilterArtifacts;
 import org.apache.maven.shared.artifact.filter.collection.GroupIdFilter;
 import org.apache.maven.shared.artifact.filter.collection.ProjectTransitivityFilter;
 import org.apache.maven.shared.artifact.filter.collection.ScopeFilter;
+import org.apache.maven.shared.filtering.ChangeDetection;
 import org.apache.maven.shared.filtering.FilteringUtils;
 import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenFileFilterRequest;
@@ -652,7 +653,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                     }
                 } else {
                     getLog().debug("Use project resource '" + source + "' as resource");
-                    FilteringUtils.copyFile(source, outputFile, null, null);
+                    FilteringUtils.copyFile(source, outputFile, null, null, ChangeDetection.CONTENT);
                 }
 
                 // exclude the original (so eclipse doesn't complain about duplicate resources)
@@ -672,7 +673,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         File source = new File(project.getBasedir(), bundleResourceName);
         if (source.exists()) {
             getLog().debug("Use project file '" + source + "' as resource");
-            FilteringUtils.copyFile(source, outputFile, null, null);
+            FilteringUtils.copyFile(source, outputFile, null, null, ChangeDetection.CONTENT);
             return true;
         }
 
