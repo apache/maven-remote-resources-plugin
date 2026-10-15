@@ -426,7 +426,7 @@ class RemoteResourcesMojoTest {
         setVariableValueToObject(mojo, "sourceEncoding", sourceEncoding);
     }
 
-    private void configureProcessMojo(ProcessRemoteResourcesMojo mojo, MavenProject project, ArrayList<String> bundles)
+    private void configureProcessMojo(ProcessRemoteResourcesMojo mojo, MavenProject project, List<String> bundles)
             throws Exception {
         DefaultRepositorySystemSession reposession = MavenRepositorySystemUtils.newSession();
         reposession.setLocalRepositoryManager(new SimpleLocalRepositoryManagerFactory()
