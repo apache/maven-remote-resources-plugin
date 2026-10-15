@@ -18,6 +18,8 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
+import javax.inject.Inject;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,7 +63,6 @@ import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.testing.PlexusTestConfiguration;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -79,18 +80,14 @@ import static org.junit.jupiter.api.Assertions.fail;
  * RemoteResources plugin Test Case
  */
 @MojoTest
-class RemoteResourcesMojoTest implements PlexusTestConfiguration {
+class RemoteResourcesMojoTest {
     static final String DEFAULT_BUNDLE_POM_PATH = "target/test-classes/unit/rrmojotest/bundle-plugin-config.xml";
     static final String DEFAULT_PROCESS_POM_PATH = "target/test-classes/unit/rrmojotest/process-plugin-config.xml";
 
     private static final String LOCAL_REPO = "target/local-repo/";
 
+    @Inject
     private PlexusContainer container;
-
-    @Override
-    public void customizeContainer(PlexusContainer container) {
-        this.container = container;
-    }
 
     /**
      * check test environment
