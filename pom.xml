@@ -199,7 +199,7 @@ under the License.
 
     <!-- test -->
     <dependency>
-      <!-- still required by AbstractMojoTestCase (deprecated, PlexusTestCase/JUnit 3 based); see RemoteResourcesMojoTest -->
+      <!-- still required at test runtime by PlexusTestCase (JUnit 3 based), which the test stubs extend -->
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13.2</version>
@@ -211,15 +211,21 @@ under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
-      <!-- runs RemoteResourcesMojoTest (AbstractMojoTestCase/PlexusTestCase, JUnit 3 style) on the JUnit Platform -->
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
+      <!-- JUnit Platform engine that runs the JUnit 5 tests, discovered via ServiceLoader -->
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.plugin-testing</groupId>
       <artifactId>maven-plugin-testing-harness</artifactId>
       <version>3.5.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-testing</artifactId>
+      <version>2.1.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -364,10 +370,10 @@ under the License.
               <failOnWarning>true</failOnWarning>
               <ignoredDependencies>
                 <ignoredDependency>org.slf4j:slf4j-simple:*</ignoredDependency>
-                <!-- still needed at test runtime by the deprecated AbstractMojoTestCase/PlexusTestCase (JUnit 3) -->
+                <!-- still needed at test runtime by PlexusTestCase (JUnit 3) used by the test stubs -->
                 <ignoredDependency>junit:junit:*</ignoredDependency>
-                <!-- JUnit Platform test engines, discovered via ServiceLoader, never referenced from bytecode -->
-                <ignoredDependency>org.junit.vintage:junit-vintage-engine:*</ignoredDependency>
+                <!-- JUnit Platform test engine, discovered via ServiceLoader, never referenced from bytecode -->
+                <ignoredDependency>org.junit.jupiter:junit-jupiter-engine:*</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>
