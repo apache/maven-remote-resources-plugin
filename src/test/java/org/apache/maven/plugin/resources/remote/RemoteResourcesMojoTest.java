@@ -34,7 +34,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -48,27 +47,18 @@ import org.apache.maven.api.plugin.testing.MojoTest;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
-import org.apache.maven.artifact.repository.MavenArtifactRepository;
-import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
 import org.apache.maven.artifact.versioning.VersionRange;
-import org.apache.maven.execution.DefaultMavenExecutionRequest;
-import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.resources.remote.stub.ArtifactStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectBuilder;
-import org.apache.maven.project.ProjectBuildingResult;
-import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
-import org.eclipse.aether.DefaultRepositorySystemSession;
-import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
-import org.eclipse.aether.repository.LocalRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.apache.maven.api.plugin.testing.MojoExtension.getVariableValueFromObject;
 import static org.apache.maven.api.plugin.testing.MojoExtension.setVariableValueToObject;
@@ -79,23 +69,21 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * RemoteResources plugin Test Case
  */
-@MojoTest
+@MojoTest(realRepositorySession = true)
 class RemoteResourcesMojoTest {
     static final String DEFAULT_BUNDLE_POM_PATH = "target/test-classes/unit/rrmojotest/bundle-plugin-config.xml";
     static final String DEFAULT_PROCESS_POM_PATH = "target/test-classes/unit/rrmojotest/process-plugin-config.xml";
 
-    private final String LOCAL_REPO = createLocalRepoPath();
-
-    private static String createLocalRepoPath() {
-        try {
-            return Files.createTempDirectory("remote-resources-local-repo-").toString();
-        } catch (java.io.IOException e) {
-            throw new IllegalStateException("Failed to create temporary local repository for test", e);
-        }
-    }
+    @TempDir
+    private File localRepo;
 
     @Inject
-    private PlexusContainer container;
+    private MavenSession session;
+
+    @BeforeEach
+    void setUp() {
+        session.getRequest().setLocalRepositoryPath(localRepo);
+    }
 
     /**
      * check test environment
@@ -360,7 +348,7 @@ class RemoteResourcesMojoTest {
             throws Exception {
         final MavenProjectResourcesStub project = createTestProject(id);
 
-        final File resourceDir = new File(project.getBasedir() + "/src/main/resources");
+        final File resourceDir = new File(project.getBasedir(), "src/main/resources");
         configureBundleMojo(mojo, project, resourceDir, sourceEncoding);
 
         setupDefaultProject(project);
@@ -374,7 +362,7 @@ class RemoteResourcesMojoTest {
 
         mojo.execute();
 
-        File xmlFile = new File(project.getBasedir() + "/target/classes/META-INF/maven/remote-resources.xml");
+        File xmlFile = new File(project.getBasedir(), "target/classes/META-INF/maven/remote-resources.xml");
         assertTrue(xmlFile.exists());
 
         String data = FileUtils.fileRead(xmlFile);
@@ -440,26 +428,6 @@ class RemoteResourcesMojoTest {
 
     private void configureProcessMojo(ProcessRemoteResourcesMojo mojo, MavenProject project, List<String> bundles)
             throws Exception {
-        DefaultRepositorySystemSession reposession = MavenRepositorySystemUtils.newSession();
-        reposession.setLocalRepositoryManager(new SimpleLocalRepositoryManagerFactory()
-                .newInstance(reposession, new LocalRepository(new File(LOCAL_REPO))));
-
-        DefaultMavenExecutionRequest request = new DefaultMavenExecutionRequest();
-        request.setUserProperties(null);
-        // request.setLocalRepository( reposession.getLocalRepository() );
-        request.setGoals(Collections.singletonList("install"));
-        request.setBaseDirectory(project.getBasedir());
-        request.setStartTime(Calendar.getInstance().getTime());
-
-        // TODO: get rid of this uglyness/legacy
-        MavenArtifactRepository localRepository = new MavenArtifactRepository();
-        localRepository.setId("local");
-        localRepository.setUrl(new File(LOCAL_REPO).toURI().toASCIIString());
-        localRepository.setLayout(new DefaultRepositoryLayout());
-        request.setLocalRepository(localRepository);
-        MavenSession session = new MavenSession(container, reposession, request, new DefaultMavenExecutionResult());
-        session.setProjects(Collections.singletonList(project));
-
         setVariableValueToObject(
                 mojo, "outputDirectory", new File(project.getBuild().getOutputDirectory()));
         setVariableValueToObject(mojo, "resourceBundles", bundles);
@@ -468,9 +436,10 @@ class RemoteResourcesMojoTest {
     }
 
     private String pathOf(Artifact artifact) {
-        String path = LOCAL_REPO + artifact.getGroupId().replace(".", "/") + "/"
-                + artifact.getArtifactId() + "/"
-                + artifact.getBaseVersion() + "/"
+        String path = localRepo.getPath() + File.separator
+                + artifact.getGroupId().replace(".", File.separator) + File.separator
+                + artifact.getArtifactId() + File.separator
+                + artifact.getBaseVersion() + File.separator
                 + artifact.getArtifactId() + "-" + artifact.getVersion();
         if (artifact.getClassifier() != null && !artifact.getClassifier().isEmpty()) {
             path = path + "-" + artifact.getClassifier();
