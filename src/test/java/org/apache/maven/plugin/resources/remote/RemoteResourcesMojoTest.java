@@ -72,7 +72,15 @@ class RemoteResourcesMojoTest {
     static final String DEFAULT_BUNDLE_POM_PATH = "target/test-classes/unit/rrmojotest/bundle-plugin-config.xml";
     static final String DEFAULT_PROCESS_POM_PATH = "target/test-classes/unit/rrmojotest/process-plugin-config.xml";
 
-    private static final String LOCAL_REPO = "target/local-repo/";
+    private final String LOCAL_REPO = createLocalRepoPath();
+
+    private static String createLocalRepoPath() {
+        try {
+            return Files.createTempDirectory("remote-resources-local-repo-").toString();
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Failed to create temporary local repository for test", e);
+        }
+    }
 
     @Inject
     private PlexusContainer container;
