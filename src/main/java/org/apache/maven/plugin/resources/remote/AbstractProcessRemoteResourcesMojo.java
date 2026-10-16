@@ -935,7 +935,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 // Don't overwrite resource that are already being provided.
 
-                File outputFile = resolveOutputFile(outputDirectory, canonicalOutputDirectory, projectResource);
+                File outputFile = resolveOutputFile(outputDirectory, projectResource, canonicalOutputDirectory);
 
                 FileUtils.mkdir(outputFile.getParentFile().getAbsolutePath());
 
@@ -993,12 +993,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         }
     }
 
-    static File resolveOutputFile(File outputDirectory, String resourceName)
-            throws IOException, MojoExecutionException {
-        return resolveOutputFile(outputDirectory, outputDirectory.getCanonicalFile(), resourceName);
-    }
-
-    private static File resolveOutputFile(File outputDirectory, File canonicalOutputDirectory, String resourceName)
+    static File resolveOutputFile(File outputDirectory, String resourceName, File canonicalOutputDirectory)
             throws IOException, MojoExecutionException {
         if (new File(resourceName).isAbsolute()) {
             throw new MojoExecutionException("Absolute remote resource paths are not allowed: " + resourceName);
