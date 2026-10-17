@@ -19,11 +19,13 @@
 package org.apache.maven.plugin.resources.remote;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -52,6 +54,7 @@ import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
+import org.junit.Assume;
 
 /**
  * RemoteResources plugin Test Case
@@ -114,6 +117,27 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         File outputFile = AbstractProcessRemoteResourcesMojo.resolveOutputFile(
                 outputDirectory, "nested/resource.txt", canonicalOutputDirectory);
         assertEquals(new File(outputDirectory, "nested/resource.txt").getCanonicalFile(), outputFile);
+    }
+
+    public void testRemoteResourceCannotEscapeOutputDirectoryThroughSymlink() throws Exception {
+        Path temporaryDirectory = Files.createTempDirectory("remote-resource-path");
+        Path outputDirectory = Files.createDirectory(temporaryDirectory.resolve("output"));
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        try {
+            Files.createSymbolicLink(outputDirectory.resolve("external"), outsideDirectory);
+        } catch (UnsupportedOperationException | IOException e) {
+            Assume.assumeNoException(e);
+        }
+
+        File output = outputDirectory.toFile();
+        File canonicalOutputDirectory = output.getCanonicalFile();
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    output, "external/escaped.txt", canonicalOutputDirectory);
+            fail("expected a symlink target outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must remain within the output directory"));
+        }
     }
 
     public void testConfigureLocatorRequiresProjectFile() throws Exception {
