@@ -21,6 +21,9 @@ package org.apache.maven.plugin.resources.remote;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -28,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
@@ -46,6 +51,8 @@ import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
@@ -87,6 +94,114 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         setupDefaultProject(project);
 
         mojo.execute();
+    }
+
+    public void testFindReactorProjectMatchesTimestampedSnapshot() throws Exception {
+        MavenProject reactorProject = new MavenProject(new org.apache.maven.model.Model());
+        reactorProject.setGroupId("com.example");
+        reactorProject.setArtifactId("reactor-project");
+        reactorProject.setVersion("1.0-SNAPSHOT");
+
+        Artifact artifact = new DefaultArtifact(
+                "com.example",
+                "reactor-project",
+                VersionRange.createFromVersion("1.0-20260926.120000-1"),
+                null,
+                "jar",
+                "",
+                new DefaultArtifactHandler());
+
+        assertSame(
+                reactorProject,
+                AbstractProcessRemoteResourcesMojo.findReactorProject(
+                        artifact, Collections.singletonList(reactorProject)));
+
+        Artifact externalArtifact = new DefaultArtifact(
+                "com.example",
+                "external-project",
+                VersionRange.createFromVersion("1.0"),
+                null,
+                "jar",
+                "",
+                new DefaultArtifactHandler());
+        assertNull(AbstractProcessRemoteResourcesMojo.findReactorProject(
+                externalArtifact, Collections.singletonList(reactorProject)));
+    }
+
+    public void testGetProjectsBuildsOnlyExternalArtifacts() throws Exception {
+        MavenProjectResourcesStub project = createTestProject("reactor-projects");
+        ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
+        setupDefaultProject(project);
+
+        MavenProject reactorProject = new MavenProject(new org.apache.maven.model.Model());
+        reactorProject.setGroupId("com.example");
+        reactorProject.setArtifactId("reactor-project");
+        reactorProject.setVersion("1.0-SNAPSHOT");
+
+        Artifact reactorArtifact = new DefaultArtifact(
+                "com.example",
+                "reactor-project",
+                VersionRange.createFromVersion("1.0-20260926.120000-1"),
+                "compile",
+                "jar",
+                "",
+                new DefaultArtifactHandler());
+        Artifact externalArtifact = new DefaultArtifact(
+                "com.example",
+                "external-project",
+                VersionRange.createFromVersion("1.0"),
+                "compile",
+                "jar",
+                "",
+                new DefaultArtifactHandler());
+        project.setArtifacts(new LinkedHashSet<>(Arrays.asList(reactorArtifact, externalArtifact)));
+        reactorProject.setArtifact(reactorArtifact);
+
+        MavenSession session = (MavenSession) getVariableValueFromObject(mojo, "mavenSession");
+        session.setProjects(Arrays.asList(project, reactorProject));
+
+        MavenProject externalProject = new MavenProject(new org.apache.maven.model.Model());
+        externalProject.setGroupId("com.example");
+        externalProject.setArtifactId("external-project");
+        externalProject.setVersion("1.0");
+        externalProject.setArtifact(externalArtifact);
+
+        ProjectBuildingResult buildingResult = (ProjectBuildingResult) Proxy.newProxyInstance(
+                ProjectBuildingResult.class.getClassLoader(),
+                new Class<?>[] {ProjectBuildingResult.class},
+                new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) {
+                        if ("getProject".equals(method.getName())) {
+                            return externalProject;
+                        }
+                        return null;
+                    }
+                });
+        List<Artifact> builtArtifacts = new ArrayList<>();
+        ProjectBuilder projectBuilder = (ProjectBuilder) Proxy.newProxyInstance(
+                ProjectBuilder.class.getClassLoader(), new Class<?>[] {ProjectBuilder.class}, new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) {
+                        if ("build".equals(method.getName())
+                                && args != null
+                                && args.length == 2
+                                && args[0] instanceof Artifact) {
+                            builtArtifacts.add((Artifact) args[0]);
+                            return buildingResult;
+                        }
+                        return null;
+                    }
+                });
+        setVariableValueToObject(mojo, "projectBuilder", projectBuilder);
+        setVariableValueToObject(mojo, "supplementModels", new HashMap<>());
+
+        List<MavenProject> projects = mojo.getProjects();
+
+        assertEquals(1, builtArtifacts.size());
+        assertSame(externalArtifact, builtArtifacts.get(0));
+        assertTrue(projects.contains(reactorProject));
+        assertTrue(projects.contains(externalProject));
     }
 
     public void testConfigureLocatorRequiresProjectFile() throws Exception {
