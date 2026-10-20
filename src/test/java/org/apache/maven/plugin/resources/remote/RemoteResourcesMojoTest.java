@@ -26,10 +26,12 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
@@ -137,6 +139,76 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
             fail("expected a symlink target outside the output directory to be rejected");
         } catch (MojoExecutionException e) {
             assertTrue(e.getMessage().contains("must remain within the output directory"));
+        }
+    }
+
+    public void testRemoteResourceResolvesNestedSymlinksBeforeCheckingContainment() throws Exception {
+        Path temporaryDirectory = Files.createTempDirectory("remote-resource-nested-path");
+        Path outputDirectory = Files.createDirectory(temporaryDirectory.resolve("output"));
+        Path insideDirectory = Files.createDirectory(outputDirectory.resolve("inside"));
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        try {
+            Files.createSymbolicLink(outputDirectory.resolve("inside-link"), insideDirectory);
+            Files.createSymbolicLink(insideDirectory.resolve("outside-link"), outsideDirectory);
+        } catch (UnsupportedOperationException | IOException e) {
+            Assume.assumeNoException(e);
+        }
+
+        File output = outputDirectory.toFile();
+        File canonicalOutputDirectory = output.getCanonicalFile();
+        File safeOutputFile = AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                output, "inside-link/not-created/resource.txt", canonicalOutputDirectory);
+        assertEquals(
+                insideDirectory.toRealPath().resolve("not-created/resource.txt").toFile(), safeOutputFile);
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    output, "inside-link/outside-link/not-created/resource.txt", canonicalOutputDirectory);
+            fail("expected a nested symlink target outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must remain within the output directory"));
+        }
+    }
+
+    public void testRemoteResourceFailsClosedWhenPathCannotBeInspected() throws Exception {
+        Path temporaryDirectory = Files.createTempDirectory("remote-resource-inaccessible-path");
+        Path outputDirectory = Files.createDirectory(temporaryDirectory.resolve("output"));
+        Path restrictedDirectory = Files.createDirectory(outputDirectory.resolve("restricted"));
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+
+        EnumSet<PosixFilePermission> originalPermissions;
+        try {
+            originalPermissions = EnumSet.copyOf(Files.getPosixFilePermissions(restrictedDirectory));
+        } catch (UnsupportedOperationException e) {
+            Assume.assumeNoException(e);
+            return;
+        }
+
+        try {
+            Files.createSymbolicLink(restrictedDirectory.resolve("external"), outsideDirectory);
+        } catch (UnsupportedOperationException | IOException e) {
+            Assume.assumeNoException(e);
+            return;
+        }
+
+        try {
+            Files.setPosixFilePermissions(
+                    restrictedDirectory, EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+        } catch (UnsupportedOperationException e) {
+            Assume.assumeNoException(e);
+            return;
+        }
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    outputDirectory.toFile(),
+                    "restricted/external/escaped.txt",
+                    outputDirectory.toFile().getCanonicalFile());
+            fail("expected unreadable path components to be rejected");
+        } catch (IOException expected) {
+            // An inaccessible component must not be treated as a missing path element.
+        } finally {
+            Files.setPosixFilePermissions(restrictedDirectory, originalPermissions);
         }
     }
 
