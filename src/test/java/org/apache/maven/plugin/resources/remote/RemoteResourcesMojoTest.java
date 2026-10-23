@@ -292,6 +292,19 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(data.contains("rules"));
     }
 
+    public void testValidateRejectsDescriptorWithEmptySegment() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-validate");
+        final ProcessRemoteResourcesMojo mojo =
+                lookupProcessMojoWithSettings(project, new String[] {"org.example:dep::jar"});
+
+        try {
+            mojo.validate();
+            fail("Expected validate() to reject a resource bundle descriptor with a missing version");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must specify groupId:artifactId:version"));
+        }
+    }
+
     protected void buildResourceBundle(String id, String sourceEncoding, String[] resourceNames, File jarName)
             throws Exception {
         final MavenProjectResourcesStub project = createTestProject(id);
