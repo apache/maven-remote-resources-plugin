@@ -89,6 +89,36 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         mojo.execute();
     }
 
+    public void testMalformedSupplementalModelFailsWithMojoExecutionException() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-malformedsupplement");
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
+
+        setupDefaultProject(project);
+
+        File supplementalModelsFile = new File(project.getBasedir(), "supplemental-models.xml");
+        FileUtils.fileWrite(
+                supplementalModelsFile.getAbsolutePath(),
+                "<supplementalDataModels>"
+                        + "<supplement>"
+                        + "<project>"
+                        + "<groupId>test</groupId>"
+                        + "<artifactId>test</artifactId>"
+                        + "<version>1.0</version>"
+                        + "<notAValidElement>whatever</notAValidElement>"
+                        + "</project>"
+                        + "</supplement>"
+                        + "</supplementalDataModels>");
+
+        setVariableValueToObject(mojo, "supplementalModels", new String[] {supplementalModelsFile.getAbsolutePath()});
+
+        try {
+            mojo.execute();
+            fail("Expected a MojoExecutionException for a malformed supplemental model entry");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Unable to parse supplemental XML"));
+        }
+    }
+
     public void testConfigureLocatorRequiresProjectFile() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-null-pom");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
