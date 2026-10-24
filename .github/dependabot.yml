@@ -30,6 +30,9 @@ updates:
       - dependency-name: "org.apache.maven:maven-model-builder"
       - dependency-name: "org.apache.maven:maven-plugin-api"
       - dependency-name: "org.apache.maven:maven-resolver-provider"
+      # Maven 3 so use SLF4J 1.7.x
+      - dependency-name: "org.slf4j:*"
+        versions: [">= 2.0.0"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
