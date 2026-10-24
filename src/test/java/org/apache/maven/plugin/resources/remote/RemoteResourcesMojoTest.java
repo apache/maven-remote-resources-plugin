@@ -254,6 +254,39 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(data.contains("projectsSortedByOrganization: {"));
     }
 
+    public void testFilteredAppendedResource() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-appended-filtered-resource");
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.4"});
+
+        setupDefaultProject(project);
+
+        String path = pathOf(new DefaultArtifact(
+                "test", "test", VersionRange.createFromVersion("1.4"), null, "jar", "", new DefaultArtifactHandler()));
+        File bundleJar = new File(path);
+        bundleJar.getParentFile().mkdirs();
+        buildResourceBundle(
+                "default-appended-filtered-resource-create",
+                null,
+                new String[] {"BUNDLE_FILTER.txt.vm", "APPENDED_FILTER.txt"},
+                bundleJar);
+
+        File appendedResourcesDirectory = new File(project.getBasedir(), "src/main/appended-resources");
+        appendedResourcesDirectory.mkdirs();
+        FileUtils.fileWrite(
+                new File(appendedResourcesDirectory, "APPENDED_FILTER.txt.vm").getAbsolutePath(),
+                "appended: $project.name\n#parse('BUNDLE_FILTER.txt.vm')");
+        setVariableValueToObject(mojo, "appendedResourcesDirectory", appendedResourcesDirectory);
+
+        mojo.execute();
+
+        File outputDirectory = (File) getVariableValueFromObject(mojo, "outputDirectory");
+        String appendedData = FileUtils.fileRead(new File(outputDirectory, "APPENDED_FILTER.txt"));
+        assertTrue(appendedData.contains("appended: Test Project default-appended-filtered-resource"));
+        assertTrue(appendedData.contains("project.name: Test Project default-appended-filtered-resource"));
+        String bundleData = FileUtils.fileRead(new File(outputDirectory, "BUNDLE_FILTER.txt"));
+        assertTrue(bundleData.contains("project.name: Test Project default-appended-filtered-resource"));
+    }
+
     public void testFilteredBundlesWithProjectProperties() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-filterbundles-two");
         final ProcessRemoteResourcesMojo mojo =
