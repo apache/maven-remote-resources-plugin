@@ -979,7 +979,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                     try (CachingOutputStream os = new CachingOutputStream(outputFile);
                             Reader reader = getReader(bundle.getSourceEncoding(), appendedVmResourceFile);
                             Writer writer = getWriter(bundle.getSourceEncoding(), os)) {
-                        velocity.evaluate(context, writer, projectResource + ".vm", reader);
+                        velocityResource = projectResource + ".vm";
+                        velocity.evaluate(context, writer, velocityResource, reader);
                     }
                 }
             }
