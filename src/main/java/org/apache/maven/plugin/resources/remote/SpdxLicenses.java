@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -55,7 +56,9 @@ public class SpdxLicenses {
 
     private static final String RESOURCE = "license-aliases.txt";
 
-    private static final Pattern EXPRESSION_TOKEN = Pattern.compile("[^\\s()]+");
+    private static final Pattern EXPRESSION_TOKEN = Pattern.compile("\\(|\\)|[^\\s()]+");
+
+    private static final Pattern LICENSE_REF = Pattern.compile("LicenseRef-[A-Za-z0-9.-]+");
 
     private static final Pattern ID_URL =
             Pattern.compile("(?:opensource\\.org/licenses?|spdx\\.org/licenses)/([^/?]+)");
@@ -169,7 +172,7 @@ public class SpdxLicenses {
     }
 
     private String idOfName(String name) {
-        String id = ids.get(name.toLowerCase(Locale.ROOT));
+        String id = knownId(name);
         if (id == null) {
             id = parseExpression(name);
         }
@@ -184,36 +187,98 @@ public class SpdxLicenses {
         if (id == null) {
             Matcher m = ID_URL.matcher(url);
             if (m.matches()) {
-                id = ids.get(m.group(1));
+                id = knownId(m.group(1));
             }
         }
         return id;
     }
 
+    /** Returns the ID in its SPDX spelling, a <code>LicenseRef-</code> ID as declared, or {@code null}. */
+    private String knownId(String token) {
+        String id = ids.get(token.toLowerCase(Locale.ROOT));
+        if (id == null && LICENSE_REF.matcher(token).matches()) {
+            id = token;
+        }
+        return id;
+    }
+
     /**
-     * Returns the expression with each ID in its SPDX spelling, or {@code null} unless it combines at least
-     * two known IDs with <code>AND</code>, <code>OR</code> or <code>WITH</code>.
+     * Returns the expression with each ID in its SPDX spelling, or {@code null} unless it is a well-formed
+     * SPDX license expression that combines known IDs with <code>AND</code>, <code>OR</code> or
+     * <code>WITH</code>.
      */
     private String parseExpression(String declared) {
+        List<String> tokens = new ArrayList<>();
         Matcher m = EXPRESSION_TOKEN.matcher(declared);
-        StringBuffer result = new StringBuffer();
-        int operators = 0;
         while (m.find()) {
-            String token = m.group();
-            String upper = token.toUpperCase(Locale.ROOT);
-            if (upper.equals("AND") || upper.equals("OR") || upper.equals("WITH")) {
-                operators++;
-                m.appendReplacement(result, upper);
-                continue;
+            tokens.add(m.group());
+        }
+        ExpressionParser parser = new ExpressionParser(tokens);
+        String result = parser.expression();
+        return result != null && parser.next == tokens.size() && parser.operators > 0 ? result : null;
+    }
+
+    /** Recursive descent over <code>term ((AND | OR) term)*</code>, where a term is an ID, optionally
+     * followed by <code>WITH</code> and an ID, or a parenthesised expression. */
+    private final class ExpressionParser {
+        private final List<String> tokens;
+
+        private int next;
+
+        private int operators;
+
+        ExpressionParser(List<String> tokens) {
+            this.tokens = tokens;
+        }
+
+        String expression() {
+            String term = term();
+            if (term == null) {
+                return null;
             }
-            String id = ids.get(token.toLowerCase(Locale.ROOT));
+            StringBuilder result = new StringBuilder(term);
+            while (next < tokens.size()) {
+                String operator = tokens.get(next).toUpperCase(Locale.ROOT);
+                if (!operator.equals("AND") && !operator.equals("OR")) {
+                    break;
+                }
+                next++;
+                operators++;
+                term = term();
+                if (term == null) {
+                    return null;
+                }
+                result.append(' ').append(operator).append(' ').append(term);
+            }
+            return result.toString();
+        }
+
+        private String term() {
+            if (next >= tokens.size()) {
+                return null;
+            }
+            String token = tokens.get(next++);
+            if (token.equals("(")) {
+                String inner = expression();
+                if (inner == null
+                        || next >= tokens.size()
+                        || !tokens.get(next++).equals(")")) {
+                    return null;
+                }
+                return "(" + inner + ")";
+            }
+            String id = knownId(token);
             if (id == null) {
                 return null;
             }
-            m.appendReplacement(result, Matcher.quoteReplacement(id));
+            if (next < tokens.size() && tokens.get(next).equalsIgnoreCase("WITH")) {
+                next++;
+                operators++;
+                String exception = next < tokens.size() ? knownId(tokens.get(next++)) : null;
+                return exception == null ? null : id + " WITH " + exception;
+            }
+            return id;
         }
-        m.appendTail(result);
-        return operators > 0 ? result.toString() : null;
     }
 
     private static boolean isBlank(String s) {
