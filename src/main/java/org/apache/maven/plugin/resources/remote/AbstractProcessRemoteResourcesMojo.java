@@ -230,6 +230,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
      * <li><code>projectsSortedByOrganization</code> - the list of dependency projects sorted by organization</li>
      * <li><code>projectTimespan</code> - the timespan of the current project (requires inceptionYear in pom)</li>
      * <li><code>locator</code> - the ResourceManager that can be used to retrieve additional resources</li>
+     * <li><code>spdx</code> - resolves a dependency license to an SPDX license ID, for example
+     * <code>$!spdx.id($license)</code>, or a dependency to an SPDX expression, for example
+     * <code>$!spdx.expression($dependency)</code> (since 3.4.0)</li>
      * </ul>
      * See <a
      * href="https://maven.apache.org/ref/current/maven-project/apidocs/org/apache/maven/project/MavenProject.html"> the
@@ -806,6 +809,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         context.put("project", project);
         context.put("presentYear", year);
         context.put("locator", locator);
+        context.put("spdx", new SpdxLicenses());
 
         if (inceptionYear.equals(year)) {
             context.put("projectTimespan", year);
