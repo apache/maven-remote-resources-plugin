@@ -31,9 +31,11 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -60,6 +62,7 @@ import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.CleanupMode;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.apache.maven.api.plugin.testing.MojoExtension.getVariableValueFromObject;
@@ -70,6 +73,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * RemoteResources plugin Test Case
@@ -79,7 +83,8 @@ class RemoteResourcesMojoTest {
     static final String DEFAULT_BUNDLE_POM_PATH = "target/test-classes/unit/rrmojotest/bundle-plugin-config.xml";
     static final String DEFAULT_PROCESS_POM_PATH = "target/test-classes/unit/rrmojotest/process-plugin-config.xml";
 
-    @TempDir
+    // NEVER: on Windows the mojo leaves the bundle jars open, so deleting them fails
+    @TempDir(cleanup = CleanupMode.NEVER)
     private File localRepo;
 
     @Inject
@@ -166,7 +171,7 @@ class RemoteResourcesMojoTest {
         try {
             Files.createSymbolicLink(outputDirectory.resolve("external"), outsideDirectory);
         } catch (UnsupportedOperationException | IOException e) {
-            return; // unsupported here
+            assumeTrue(false, "not supported on this platform: " + e);
         }
 
         File output = outputDirectory.toFile();
@@ -190,7 +195,7 @@ class RemoteResourcesMojoTest {
             Files.createSymbolicLink(outputDirectory.resolve("inside-link"), insideDirectory);
             Files.createSymbolicLink(insideDirectory.resolve("outside-link"), outsideDirectory);
         } catch (UnsupportedOperationException | IOException e) {
-            return; // unsupported here
+            assumeTrue(false, "not supported on this platform: " + e);
         }
 
         File output = outputDirectory.toFile();
@@ -216,27 +221,25 @@ class RemoteResourcesMojoTest {
         Path restrictedDirectory = Files.createDirectory(outputDirectory.resolve("restricted"));
         Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
 
-        java.util.EnumSet<java.nio.file.attribute.PosixFilePermission> originalPermissions;
+        EnumSet<PosixFilePermission> originalPermissions;
         try {
-            originalPermissions = java.util.EnumSet.copyOf(Files.getPosixFilePermissions(restrictedDirectory));
+            originalPermissions = EnumSet.copyOf(Files.getPosixFilePermissions(restrictedDirectory));
         } catch (UnsupportedOperationException e) {
-            return; // unsupported here
+            assumeTrue(false, "not supported on this platform: " + e);
+            return;
         }
 
         try {
             Files.createSymbolicLink(restrictedDirectory.resolve("external"), outsideDirectory);
         } catch (UnsupportedOperationException | IOException e) {
-            return; // unsupported here
+            assumeTrue(false, "not supported on this platform: " + e);
         }
 
         try {
             Files.setPosixFilePermissions(
-                    restrictedDirectory,
-                    java.util.EnumSet.of(
-                            java.nio.file.attribute.PosixFilePermission.OWNER_READ,
-                            java.nio.file.attribute.PosixFilePermission.OWNER_WRITE));
+                    restrictedDirectory, EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
         } catch (UnsupportedOperationException e) {
-            return; // unsupported here
+            assumeTrue(false, "not supported on this platform: " + e);
         }
 
         try {
@@ -262,7 +265,7 @@ class RemoteResourcesMojoTest {
         setupDefaultProject(project);
 
         File supplementalModelsFile = new File(project.getBasedir(), "supplemental-models.xml");
-        org.codehaus.plexus.util.FileUtils.fileWrite(
+        FileUtils.fileWrite(
                 supplementalModelsFile.getAbsolutePath(),
                 "<supplementalDataModels>"
                         + "<supplement>"
