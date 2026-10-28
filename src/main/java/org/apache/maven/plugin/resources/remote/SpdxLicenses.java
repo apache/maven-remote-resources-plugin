@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +52,10 @@ import org.apache.maven.project.MavenProject;
  * <p>
  * A project that declares several licenses may be used under any one of them, so
  * <code>$!spdx.expression($project)</code> joins their IDs with <code>OR</code>.
+ * <p>
+ * To list each license once, <code>$spdx.group($projects)</code> groups dependencies by SPDX expression,
+ * <code>$spdx.ids($projects)</code> returns every ID they use, and <code>$spdx.unresolved($projects)</code>
+ * returns the dependencies that match nothing.
  *
  * @since 3.4.0
  */
@@ -163,6 +169,66 @@ public class SpdxLicenses {
             result.append(compound ? "(" + id + ")" : id);
         }
         return result.toString();
+    }
+
+    /**
+     * Groups projects by their SPDX license expression, leaving out the projects whose expression is unknown.
+     *
+     * @param projects projects, typically <code>$projects</code>
+     * @return the projects for each expression, sorted by expression
+     */
+    public Map<String, List<MavenProject>> group(List<MavenProject> projects) {
+        Map<String, List<MavenProject>> groups = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        if (projects != null) {
+            for (MavenProject project : projects) {
+                String expression = expression(project);
+                if (expression != null) {
+                    groups.computeIfAbsent(expression, k -> new ArrayList<>()).add(project);
+                }
+            }
+        }
+        return groups;
+    }
+
+    /**
+     * Returns every SPDX license and exception ID that the projects' expressions use, each one once, so that a
+     * template can add each license text once.
+     *
+     * @param projects projects, typically <code>$projects</code>
+     * @return the IDs, sorted
+     */
+    public Set<String> ids(List<MavenProject> projects) {
+        Set<String> result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (String expression : group(projects).keySet()) {
+            Matcher m = EXPRESSION_TOKEN.matcher(expression);
+            while (m.find()) {
+                String token = m.group();
+                if (!token.equalsIgnoreCase("AND")
+                        && !token.equalsIgnoreCase("OR")
+                        && !token.equalsIgnoreCase("WITH")) {
+                    result.add(token);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the projects whose SPDX license expression is unknown.
+     *
+     * @param projects projects, typically <code>$projects</code>
+     * @return the projects that declare no license or a license that matches nothing
+     */
+    public List<MavenProject> unresolved(List<MavenProject> projects) {
+        List<MavenProject> result = new ArrayList<>();
+        if (projects != null) {
+            for (MavenProject project : projects) {
+                if (expression(project) == null) {
+                    result.add(project);
+                }
+            }
+        }
+        return result;
     }
 
     /**

@@ -27,6 +27,7 @@ import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ITSpdxLicenseId extends AbstractIT {
@@ -60,5 +61,11 @@ public class ITSpdxLicenseId extends AbstractIT {
                 content.contains("e-dual expression: CDDL-1.1 OR (GPL-2.0-only WITH Classpath-exception-2.0)\n"),
                 content);
         assertTrue(content.contains("f-mapped: BSD-3-Clause\n"), content);
+
+        assertTrue(content.contains("Group Apache-2.0: a-name b-url\n"), content);
+        assertTrue(content.contains("Group (Apache-2.0 OR EPL-2.0): c-expression\n"), content);
+        assertTrue(content.contains("Unresolved: d-unknown\n"), content);
+        assertEquals(1, content.split("License text: Apache-2.0\n", -1).length - 1, content);
+        assertTrue(content.contains("License text: Classpath-exception-2.0\n"), content);
     }
 }
