@@ -118,6 +118,31 @@ Finally, we tell the Remote Resources Plugin to use the new supplemental-model f
 
 After re-running the project build, the supplemental information we provided will be merged with the metadata from the dependency POMs, providing enough information to complete the dependencies listing.
 
+How a Supplement Is Merged
+--------------------------
+
+A value that the supplement sets replaces the dependency POM's value, and a value it leaves out keeps the POM's. Lists are replaced as a whole: when a supplement declares `licenses`, `developers`, `contributors` or `mailingLists`, the dependency gets exactly the entries in the supplement, and none of the entries in its own POM. To add a license to the one a POM declares, list both in the supplement.
+
+This makes a supplement the place to correct the license of one artifact, for example one whose POM points only at a license page on its own website:
+
+```xml
+  <supplement>
+    <project>
+      <groupId>org.foo</groupId>
+      <artifactId>own-license-page</artifactId>
+
+      <licenses>
+        <license>
+          <name>MIT License</name>
+          <url>https://opensource.org/licenses/MIT</url>
+        </license>
+      </licenses>
+    </project>
+  </supplement>
+```
+
+Supplements play the same role as the `licenses.xml` file of the [License Maven Plugin](https://www.mojohaus.org/license-maven-plugin/): both describe one artifact by `groupId` and `artifactId`, so a supplement applies to every version of that artifact.
+
 Publishing and Reusing Supplemental Models
 ------------------------------------------
 
