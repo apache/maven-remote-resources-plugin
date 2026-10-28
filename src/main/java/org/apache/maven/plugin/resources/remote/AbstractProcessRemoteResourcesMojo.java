@@ -772,7 +772,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             // also reject empty groupId/artifactId/version (e.g. a missing segment)
             String[] s = artifactDescriptor.split(":", -1);
 
-            if (s.length < 3 || s.length > 5
+            if (s.length < 3
+                    || s.length > 5
                     || s[0].isEmpty()
                     || s[1].isEmpty()
                     || s[2].isEmpty()
