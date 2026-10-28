@@ -145,7 +145,7 @@ class SpdxLicensesTest {
         assertEquals(Arrays.asList(c), groups.get("CDDL-1.1"));
         assertEquals(
                 Arrays.asList("Apache-2.0", "CDDL-1.1"),
-                Arrays.asList(spdx.ids(projects).toArray()));
+                Arrays.asList(spdx.licenseIds(projects).toArray()));
         assertEquals(Arrays.asList(d), spdx.unresolved(projects));
     }
 
@@ -183,17 +183,17 @@ class SpdxLicensesTest {
     }
 
     @Test
-    void category() {
-        assertEquals("A", spdx.category("Apache-2.0"));
-        assertEquals("B", spdx.category("EPL-2.0"));
-        assertEquals("X", spdx.category("LGPL-2.1-or-later"));
-        assertEquals("B", spdx.category("GPL-2.0-only WITH Classpath-exception-2.0"));
-        assertEquals("X", spdx.category("GPL-3.0-only WITH Classpath-exception-2.0"));
-        assertEquals("A", spdx.category("(MIT OR GPL-2.0-only)"));
-        assertEquals("B", spdx.category("MIT AND EPL-2.0"));
-        assertNull(spdx.category("MIT AND Zlib"));
-        assertNull(spdx.category("Zlib"));
-        assertNull(spdx.category(null));
+    void asfCategory() {
+        assertEquals("A", spdx.asfCategory("Apache-2.0"));
+        assertEquals("B", spdx.asfCategory("EPL-2.0"));
+        assertEquals("X", spdx.asfCategory("LGPL-2.1-or-later"));
+        assertEquals("B", spdx.asfCategory("GPL-2.0-only WITH Classpath-exception-2.0"));
+        assertEquals("X", spdx.asfCategory("GPL-3.0-only WITH Classpath-exception-2.0"));
+        assertEquals("A", spdx.asfCategory("(MIT OR GPL-2.0-only)"));
+        assertEquals("B", spdx.asfCategory("MIT AND EPL-2.0"));
+        assertNull(spdx.asfCategory("MIT AND Zlib"));
+        assertNull(spdx.asfCategory("Zlib"));
+        assertNull(spdx.asfCategory(null));
     }
 
     private static License license(String name, String url) {
