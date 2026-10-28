@@ -55,6 +55,7 @@ import java.util.TreeMap;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.archiver.MavenArchiver;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
@@ -570,7 +571,11 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         for (Artifact artifact : artifacts) {
             if (artifact.isSnapshot()) {
-                artifact.setVersion(artifact.getBaseVersion());
+                // build a new artifact from the base version instead of mutating the shared
+                // artifact instances (e.g. the ones from project.getArtifacts())
+                Artifact snapshotArtifact = ArtifactUtils.copyArtifact(artifact);
+                snapshotArtifact.setVersion(artifact.getBaseVersion());
+                artifact = snapshotArtifact;
             }
 
             MavenProject reactorProject = findReactorProject(artifact, mavenSession);
