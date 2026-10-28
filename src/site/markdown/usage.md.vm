@@ -113,6 +113,22 @@ $dependency.groupId:$dependency.artifactId #if( $id )$id#else$license.name#end
 #end]]#
 ```
 
+To resolve a declared license that the built-in table does not know, add a `licenseMappings` entry. A mapping applies when each of its `name` and `url` that is set matches the declared license, so a generic name such as "BSD" can be tied to one URL. The `spdxId` is an SPDX ID or expression; a `LicenseRef-` ID names a license that has no SPDX ID:
+
+```xml
+<configuration>
+  <licenseMappings>
+    <licenseMapping>
+      <spdxId>BSD-3-Clause</spdxId>
+      <name>BSD</name>
+      <url>https://example.org/widget/LICENSE</url>
+    </licenseMapping>
+  </licenseMappings>
+</configuration>
+```
+
+A mapping matches a spelling wherever it appears, like `licenseMerges` in the [License Maven Plugin](https://www.mojohaus.org/license-maven-plugin/). To correct the license of one artifact, use a [supplemental model](./supplemental-models.html) instead, which plays the role of that plugin's `licenses.xml`.
+
 A dependency that declares several licenses may be used under any one of them. `${esc.d}spdx.expression(${esc.d}dependency)` returns one SPDX license expression for the whole dependency, joining the IDs with `OR`, for example `CDDL-1.1 OR (GPL-2.0-only WITH Classpath-exception-2.0)`. It returns null when the dependency declares no license or when one of its licenses matches nothing, because a partial expression would leave out a choice.
 
 Running Once in a Multi-Module Build
