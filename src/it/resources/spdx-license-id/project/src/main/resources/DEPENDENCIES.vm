@@ -18,7 +18,7 @@ Override: #if ($projectName)$projectName#else${project.name}#end
 #foreach( $dependency in $projects )
 $dependency.artifactId expression: $!spdx.expression($dependency)
 #set( $preferred = $spdx.preferred($dependency) )
-$dependency.artifactId preferred:#if( $preferred ) $preferred $!spdx.category($preferred)#end
+$dependency.artifactId preferred:#if( $preferred ) $preferred $!spdx.asfCategory($preferred)#end
 #foreach( $license in $dependency.licenses )
 #set( $id = $spdx.id($license) )
 $dependency.artifactId: #if( $id )$id#else$license.name#end
@@ -27,7 +27,7 @@ $dependency.artifactId: #if( $id )$id#else$license.name#end
 #foreach( $entry in $spdx.group($projects).entrySet() )
 Group $entry.key:#foreach( $dependency in $entry.value ) $dependency.artifactId#end
 #end
-#foreach( $id in $spdx.ids($projects) )
+#foreach( $id in $spdx.licenseIds($projects) )
 License text: $id
 #end
 #foreach( $dependency in $spdx.unresolved($projects) )

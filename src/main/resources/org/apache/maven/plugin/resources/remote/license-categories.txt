@@ -43,6 +43,8 @@ EPL-2.0	B
 MPL-1.0	B
 MPL-1.1	B
 MPL-2.0	B
+# Category B only under the conditions in the "GPL-2.0 with GNU ClasspathException"
+# section of resolved.html; without the exception GPL-2.0-only is Category X.
 GPL-2.0-only WITH Classpath-exception-2.0	B
 
 AGPL-3.0-only	X
