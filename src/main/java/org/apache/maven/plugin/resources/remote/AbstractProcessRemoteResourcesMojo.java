@@ -1035,7 +1035,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     }
 
     protected Model mergeModels(Model parent, Model child) {
-        inheritanceAssembler.assembleModelInheritance(child, parent);
+        // a supplement describes the same artifact, not a child module, so URLs must not get the artifactId appended
+        inheritanceAssembler.copyModel(child, parent);
         return child;
     }
 
