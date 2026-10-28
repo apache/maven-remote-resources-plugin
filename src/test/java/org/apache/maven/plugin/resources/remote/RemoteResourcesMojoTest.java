@@ -21,14 +21,18 @@ package org.apache.maven.plugin.resources.remote;
 import javax.inject.Inject;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
@@ -41,6 +45,7 @@ import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.resources.remote.RemoteResourcesClassLoader;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectResourcesStub;
 import org.apache.maven.project.MavenProject;
@@ -52,6 +57,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import static org.apache.maven.api.plugin.testing.MojoExtension.getVariableValueFromObject;
 import static org.apache.maven.api.plugin.testing.MojoExtension.setVariableValueToObject;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -101,6 +107,171 @@ class RemoteResourcesMojoTest {
     void testConfigureLocatorRequiresProjectFile(
             @InjectMojo(goal = "process", pom = DEFAULT_PROCESS_POM_PATH) ProcessRemoteResourcesMojo mojo)
             throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-null-pom");
+        configureProcessMojo(mojo, project, new ArrayList<>());
+
+        setupDefaultProject(project);
+        project.setFile(null);
+
+        try {
+            mojo.execute();
+            fail("expected MojoExecutionException when the project has no POM file");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("no POM file"));
+        }
+    }
+
+    @Test
+    void testRemoteResourceCannotEscapeOutputDirectory() throws Exception {
+        File outputDirectory = new File("target/remote-resource-output");
+        File canonicalOutputDirectory = outputDirectory.getCanonicalFile();
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    outputDirectory, "../outside.txt", canonicalOutputDirectory);
+            fail("expected a resource outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must remain within the output directory"));
+        }
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    outputDirectory,
+                    new File(outputDirectory.getParentFile(), "absolute.txt").getAbsolutePath(),
+                    canonicalOutputDirectory);
+            fail("expected an absolute resource path outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("Absolute remote resource paths are not allowed"));
+        }
+
+        File outputFile = AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                outputDirectory, "nested/resource.txt", canonicalOutputDirectory);
+        assertEquals(new File(outputDirectory, "nested/resource.txt").getCanonicalFile(), outputFile);
+    }
+
+    @Test
+    void testRemoteResourceCannotEscapeOutputDirectoryThroughSymlink() throws Exception {
+        Path temporaryDirectory = Files.createTempDirectory("remote-resource-path");
+        Path outputDirectory = Files.createDirectory(temporaryDirectory.resolve("output"));
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        try {
+            Files.createSymbolicLink(outputDirectory.resolve("external"), outsideDirectory);
+        } catch (UnsupportedOperationException | IOException e) {
+            return; // unsupported here
+        }
+
+        File output = outputDirectory.toFile();
+        File canonicalOutputDirectory = output.getCanonicalFile();
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    output, "external/escaped.txt", canonicalOutputDirectory);
+            fail("expected a symlink target outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must remain within the output directory"));
+        }
+    }
+
+    @Test
+    void testRemoteResourceResolvesNestedSymlinksBeforeCheckingContainment() throws Exception {
+        Path temporaryDirectory = Files.createTempDirectory("remote-resource-nested-path");
+        Path outputDirectory = Files.createDirectory(temporaryDirectory.resolve("output"));
+        Path insideDirectory = Files.createDirectory(outputDirectory.resolve("inside"));
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        try {
+            Files.createSymbolicLink(outputDirectory.resolve("inside-link"), insideDirectory);
+            Files.createSymbolicLink(insideDirectory.resolve("outside-link"), outsideDirectory);
+        } catch (UnsupportedOperationException | IOException e) {
+            return; // unsupported here
+        }
+
+        File output = outputDirectory.toFile();
+        File canonicalOutputDirectory = output.getCanonicalFile();
+        File safeOutputFile = AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                output, "inside-link/not-created/resource.txt", canonicalOutputDirectory);
+        assertEquals(
+                insideDirectory.toRealPath().resolve("not-created/resource.txt").toFile(), safeOutputFile);
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    output, "inside-link/outside-link/not-created/resource.txt", canonicalOutputDirectory);
+            fail("expected a nested symlink target outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must remain within the output directory"));
+        }
+    }
+
+    @Test
+    void testRemoteResourceFailsClosedWhenPathCannotBeInspected() throws Exception {
+        Path temporaryDirectory = Files.createTempDirectory("remote-resource-inaccessible-path");
+        Path outputDirectory = Files.createDirectory(temporaryDirectory.resolve("output"));
+        Path restrictedDirectory = Files.createDirectory(outputDirectory.resolve("restricted"));
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+
+        java.util.EnumSet<java.nio.file.attribute.PosixFilePermission> originalPermissions;
+        try {
+            originalPermissions = java.util.EnumSet.copyOf(Files.getPosixFilePermissions(restrictedDirectory));
+        } catch (UnsupportedOperationException e) {
+            return; // unsupported here
+        }
+
+        try {
+            Files.createSymbolicLink(restrictedDirectory.resolve("external"), outsideDirectory);
+        } catch (UnsupportedOperationException | IOException e) {
+            return; // unsupported here
+        }
+
+        try {
+            Files.setPosixFilePermissions(
+                    restrictedDirectory, java.util.EnumSet.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ, java.nio.file.attribute.PosixFilePermission.OWNER_WRITE));
+        } catch (UnsupportedOperationException e) {
+            return; // unsupported here
+        }
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    outputDirectory.toFile(),
+                    "restricted/external/escaped.txt",
+                    outputDirectory.toFile().getCanonicalFile());
+            fail("expected unreadable path components to be rejected");
+        } catch (IOException expected) {
+            // An inaccessible component must not be treated as a missing path element.
+        } finally {
+            Files.setPosixFilePermissions(restrictedDirectory, originalPermissions);
+        }
+    }
+
+    @Test
+    void testMalformedSupplementalModelFailsWithMojoExecutionException(
+            @InjectMojo(goal = "process", pom = DEFAULT_PROCESS_POM_PATH) ProcessRemoteResourcesMojo mojo) throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-malformedsupplement");
+        configureProcessMojo(mojo, project, new ArrayList<>());
+
+        setupDefaultProject(project);
+
+        File supplementalModelsFile = new File(project.getBasedir(), "supplemental-models.xml");
+        org.codehaus.plexus.util.FileUtils.fileWrite(
+                supplementalModelsFile.getAbsolutePath(),
+                "<supplementalDataModels>"
+                        + "<supplement>"
+                        + "<project>"
+                        + "<groupId>test</groupId>"
+                        + "<artifactId>test</artifactId>"
+                        + "<version>1.0</version>"
+                        + "<notAValidElement>whatever</notAValidElement>"
+                        + "</project>"
+                        + "</supplement>"
+                        + "</supplementalDataModels>");
+
+        setVariableValueToObject(mojo, "supplementalModels", new String[] {supplementalModelsFile.getAbsolutePath()});
+
+        try {
+            mojo.execute();
+            fail("Expected a MojoExecutionException for a malformed supplemental model entry");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Unable to parse supplemental XML"));
+        }
+    }
+
         final MavenProjectResourcesStub project = createTestProject("default-null-pom");
         configureProcessMojo(mojo, project, new ArrayList<>());
 
@@ -206,6 +377,55 @@ class RemoteResourcesMojoTest {
             @InjectMojo(goal = "process", pom = DEFAULT_PROCESS_POM_PATH) ProcessRemoteResourcesMojo mojo,
             @InjectMojo(goal = "bundle", pom = DEFAULT_BUNDLE_POM_PATH) BundleRemoteResourcesMojo bundleMojo)
             throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-utf8");
+        configureProcessMojo(mojo, project, new ArrayList<>(Arrays.asList("test:test:1.2")));
+
+        setupDefaultProject(project);
+
+        String path = pathOf(new DefaultArtifact(
+                "test", "test", VersionRange.createFromVersion("1.2"), null, "jar", "", new DefaultArtifactHandler()));
+
+        File file = new File(path);
+        file.getParentFile().mkdirs();
+        buildResourceBundle(bundleMojo, "default-utf8-create", "UTF-8", new String[] {"UTF-8.bin.vm"}, file);
+
+        mojo.execute();
+
+        file = getVariableValueFromObject(mojo, "outputDirectory");
+        file = new File(file, "UTF-8.bin");
+        assertTrue(file.exists());
+
+        byte[] data = Files.readAllBytes(file.toPath());
+        byte[] expected = "\u00E4\u00F6\u00FC\u00C4\u00D6\u00DC\u00DF".getBytes(StandardCharsets.UTF_8);
+        assertTrue(Arrays.equals(expected, data));
+    }
+
+    @Test
+    void testClassLoaderIsClosedAfterExecution(
+            @InjectMojo(goal = "process", pom = DEFAULT_PROCESS_POM_PATH) ProcessRemoteResourcesMojo mojo,
+            @InjectMojo(goal = "bundle", pom = DEFAULT_BUNDLE_POM_PATH) BundleRemoteResourcesMojo bundleMojo)
+            throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-closeclassloader");
+        configureProcessMojo(mojo, project, new ArrayList<>(Arrays.asList("test:test:1.0")));
+
+        setupDefaultProject(project);
+
+        String path = pathOf(new DefaultArtifact(
+                "test", "test", VersionRange.createFromVersion("1.0"), null, "jar", "", new DefaultArtifactHandler()));
+
+        File file = new File(path);
+        file.getParentFile().mkdirs();
+        buildResourceBundle(bundleMojo, "default-closeclassloader-create", null, new String[] {"SIMPLE.txt"}, file);
+
+        mojo.execute();
+
+        RemoteResourcesClassLoader classLoader =
+                (RemoteResourcesClassLoader) getVariableValueFromObject(mojo, "classLoader");
+        assertNotNull(classLoader);
+        // resources from the bundle jars must no longer be served by the closed classloader
+        assertNull(classLoader.getResource("SIMPLE.txt"));
+    }
+
         final MavenProjectResourcesStub project = createTestProject("default-utf8");
         configureProcessMojo(mojo, project, new ArrayList<>(Arrays.asList("test:test:1.2")));
 
