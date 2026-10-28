@@ -23,11 +23,11 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Properties;
 
+import org.apache.maven.api.plugin.testing.MojoExtension;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.model.Profile;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.PlexusTestCase;
 import org.codehaus.plexus.util.FileUtils;
 
 /**
@@ -58,7 +58,7 @@ public class MavenProjectBasicStub extends MavenProject {
         identifier = id;
 
         // set isolated root directory
-        testRootDir = PlexusTestCase.getBasedir() + "/target/test-classes/unit/test-dir/" + identifier;
+        testRootDir = MojoExtension.getBasedir() + "/target/test-classes/unit/test-dir/" + identifier;
 
         if (!new File(testRootDir).exists()) {
             FileUtils.mkdir(testRootDir);
