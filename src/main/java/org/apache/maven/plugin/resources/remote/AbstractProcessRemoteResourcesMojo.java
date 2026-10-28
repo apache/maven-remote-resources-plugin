@@ -58,6 +58,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Resource;
@@ -219,6 +220,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     /**
      * The resource bundles that will be retrieved and processed,
      * expressed with <code>groupId:artifactId:version[:type[:classifier]]</code> format.
+     * Since 3.4.0, a bundle given as <code>groupId:artifactId</code> takes its version from the project's
+     * dependency on that artifact, or else from its <code>dependencyManagement</code>. Such a bundle always
+     * resolves the plain jar; give the version to name a type or classifier.
      */
     @Parameter(property = "resourceBundles", required = true)
     private List<String> resourceBundles;
@@ -463,7 +467,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             configureLocator();
             validate();
 
-            List<File> resourceBundleArtifacts = downloadBundles(resourceBundles);
+            List<File> resourceBundleArtifacts = downloadBundles(versionedBundles());
             supplementModels = loadSupplements(supplementalModels);
 
             classLoader = initalizeClassloader(resourceBundleArtifacts);
@@ -831,7 +835,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         int bundleCount = 1;
 
-        for (String artifactDescriptor : resourceBundles) {
+        for (String artifactDescriptor : versionedBundles()) {
             // groupId:artifactId:version, groupId:artifactId:version:type
             // or groupId:artifactId:version:type:classifier
             // use the same splitting as downloadBundles() so both are consistent;
@@ -929,6 +933,46 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             context.put("projectTimespan", inceptionYear + "-" + year);
         }
         return context;
+    }
+
+    /**
+     * Returns the resource bundle descriptors with a version added to each one given as
+     * <code>groupId:artifactId</code>, taken from the project's dependencies or dependency management.
+     */
+    List<String> versionedBundles() throws MojoExecutionException {
+        List<String> result = new ArrayList<>();
+        for (String descriptor : resourceBundles) {
+            String[] s = descriptor.split(":", -1);
+            if (s.length == 2 && !s[0].isEmpty() && !s[1].isEmpty()) {
+                String version = dependencyVersion(s[0], s[1]);
+                if (version == null) {
+                    throw new MojoExecutionException("The resource bundle " + descriptor
+                            + " has no version, and the project has no dependency or managed dependency on it. "
+                            + "Add the version, as in <resourceBundle>" + descriptor + ":1.0</resourceBundle>, "
+                            + "or manage the version of " + descriptor + " in dependencyManagement.");
+                }
+                result.add(descriptor + ":" + version);
+            } else {
+                result.add(descriptor);
+            }
+        }
+        return result;
+    }
+
+    private String dependencyVersion(String groupId, String artifactId) {
+        List<Dependency> candidates = new ArrayList<>(project.getDependencies());
+        if (project.getDependencyManagement() != null) {
+            candidates.addAll(project.getDependencyManagement().getDependencies());
+        }
+        for (Dependency dependency : candidates) {
+            if (groupId.equals(dependency.getGroupId())
+                    && artifactId.equals(dependency.getArtifactId())
+                    && dependency.getVersion() != null
+                    && !dependency.getVersion().isEmpty()) {
+                return dependency.getVersion();
+            }
+        }
+        return null;
     }
 
     private List<File> downloadBundles(List<String> bundles) throws MojoExecutionException {
