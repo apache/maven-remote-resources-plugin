@@ -35,6 +35,7 @@ class SpdxLicensesTest {
         assertEquals("Apache-2.0", spdx.id("Apache-2.0", null));
         assertEquals("Apache-2.0", spdx.id("apache-2.0", null));
         assertEquals("GPL-2.0", spdx.id("GPL-2.0", null));
+        assertEquals("LicenseRef-Widget", spdx.id("LicenseRef-Widget", null));
     }
 
     @Test
@@ -45,6 +46,13 @@ class SpdxLicensesTest {
                 spdx.id("GPL-2.0-only with Classpath-exception-2.0", null));
         assertNull(spdx.id("Apache-2.0 OR Unknown-1.0", null));
         assertNull(spdx.id("Apache-2.0 MIT", null));
+        assertNull(spdx.id("OR", null));
+        assertNull(spdx.id("Apache-2.0 OR OR MIT", null));
+        assertNull(spdx.id("(Apache-2.0 OR MIT", null));
+        assertNull(spdx.id("Apache-2.0 OR MIT)", null));
+        assertNull(spdx.id("MIT WITH", null));
+        assertEquals("LicenseRef-Widget OR MIT", spdx.id("LicenseRef-Widget or MIT", null));
+        assertEquals("(MIT OR Apache-2.0) AND BSD-3-Clause", spdx.id("( mit OR apache-2.0 ) and bsd-3-clause", null));
     }
 
     @Test
