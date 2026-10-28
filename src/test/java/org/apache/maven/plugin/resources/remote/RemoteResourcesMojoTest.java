@@ -450,7 +450,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
             mojo.validate();
             fail("Expected validate() to reject a resource bundle descriptor with a missing version");
         } catch (MojoExecutionException e) {
-            assertTrue(e.getMessage().contains("must specify groupId:artifactId:version"));
+            assertTrue(e.getMessage().contains("must specify a groupId, artifactId"));
         }
     }
 
