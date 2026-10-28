@@ -26,6 +26,10 @@ under the License.
   <version>1.0</version>
   <packaging>pom</packaging>
 
+  <organization>
+    <name>Example Org</name>
+  </organization>
+
   <licenses>
     <license>
       <name>(Apache-2.0 OR EPL-2.0)</name>
