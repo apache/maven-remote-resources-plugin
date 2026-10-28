@@ -32,6 +32,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -75,6 +79,7 @@ import org.apache.maven.shared.artifact.filter.collection.FilterArtifacts;
 import org.apache.maven.shared.artifact.filter.collection.GroupIdFilter;
 import org.apache.maven.shared.artifact.filter.collection.ProjectTransitivityFilter;
 import org.apache.maven.shared.artifact.filter.collection.ScopeFilter;
+import org.apache.maven.shared.filtering.ChangeDetection;
 import org.apache.maven.shared.filtering.FilteringUtils;
 import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenFileFilterRequest;
@@ -191,6 +196,26 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     private List<String> supplementalModelArtifacts;
 
     /**
+     * Maps licenses that <code>$spdx</code> does not resolve to SPDX license IDs or expressions. A mapping
+     * applies to a declared license when each of its <code>name</code> and <code>url</code> that is set matches,
+     * ignoring case, punctuation, the URL scheme, <code>www.</code> and a trailing <code>.txt</code> or
+     * <code>.html</code>. Mappings are tried in order, before the built-in aliases.
+     * <pre>
+     * &lt;licenseMappings&gt;
+     *   &lt;licenseMapping&gt;
+     *     &lt;spdxId&gt;BSD-3-Clause&lt;/spdxId&gt;
+     *     &lt;name&gt;BSD&lt;/name&gt;
+     *     &lt;url&gt;https://example.org/widget/LICENSE&lt;/url&gt;
+     *   &lt;/licenseMapping&gt;
+     * &lt;/licenseMappings&gt;
+     * </pre>
+     *
+     * @since 3.4.0
+     */
+    @Parameter
+    private List<LicenseMapping> licenseMappings;
+
+    /**
      * The resource bundles that will be retrieved and processed,
      * expressed with <code>groupId:artifactId:version[:type[:classifier]]</code> format.
      */
@@ -229,6 +254,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
      * <li><code>projectsSortedByOrganization</code> - the list of dependency projects sorted by organization</li>
      * <li><code>projectTimespan</code> - the timespan of the current project (requires inceptionYear in pom)</li>
      * <li><code>locator</code> - the ResourceManager that can be used to retrieve additional resources</li>
+     * <li><code>spdx</code> - resolves a dependency license to an SPDX license ID, for example
+     * <code>$!spdx.id($license)</code>, or a dependency to an SPDX expression, for example
+     * <code>$!spdx.expression($dependency)</code> (since 3.4.0)</li>
      * </ul>
      * See <a
      * href="https://maven.apache.org/ref/current/maven-project/apidocs/org/apache/maven/project/MavenProject.html"> the
@@ -424,10 +452,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
         }
 
-        configureLocator();
-
         ClassLoader origLoader = Thread.currentThread().getContextClassLoader();
         try {
+            configureLocator();
             validate();
 
             List<File> resourceBundleArtifacts = downloadBundles(resourceBundles);
@@ -495,8 +522,12 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
         }
 
-        locator.addSearchPath(
-                FileResourceLoader.ID, project.getFile().getParentFile().getAbsolutePath());
+        File projectFile = project.getFile();
+        if (projectFile == null) {
+            throw new MojoExecutionException(
+                    "The current project has no POM file; cannot configure the resource locator.");
+        }
+        locator.addSearchPath(FileResourceLoader.ID, projectFile.getParentFile().getAbsolutePath());
         if (appendedResourcesDirectory != null) {
             locator.addSearchPath(FileResourceLoader.ID, appendedResourcesDirectory.getAbsolutePath());
         }
@@ -649,7 +680,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                     }
                 } else {
                     getLog().debug("Use project resource '" + source + "' as resource");
-                    FilteringUtils.copyFile(source, outputFile, null, null);
+                    FilteringUtils.copyFile(source, outputFile, null, null, ChangeDetection.CONTENT);
                 }
 
                 // exclude the original (so eclipse doesn't complain about duplicate resources)
@@ -669,7 +700,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         File source = new File(project.getBasedir(), bundleResourceName);
         if (source.exists()) {
             getLog().debug("Use project file '" + source + "' as resource");
-            FilteringUtils.copyFile(source, outputFile, null, null);
+            FilteringUtils.copyFile(source, outputFile, null, null, ChangeDetection.CONTENT);
             return true;
         }
 
@@ -718,6 +749,20 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     }
 
     protected void validate() throws MojoExecutionException {
+        if (licenseMappings != null) {
+            SpdxLicenses spdx = new SpdxLicenses();
+            for (LicenseMapping mapping : licenseMappings) {
+                if (SpdxLicenses.isBlank(mapping.getName()) && SpdxLicenses.isBlank(mapping.getUrl())) {
+                    throw new MojoExecutionException("Each licenseMapping needs a name, a url or both: " + mapping);
+                }
+                if (spdx.canonicalMappingId(mapping.getSpdxId()) == null) {
+                    throw new MojoExecutionException(
+                            "The spdxId of a licenseMapping must be an SPDX license ID, such as MIT, or an SPDX "
+                                    + "license expression, such as Apache-2.0 OR MIT: " + mapping);
+                }
+            }
+        }
+
         int bundleCount = 1;
 
         for (String artifactDescriptor : resourceBundles) {
@@ -809,6 +854,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         context.put("project", project);
         context.put("presentYear", year);
         context.put("locator", locator);
+        context.put("spdx", new SpdxLicenses(licenseMappings == null ? Collections.emptyList() : licenseMappings));
 
         if (inceptionYear.equals(year)) {
             context.put("projectTimespan", year);
@@ -922,6 +968,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         String velocityResource = null;
         try {
+            File canonicalOutputDirectory = outputDirectory.getCanonicalFile();
 
             for (Map.Entry<String, RemoteResourcesBundle> entry : remoteResources) {
                 String bundleResource = entry.getKey();
@@ -938,7 +985,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 // Don't overwrite resource that are already being provided.
 
-                File outputFile = new File(outputDirectory, projectResource);
+                File outputFile = resolveOutputFile(outputDirectory, projectResource, canonicalOutputDirectory);
 
                 FileUtils.mkdir(outputFile.getParentFile().getAbsolutePath());
 
@@ -996,6 +1043,50 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         }
     }
 
+    static File resolveOutputFile(File outputDirectory, String resourceName, File canonicalOutputDirectory)
+            throws IOException, MojoExecutionException {
+        if (new File(resourceName).isAbsolute()) {
+            throw new MojoExecutionException("Absolute remote resource paths are not allowed: " + resourceName);
+        }
+        Path canonicalOutputPath = resolvePathThroughExistingAncestors(canonicalOutputDirectory.toPath());
+        Path outputPath =
+                resolvePathThroughExistingAncestors(outputDirectory.toPath().resolve(resourceName));
+        if (outputPath.equals(canonicalOutputPath) || !outputPath.startsWith(canonicalOutputPath)) {
+            throw new MojoExecutionException(
+                    "Remote resource path must remain within the output directory: " + resourceName);
+        }
+        return outputPath.toFile();
+    }
+
+    private static Path resolvePathThroughExistingAncestors(Path path) throws IOException {
+        Path normalizedPath = path.toAbsolutePath().normalize();
+        Path existingAncestor = normalizedPath;
+        List<Path> missingPathElements = new ArrayList<>();
+        while (existingAncestor != null && !existsWithoutFollowingLinks(existingAncestor)) {
+            missingPathElements.add(existingAncestor.getFileName());
+            existingAncestor = existingAncestor.getParent();
+        }
+
+        if (existingAncestor == null) {
+            return normalizedPath;
+        }
+
+        Path resolvedPath = existingAncestor.toRealPath();
+        for (int i = missingPathElements.size() - 1; i >= 0; i--) {
+            resolvedPath = resolvedPath.resolve(missingPathElements.get(i));
+        }
+        return resolvedPath.normalize();
+    }
+
+    private static boolean existsWithoutFollowingLinks(Path path) throws IOException {
+        try {
+            Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+            return true;
+        } catch (NoSuchFileException e) {
+            return false;
+        }
+    }
+
     private void verifyRequiredProperties(RemoteResourcesBundle bundle, URL url) throws MojoExecutionException {
         if (bundle.getRequiredProjectProperties() == null
                 || bundle.getRequiredProjectProperties().isEmpty()) {
@@ -1012,7 +1103,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
     protected Model getSupplement(Xpp3Dom supplementModelXml) throws MojoExecutionException {
         MavenXpp3Reader modelReader = new MavenXpp3Reader();
-        Model model = null;
+        Model model;
 
         try {
             model = modelReader.read(new StringReader(supplementModelXml.toString()));
@@ -1029,16 +1120,17 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                         "Supplemental project XML " + "requires that a <artifactId> element be present.");
             }
         } catch (IOException e) {
-            getLog().warn("Unable to read supplemental XML: " + e.getMessage(), e);
+            throw new MojoExecutionException("Unable to read supplemental XML: " + e.getMessage(), e);
         } catch (XmlPullParserException e) {
-            getLog().warn("Unable to parse supplemental XML: " + e.getMessage(), e);
+            throw new MojoExecutionException("Unable to parse supplemental XML: " + e.getMessage(), e);
         }
 
         return model;
     }
 
     protected Model mergeModels(Model parent, Model child) {
-        inheritanceAssembler.assembleModelInheritance(child, parent);
+        // a supplement describes the same artifact, not a child module, so URLs must not get the artifactId appended
+        inheritanceAssembler.copyModel(child, parent);
         return child;
     }
 

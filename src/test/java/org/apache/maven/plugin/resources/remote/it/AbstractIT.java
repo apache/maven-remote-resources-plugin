@@ -19,10 +19,10 @@
 package org.apache.maven.plugin.resources.remote.it;
 
 import org.apache.maven.plugin.resources.remote.it.support.BootstrapInstaller;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractIT {
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         BootstrapInstaller.install();
     }
