@@ -187,13 +187,6 @@ under the License.
 
     <!-- test -->
     <dependency>
-      <!-- still required at test runtime by PlexusTestCase (JUnit 3 based), used by the test stubs -->
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
@@ -352,8 +345,6 @@ under the License.
               <failOnWarning>true</failOnWarning>
               <ignoredDependencies>
                 <ignoredDependency>org.slf4j:slf4j-simple:*</ignoredDependency>
-                <!-- still needed at test runtime by PlexusTestCase (JUnit 3) used by the test stubs -->
-                <ignoredDependency>junit:junit:*</ignoredDependency>
                 <!-- JUnit Platform test engine, discovered via ServiceLoader, never referenced from bytecode -->
                 <ignoredDependency>org.junit.jupiter:junit-jupiter-engine:*</ignoredDependency>
               </ignoredDependencies>
