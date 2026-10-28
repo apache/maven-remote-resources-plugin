@@ -19,6 +19,8 @@
 package org.apache.maven.plugin.resources.remote;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.maven.model.License;
 import org.apache.maven.model.Model;
@@ -124,6 +126,27 @@ class SpdxLicensesTest {
         assertNull(spdx.expression(project(license("MIT", null), license("Public Domain", null))));
         assertNull(spdx.expression(project()));
         assertNull(spdx.expression(null));
+    }
+
+    @Test
+    void groupsListEachLicenseOnce() {
+        MavenProject a = project(license("Apache License, Version 2.0", null));
+        MavenProject b = project(license("The Apache Software License, Version 2.0", null));
+        MavenProject c = project(license("CDDL 1.1", null), license("GPL2 w/ CPE", null));
+        MavenProject d = project(license("Public Domain", null));
+        MavenProject e = project(license("Apache-2.0 OR MIT", null));
+        List<MavenProject> projects = Arrays.asList(a, b, c, d, e);
+
+        Map<String, List<MavenProject>> groups = spdx.group(projects);
+        assertEquals(
+                Arrays.asList(
+                        "Apache-2.0", "Apache-2.0 OR MIT", "CDDL-1.1 OR (GPL-2.0-only WITH Classpath-exception-2.0)"),
+                Arrays.asList(groups.keySet().toArray()));
+        assertEquals(Arrays.asList(a, b), groups.get("Apache-2.0"));
+        assertEquals(
+                Arrays.asList("Apache-2.0", "CDDL-1.1", "Classpath-exception-2.0", "GPL-2.0-only", "MIT"),
+                Arrays.asList(spdx.ids(projects).toArray()));
+        assertEquals(Arrays.asList(d), spdx.unresolved(projects));
     }
 
     private static License license(String name, String url) {

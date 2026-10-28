@@ -22,3 +22,13 @@ $dependency.artifactId expression: $!spdx.expression($dependency)
 $dependency.artifactId: #if( $id )$id#else$license.name#end
 #end
 #end
+#foreach( $entry in $spdx.group($projects).entrySet() )
+Group $entry.key:#foreach( $dependency in $entry.value ) $dependency.artifactId#end
+
+#end
+#foreach( $id in $spdx.ids($projects) )
+License text: $id
+#end
+#foreach( $dependency in $spdx.unresolved($projects) )
+Unresolved: $dependency.artifactId
+#end
