@@ -59,5 +59,6 @@ public class ITSpdxLicenseId extends AbstractIT {
         assertTrue(
                 content.contains("e-dual expression: CDDL-1.1 OR (GPL-2.0-only WITH Classpath-exception-2.0)\n"),
                 content);
+        assertTrue(content.contains("f-mapped: BSD-3-Clause\n"), content);
     }
 }

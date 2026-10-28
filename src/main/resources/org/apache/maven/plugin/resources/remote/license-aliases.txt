@@ -26,7 +26,8 @@
 # whether "only" or "or later" applies, and a wrong ID is worse than none. So are URLs
 # of pages that cover two licenses at once, such as GlassFish's CDDL+GPL_1_1.html, and
 # license pages of individual projects, such as jsoup.org/license: they name no license,
-# and keep their address when the project changes its license.
+# and keep their address when the project changes its license. Map those with the
+# plugin's licenseMappings parameter instead.
 
 0BSD
 AGPL-3.0-only

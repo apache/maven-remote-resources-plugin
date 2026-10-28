@@ -18,6 +18,8 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
+import java.util.Arrays;
+
 import org.apache.maven.model.License;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
@@ -137,6 +139,28 @@ class SpdxLicensesTest {
             model.addLicense(license);
         }
         return new MavenProject(model);
+    }
+
+    @Test
+    void mappings() {
+        SpdxLicenses mapped = new SpdxLicenses(Arrays.asList(
+                mapping("BSD-3-Clause", "BSD", "https://example.org/widget/LICENSE"),
+                mapping("LicenseRef-Bouncy-Castle", "Bouncy Castle Licence", null),
+                mapping("Apache-2.0 OR MIT", null, "https://example.com/LICENSE")));
+        assertEquals("BSD-3-Clause", mapped.id("bsd", "http://www.example.org/widget/LICENSE.txt"));
+        assertNull(mapped.id("BSD", null));
+        assertNull(mapped.id(null, "https://example.org/widget/LICENSE"));
+        assertEquals("LicenseRef-Bouncy-Castle", mapped.id("Bouncy Castle Licence", "https://example.org/"));
+        assertEquals("Apache-2.0 OR MIT", mapped.id("Apache 2.0", "https://example.com/LICENSE.txt"));
+        assertEquals("MIT", mapped.id("MIT", null));
+    }
+
+    private static LicenseMapping mapping(String spdxId, String name, String url) {
+        LicenseMapping mapping = new LicenseMapping();
+        mapping.setSpdxId(spdxId);
+        mapping.setName(name);
+        mapping.setUrl(url);
+        return mapping;
     }
 
     @Test
