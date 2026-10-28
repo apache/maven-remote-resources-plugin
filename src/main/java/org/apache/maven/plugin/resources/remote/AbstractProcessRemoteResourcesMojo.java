@@ -237,6 +237,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
     /**
      * Attaches the resources to the main build of the project as a resource directory.
+     * A file of the same name in the project's main resources is then used instead of the bundled one.
      *
      * @since 1.5
      */
@@ -245,6 +246,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
     /**
      * Attaches the resources to the test build of the project as a resource directory.
+     * When <code>attachToMain</code> is <code>false</code>, a file of the same name in the project's test
+     * resources is then used instead of the bundled one, and the main resources are left untouched.
      *
      * @since 1.5
      */
@@ -691,10 +694,22 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         return organizations;
     }
 
+    /**
+     * Returns the project resources that may override a bundled resource: the main resources when the output is
+     * attached to the main build, else the test resources when it is attached to the test build only. A file there
+     * is used instead of the bundled one and excluded from that resource set, so it is not copied twice.
+     */
+    private List<Resource> overridingResources() {
+        if (attachToMain) {
+            return project.getResources();
+        }
+        return attachToTest ? project.getTestResources() : Collections.emptyList();
+    }
+
     protected boolean copyResourceIfExists(
             File outputFile, String bundleResourceName, VelocityContext context, String encoding)
             throws IOException, MojoExecutionException {
-        for (Resource resource : project.getResources()) {
+        for (Resource resource : overridingResources()) {
             File resourceDirectory = new File(resource.getDirectory());
 
             if (!resourceDirectory.exists()) {
