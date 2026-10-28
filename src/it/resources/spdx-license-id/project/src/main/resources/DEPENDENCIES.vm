@@ -24,11 +24,19 @@ $dependency.artifactId: #if( $id )$id#else$license.name#end
 #end
 #foreach( $entry in $spdx.group($projects).entrySet() )
 Group $entry.key:#foreach( $dependency in $entry.value ) $dependency.artifactId#end
-
 #end
 #foreach( $id in $spdx.ids($projects) )
 License text: $id
 #end
 #foreach( $dependency in $spdx.unresolved($projects) )
 Unresolved: $dependency.artifactId
+#end
+#foreach( $org in $projectsSortedByOrganization.entrySet() )
+Org $org.key.name:
+#foreach( $group in $spdx.group($org.value).entrySet() )
+  License $group.key:#foreach( $dependency in $group.value ) $dependency.artifactId#end
+#end
+#foreach( $dependency in $spdx.unresolved($org.value) )
+  Unresolved $dependency.artifactId
+#end
 #end

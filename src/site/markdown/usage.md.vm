@@ -142,7 +142,24 @@ $group.key:
 #end
 #foreach( $dependency in $spdx.unresolved($projects) )
 $dependency.name: #foreach( $license in $dependency.licenses )$license.name #end
+#end]]#
+```
 
+`${esc.d}spdx.group` and `${esc.d}spdx.unresolved` take any list of dependencies, so they also work inside each organization of `${esc.d}projectsSortedByOrganization`:
+
+```
+#[[#foreach( $organization in $projectsSortedByOrganization.entrySet() )
+From: '$organization.key.name'#if( $organization.key.url ) ($organization.key.url)#end
+
+#foreach( $group in $spdx.group($organization.value).entrySet() )
+  $group.key:
+#foreach( $dependency in $group.value )
+    - $dependency.name ($dependency.groupId:$dependency.artifactId)
+#end
+#end
+#foreach( $dependency in $spdx.unresolved($organization.value) )
+  - $dependency.name: #foreach( $license in $dependency.licenses )$license.name #end
+#end
 #end]]#
 ```
 
