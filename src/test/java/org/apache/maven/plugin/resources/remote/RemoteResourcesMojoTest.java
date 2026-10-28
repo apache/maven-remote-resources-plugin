@@ -62,7 +62,6 @@ import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.CleanupMode;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.apache.maven.api.plugin.testing.MojoExtension.getVariableValueFromObject;
@@ -83,8 +82,7 @@ class RemoteResourcesMojoTest {
     static final String DEFAULT_BUNDLE_POM_PATH = "target/test-classes/unit/rrmojotest/bundle-plugin-config.xml";
     static final String DEFAULT_PROCESS_POM_PATH = "target/test-classes/unit/rrmojotest/process-plugin-config.xml";
 
-    // NEVER: on Windows the mojo leaves the bundle jars open, so deleting them fails
-    @TempDir(cleanup = CleanupMode.NEVER)
+    @TempDir
     private File localRepo;
 
     @Inject
@@ -372,6 +370,36 @@ class RemoteResourcesMojoTest {
         file = getVariableValueFromObject(mojo, "outputDirectory");
         file = new File(file, "SIMPLE.txt");
         assertTrue(file.exists());
+    }
+
+    @Test
+    void testRewrittenBundleIsReadAgain(
+            @InjectMojo(goal = "process", pom = DEFAULT_PROCESS_POM_PATH) ProcessRemoteResourcesMojo mojo,
+            @InjectMojo(goal = "bundle", pom = DEFAULT_BUNDLE_POM_PATH) BundleRemoteResourcesMojo bundleMojo)
+            throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-rewrittenbundle");
+        configureProcessMojo(mojo, project, Arrays.asList("test:test:1.7"));
+        setupDefaultProject(project);
+
+        File bundleJar = new File(pathOf(new DefaultArtifact(
+                "test", "test", VersionRange.createFromVersion("1.7"), null, "jar", "", new DefaultArtifactHandler())));
+        bundleJar.getParentFile().mkdirs();
+        // no template in the first bundle: rendering one goes through the class loader, whose close would
+        // evict the cached jar and hide the stale read
+        buildResourceBundle(bundleMojo, "default-rewrittenbundle-first", null, new String[] {"SIMPLE.txt"}, bundleJar);
+        mojo.execute();
+
+        // the same jar rewritten in place with more content, as a rebuilt snapshot would be
+        buildResourceBundle(
+                bundleMojo,
+                "default-rewrittenbundle-second",
+                null,
+                new String[] {"SIMPLE.txt", "FILTER.txt.vm"},
+                bundleJar);
+        mojo.execute();
+
+        File outputDirectory = getVariableValueFromObject(mojo, "outputDirectory");
+        assertTrue(new File(outputDirectory, "FILTER.txt").exists());
     }
 
     @Test
