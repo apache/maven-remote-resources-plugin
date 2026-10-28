@@ -59,7 +59,7 @@ To turn on the bundle resource manifest generation you need to configure the plu
 
 This will trigger the scanning of that project's `${esc.d}{basedir}/src/main/resources` directory and create the `${esc.d}{basedir}/target/classes/META-INF/maven/remote-resources.xml` [manifest file](./remote-resources.html).
 
-**Note:** The files have to be named like `*.vm` to mark them as [Velocity](htps://velocity.apache.org) macro files which will be filtered by the **process** goal. If you don't name the files according to this, they will not be filtered.
+**Note:** The files have to be named like `*.vm` to mark them as [Velocity](https://velocity.apache.org) macro files which will be filtered by the **process** goal. If you don't name the files according to this, they will not be filtered.
 
 How to Use Remote Resource Bundles
 ----------------------------------
