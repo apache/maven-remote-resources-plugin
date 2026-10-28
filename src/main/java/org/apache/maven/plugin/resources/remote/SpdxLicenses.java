@@ -53,7 +53,11 @@ import org.apache.maven.project.MavenProject;
  * A project that declares several licenses may be used under any one of them, so
  * <code>$!spdx.expression($project)</code> joins their IDs with <code>OR</code>.
  * <p>
- * To list each license once, <code>$spdx.group($projects)</code> groups dependencies by SPDX expression,
+ * An ASF distribution names one chosen license for such a project: <code>$!spdx.preferred($project)</code>
+ * picks it by <a href="https://www.apache.org/legal/resolved.html">ASF license category</a>, which
+ * <code>$!spdx.category($id)</code> returns.
+ * <p>
+ * To list each license once, <code>$spdx.group($projects)</code> groups dependencies by preferred license,
  * <code>$spdx.ids($projects)</code> returns every ID they use, and <code>$spdx.unresolved($projects)</code>
  * returns the dependencies that match nothing.
  *
@@ -62,6 +66,8 @@ import org.apache.maven.project.MavenProject;
 public class SpdxLicenses {
 
     private static final String RESOURCE = "license-aliases.txt";
+
+    private static final String CATEGORIES = "license-categories.txt";
 
     private static final Pattern EXPRESSION_TOKEN = Pattern.compile("\\(|\\)|[^\\s()]+");
 
@@ -81,6 +87,9 @@ public class SpdxLicenses {
     /** Normalised URL to ID or expression. */
     private final Map<String, String> urls = new HashMap<>();
 
+    /** Lower-case ID or expression to ASF category. */
+    private final Map<String, String> categories = new HashMap<>();
+
     private final List<LicenseMapping> mappings;
 
     SpdxLicenses() {
@@ -89,33 +98,42 @@ public class SpdxLicenses {
 
     SpdxLicenses(List<LicenseMapping> mappings) {
         this.mappings = new ArrayList<>(mappings);
-        InputStream in = SpdxLicenses.class.getResourceAsStream(RESOURCE);
-        if (in == null) {
-            throw new IllegalStateException("Missing resource " + RESOURCE);
+        for (String[] fields : read(RESOURCE)) {
+            String id = fields[0].trim();
+            if (id.indexOf(' ') < 0) {
+                ids.put(id.toLowerCase(Locale.ROOT), id);
+            }
+            if (fields.length > 1) {
+                String alias = fields[1].trim();
+                if (alias.startsWith("http://") || alias.startsWith("https://")) {
+                    put(urls, normaliseUrl(alias), id);
+                } else {
+                    put(names, normaliseName(alias), id);
+                }
+            }
         }
+        for (String[] fields : read(CATEGORIES)) {
+            categories.put(fields[0].trim().toLowerCase(Locale.ROOT), fields[1].trim());
+        }
+    }
+
+    private static List<String[]> read(String resource) {
+        InputStream in = SpdxLicenses.class.getResourceAsStream(resource);
+        if (in == null) {
+            throw new IllegalStateException("Missing resource " + resource);
+        }
+        List<String[]> lines = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty() || line.startsWith("#")) {
-                    continue;
-                }
-                String[] fields = line.split("\t", 2);
-                String id = fields[0].trim();
-                if (id.indexOf(' ') < 0) {
-                    ids.put(id.toLowerCase(Locale.ROOT), id);
-                }
-                if (fields.length > 1) {
-                    String alias = fields[1].trim();
-                    if (alias.startsWith("http://") || alias.startsWith("https://")) {
-                        put(urls, normaliseUrl(alias), id);
-                    } else {
-                        put(names, normaliseName(alias), id);
-                    }
+                if (!line.trim().isEmpty() && !line.startsWith("#")) {
+                    lines.add(line.split("\t", 2));
                 }
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+        return lines;
     }
 
     private static void put(Map<String, String> map, String key, String id) {
@@ -172,18 +190,154 @@ public class SpdxLicenses {
     }
 
     /**
-     * Groups projects by their SPDX license expression, leaving out the projects whose expression is unknown.
+     * Returns the license to use a project under: of the choices its licenses resolve to, the first one in
+     * ASF Category A, else in Category B, else without a known category, else in Category X. Choices that
+     * resolve to nothing are skipped, as are the alternatives of an <code>OR</code> expression that lose.
+     *
+     * @param project a project, typically a dependency
+     * @return the SPDX ID or expression of the chosen license, or {@code null} when none of its licenses resolve
+     */
+    public String preferred(MavenProject project) {
+        List<License> licenses = project == null ? null : project.getLicenses();
+        if (licenses == null) {
+            return null;
+        }
+        String best = null;
+        int bestRank = Integer.MAX_VALUE;
+        for (License license : licenses) {
+            String id = id(license);
+            if (id == null) {
+                continue;
+            }
+            for (String choice : alternatives(id)) {
+                int rank = rank(category(choice));
+                if (rank < bestRank) {
+                    best = choice;
+                    bestRank = rank;
+                }
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Returns the <a href="https://www.apache.org/legal/resolved.html">ASF license category</a> of an SPDX ID or
+     * expression: <code>A</code>, <code>B</code> or <code>X</code>. An <code>OR</code> expression takes the best
+     * category of its alternatives, an <code>AND</code> expression the worst of its parts.
+     *
+     * @param expression an SPDX ID or expression, for example from <code>$spdx.preferred($dependency)</code>
+     * @return the category, or {@code null} when it is not known
+     */
+    public String category(String expression) {
+        if (isBlank(expression)) {
+            return null;
+        }
+        String e = stripParentheses(expression.trim());
+        String category = categories.get(e.toLowerCase(Locale.ROOT));
+        if (category != null) {
+            return category;
+        }
+        List<String> alternatives = split(e, " OR ");
+        if (alternatives.size() > 1) {
+            String best = null;
+            for (String alternative : alternatives) {
+                String c = category(alternative);
+                best = rank(c) < rank(best) ? c : best;
+            }
+            return best;
+        }
+        List<String> parts = split(e, " AND ");
+        if (parts.size() > 1) {
+            String worst = "A";
+            for (String part : parts) {
+                String c = category(part);
+                worst = rank(c) > rank(worst) ? c : worst;
+            }
+            return worst;
+        }
+        int with = e.toUpperCase(Locale.ROOT).indexOf(" WITH ");
+        return with > 0 ? categories.get(e.substring(0, with).toLowerCase(Locale.ROOT)) : null;
+    }
+
+    /** A, B, unknown, X. */
+    private static int rank(String category) {
+        if ("A".equals(category)) {
+            return 0;
+        }
+        if ("B".equals(category)) {
+            return 1;
+        }
+        return "X".equals(category) ? 3 : 2;
+    }
+
+    /** Returns the alternatives of an <code>OR</code> expression, each without enclosing parentheses. */
+    private static List<String> alternatives(String expression) {
+        List<String> result = new ArrayList<>();
+        for (String alternative : split(stripParentheses(expression), " OR ")) {
+            String a = stripParentheses(alternative);
+            if (split(a, " OR ").size() > 1) {
+                result.addAll(alternatives(a));
+            } else {
+                result.add(a);
+            }
+        }
+        return result;
+    }
+
+    /** Splits at the operator where it is outside parentheses. */
+    private static List<String> split(String expression, String operator) {
+        List<String> parts = new ArrayList<>();
+        int depth = 0;
+        int start = 0;
+        for (int i = 0; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            if (c == '(') {
+                depth++;
+            } else if (c == ')') {
+                depth--;
+            } else if (depth == 0 && expression.regionMatches(true, i, operator, 0, operator.length())) {
+                parts.add(expression.substring(start, i).trim());
+                start = i + operator.length();
+                i = start - 1;
+            }
+        }
+        parts.add(expression.substring(start).trim());
+        return parts;
+    }
+
+    private static String stripParentheses(String expression) {
+        String e = expression.trim();
+        while (e.startsWith("(") && e.endsWith(")") && encloses(e)) {
+            e = e.substring(1, e.length() - 1).trim();
+        }
+        return e;
+    }
+
+    /** Whether the opening parenthesis at the start closes at the end. */
+    private static boolean encloses(String e) {
+        int depth = 0;
+        for (int i = 0; i < e.length(); i++) {
+            depth += e.charAt(i) == '(' ? 1 : e.charAt(i) == ')' ? -1 : 0;
+            if (depth == 0) {
+                return i == e.length() - 1;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Groups projects by their preferred license, leaving out the projects whose licenses resolve to nothing.
      *
      * @param projects projects, typically <code>$projects</code>
-     * @return the projects for each expression, sorted by expression
+     * @return the projects for each preferred license, sorted by SPDX ID
      */
     public Map<String, List<MavenProject>> group(List<MavenProject> projects) {
         Map<String, List<MavenProject>> groups = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         if (projects != null) {
             for (MavenProject project : projects) {
-                String expression = expression(project);
-                if (expression != null) {
-                    groups.computeIfAbsent(expression, k -> new ArrayList<>()).add(project);
+                String preferred = preferred(project);
+                if (preferred != null) {
+                    groups.computeIfAbsent(preferred, k -> new ArrayList<>()).add(project);
                 }
             }
         }
@@ -191,8 +345,8 @@ public class SpdxLicenses {
     }
 
     /**
-     * Returns every SPDX license and exception ID that the projects' expressions use, each one once, so that a
-     * template can add each license text once.
+     * Returns every SPDX license and exception ID that the projects' preferred licenses use, each one once, so
+     * that a template can add each license text once.
      *
      * @param projects projects, typically <code>$projects</code>
      * @return the IDs, sorted
@@ -203,9 +357,7 @@ public class SpdxLicenses {
             Matcher m = EXPRESSION_TOKEN.matcher(expression);
             while (m.find()) {
                 String token = m.group();
-                if (!token.equalsIgnoreCase("AND")
-                        && !token.equalsIgnoreCase("OR")
-                        && !token.equalsIgnoreCase("WITH")) {
+                if (!isOperator(token) && !token.equals("(") && !token.equals(")")) {
                     result.add(token);
                 }
             }
@@ -214,16 +366,16 @@ public class SpdxLicenses {
     }
 
     /**
-     * Returns the projects whose SPDX license expression is unknown.
+     * Returns the projects that have no preferred license.
      *
      * @param projects projects, typically <code>$projects</code>
-     * @return the projects that declare no license or a license that matches nothing
+     * @return the projects that declare no license, or only licenses that match nothing
      */
     public List<MavenProject> unresolved(List<MavenProject> projects) {
         List<MavenProject> result = new ArrayList<>();
         if (projects != null) {
             for (MavenProject project : projects) {
-                if (expression(project) == null) {
+                if (preferred(project) == null) {
                     result.add(project);
                 }
             }

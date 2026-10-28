@@ -1,0 +1,65 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# ASF license categories of the IDs in license-aliases.txt, from
+# https://www.apache.org/legal/resolved.html. Category A may be included in ASF
+# products, Category B in binary form only and labelled, Category X not at all.
+#
+# Each line holds an SPDX ID or expression, a tab, and A, B or X. An ID that is
+# missing here has no known category.
+
+0BSD	A
+Apache-1.1	A
+Apache-2.0	A
+BSD-2-Clause	A
+BSD-3-Clause	A
+BSL-1.0	A
+CC0-1.0	A
+ISC	A
+MIT	A
+MIT-0	A
+UPL-1.0	A
+Unlicense	A
+
+CDDL-1.0	B
+CDDL-1.1	B
+CPL-1.0	B
+EPL-1.0	B
+EPL-2.0	B
+MPL-1.0	B
+MPL-1.1	B
+MPL-2.0	B
+GPL-2.0-only WITH Classpath-exception-2.0	B
+
+AGPL-3.0-only	X
+AGPL-3.0-or-later	X
+GPL-2.0	X
+GPL-2.0+	X
+GPL-2.0-only	X
+GPL-2.0-or-later	X
+GPL-3.0	X
+GPL-3.0+	X
+GPL-3.0-only	X
+GPL-3.0-or-later	X
+LGPL-2.1	X
+LGPL-2.1+	X
+LGPL-2.1-only	X
+LGPL-2.1-or-later	X
+LGPL-3.0	X
+LGPL-3.0+	X
+LGPL-3.0-only	X
+LGPL-3.0-or-later	X

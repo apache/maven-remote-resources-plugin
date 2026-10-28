@@ -139,14 +139,61 @@ class SpdxLicensesTest {
 
         Map<String, List<MavenProject>> groups = spdx.group(projects);
         assertEquals(
-                Arrays.asList(
-                        "Apache-2.0", "Apache-2.0 OR MIT", "CDDL-1.1 OR (GPL-2.0-only WITH Classpath-exception-2.0)"),
+                Arrays.asList("Apache-2.0", "CDDL-1.1"),
                 Arrays.asList(groups.keySet().toArray()));
-        assertEquals(Arrays.asList(a, b), groups.get("Apache-2.0"));
+        assertEquals(Arrays.asList(a, b, e), groups.get("Apache-2.0"));
+        assertEquals(Arrays.asList(c), groups.get("CDDL-1.1"));
         assertEquals(
-                Arrays.asList("Apache-2.0", "CDDL-1.1", "Classpath-exception-2.0", "GPL-2.0-only", "MIT"),
+                Arrays.asList("Apache-2.0", "CDDL-1.1"),
                 Arrays.asList(spdx.ids(projects).toArray()));
         assertEquals(Arrays.asList(d), spdx.unresolved(projects));
+    }
+
+    @Test
+    void preferredSkipsUnresolvedChoices() {
+        // javassist 3.30.2-GA and rocksdbjni 9.7.3 as their POMs declare them
+        assertEquals(
+                "Apache-2.0",
+                spdx.preferred(project(
+                        license("MPL 1.1", "https://www.mozilla.org/en-US/MPL/1.1/"),
+                        license("LGPL 2.1", "https://www.gnu.org/licenses/lgpl-2.1.html"),
+                        license("Apache License 2.0", "https://www.apache.org/licenses/LICENSE-2.0"))));
+        assertEquals(
+                "Apache-2.0",
+                spdx.preferred(project(
+                        license("Apache License 2.0", "http://www.apache.org/licenses/LICENSE-2.0.html"),
+                        license("GNU General Public License, version 2", "http://www.gnu.org/licenses/gpl-2.0.html"))));
+        assertNull(spdx.preferred(project(license("Public Domain", null))));
+        assertNull(spdx.preferred(project()));
+        assertNull(spdx.preferred(null));
+    }
+
+    @Test
+    void preferredFollowsCategory() {
+        assertEquals("MPL-1.1", spdx.preferred(project(license("LGPL-2.1-only", null), license("MPL 1.1", null))));
+        assertEquals("Apache-2.0", spdx.preferred(project(license("EPL-2.0 OR Apache-2.0", null))));
+        assertEquals("MIT", spdx.preferred(project(license("(MIT OR Apache-2.0)", null))));
+        assertEquals("GPL-2.0-only", spdx.preferred(project(license("GPL-2.0-only", null))));
+        assertEquals(
+                "LicenseRef-Widget",
+                spdx.preferred(project(license("GPL-3.0-only", null), license("LicenseRef-Widget", null))));
+        assertEquals(
+                "GPL-2.0-only WITH Classpath-exception-2.0",
+                spdx.preferred(project(license("GPL-3.0-only", null), license("GPL2 w/ CPE", null))));
+    }
+
+    @Test
+    void category() {
+        assertEquals("A", spdx.category("Apache-2.0"));
+        assertEquals("B", spdx.category("EPL-2.0"));
+        assertEquals("X", spdx.category("LGPL-2.1-or-later"));
+        assertEquals("B", spdx.category("GPL-2.0-only WITH Classpath-exception-2.0"));
+        assertEquals("X", spdx.category("GPL-3.0-only WITH Classpath-exception-2.0"));
+        assertEquals("A", spdx.category("(MIT OR GPL-2.0-only)"));
+        assertEquals("B", spdx.category("MIT AND EPL-2.0"));
+        assertNull(spdx.category("MIT AND Zlib"));
+        assertNull(spdx.category("Zlib"));
+        assertNull(spdx.category(null));
     }
 
     private static License license(String name, String url) {
