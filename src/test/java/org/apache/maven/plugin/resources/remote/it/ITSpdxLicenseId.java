@@ -62,18 +62,25 @@ public class ITSpdxLicenseId extends AbstractIT {
                 content);
         assertTrue(content.contains("f-mapped: BSD-3-Clause\n"), content);
 
-        assertTrue(content.contains("Group Apache-2.0: a-name b-url\n"), content);
-        assertTrue(content.contains("Group (Apache-2.0 OR EPL-2.0): c-expression\n"), content);
-        assertTrue(content.contains("Unresolved: d-unknown\n"), content);
-        assertEquals(1, content.split("License text: Apache-2.0\n", -1).length - 1, content);
-        assertTrue(content.contains("License text: Classpath-exception-2.0\n"), content);
+        assertTrue(content.contains("c-expression preferred: Apache-2.0 A\n"), content);
+        assertTrue(content.contains("e-dual preferred: CDDL-1.1 B\n"), content);
+        assertTrue(content.contains("d-unknown preferred:\n"), content);
 
-        assertTrue(
-                content.contains("Org Example Org:\n"
-                        + "  License (Apache-2.0 OR EPL-2.0): c-expression\n"
-                        + "  License Apache-2.0: a-name\n"),
+        assertTrue(content.contains("Group Apache-2.0: a-name b-url c-expression\n"), content);
+        assertTrue(content.contains("Group CDDL-1.1: e-dual\n"), content);
+        assertTrue(content.contains("Unresolved: d-unknown\n"), content);
+        assertEquals(
+                "License text: Apache-2.0\nLicense text: BSD-3-Clause\nLicense text: CDDL-1.1\n",
+                content.replaceAll("(?m)^(?!License text: ).*\n", ""),
                 content);
-        assertTrue(content.contains("Org an unknown organization:\n  License Apache-2.0: b-url\n"), content);
-        assertTrue(content.contains("  Unresolved d-unknown\n"), content);
+
+        assertTrue(content.contains("Org Example Org:\n  License Apache-2.0: a-name c-expression\n"), content);
+        assertTrue(
+                content.contains("Org an unknown organization:\n"
+                        + "  License Apache-2.0: b-url\n"
+                        + "  License BSD-3-Clause: f-mapped\n"
+                        + "  License CDDL-1.1: e-dual\n"
+                        + "  Unresolved d-unknown\n"),
+                content);
     }
 }
