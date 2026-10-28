@@ -55,10 +55,10 @@ import org.apache.maven.project.MavenProject;
  * <p>
  * An ASF distribution names one chosen license for such a project: <code>$!spdx.preferred($project)</code>
  * picks it by <a href="https://www.apache.org/legal/resolved.html">ASF license category</a>, which
- * <code>$!spdx.category($id)</code> returns.
+ * <code>$!spdx.asfCategory($id)</code> returns.
  * <p>
  * To list each license once, <code>$spdx.group($projects)</code> groups dependencies by preferred license,
- * <code>$spdx.ids($projects)</code> returns every ID they use, and <code>$spdx.unresolved($projects)</code>
+ * <code>$spdx.licenseIds($projects)</code> returns every ID they use, and <code>$spdx.unresolved($projects)</code>
  * returns the dependencies that match nothing.
  *
  * @since 3.4.0
@@ -210,7 +210,7 @@ public class SpdxLicenses {
                 continue;
             }
             for (String choice : alternatives(id)) {
-                int rank = rank(category(choice));
+                int rank = rank(asfCategory(choice));
                 if (rank < bestRank) {
                     best = choice;
                     bestRank = rank;
@@ -228,7 +228,7 @@ public class SpdxLicenses {
      * @param expression an SPDX ID or expression, for example from <code>$spdx.preferred($dependency)</code>
      * @return the category, or {@code null} when it is not known
      */
-    public String category(String expression) {
+    public String asfCategory(String expression) {
         if (isBlank(expression)) {
             return null;
         }
@@ -241,7 +241,7 @@ public class SpdxLicenses {
         if (alternatives.size() > 1) {
             String best = null;
             for (String alternative : alternatives) {
-                String c = category(alternative);
+                String c = asfCategory(alternative);
                 best = rank(c) < rank(best) ? c : best;
             }
             return best;
@@ -250,7 +250,7 @@ public class SpdxLicenses {
         if (parts.size() > 1) {
             String worst = "A";
             for (String part : parts) {
-                String c = category(part);
+                String c = asfCategory(part);
                 worst = rank(c) > rank(worst) ? c : worst;
             }
             return worst;
@@ -351,7 +351,7 @@ public class SpdxLicenses {
      * @param projects projects, typically <code>$projects</code>
      * @return the IDs, sorted
      */
-    public Set<String> ids(List<MavenProject> projects) {
+    public Set<String> licenseIds(List<MavenProject> projects) {
         Set<String> result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (String expression : group(projects).keySet()) {
             Matcher m = EXPRESSION_TOKEN.matcher(expression);
