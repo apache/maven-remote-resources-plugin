@@ -19,6 +19,7 @@
 package org.apache.maven.plugin.resources.remote;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationHandler;
@@ -27,10 +28,13 @@ import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -202,6 +206,151 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertSame(externalArtifact, builtArtifacts.get(0));
         assertTrue(projects.contains(reactorProject));
         assertTrue(projects.contains(externalProject));
+    }
+
+    public void testRemoteResourceCannotEscapeOutputDirectory() throws Exception {
+        File outputDirectory = new File("target/remote-resource-output");
+        File canonicalOutputDirectory = outputDirectory.getCanonicalFile();
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    outputDirectory, "../outside.txt", canonicalOutputDirectory);
+            fail("expected a resource outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must remain within the output directory"));
+        }
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    outputDirectory,
+                    new File(outputDirectory.getParentFile(), "absolute.txt").getAbsolutePath(),
+                    canonicalOutputDirectory);
+            fail("expected an absolute resource path outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("Absolute remote resource paths are not allowed"));
+        }
+
+        File outputFile = AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                outputDirectory, "nested/resource.txt", canonicalOutputDirectory);
+        assertEquals(new File(outputDirectory, "nested/resource.txt").getCanonicalFile(), outputFile);
+    }
+
+    public void testRemoteResourceCannotEscapeOutputDirectoryThroughSymlink() throws Exception {
+        Path temporaryDirectory = Files.createTempDirectory("remote-resource-path");
+        Path outputDirectory = Files.createDirectory(temporaryDirectory.resolve("output"));
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        try {
+            Files.createSymbolicLink(outputDirectory.resolve("external"), outsideDirectory);
+        } catch (UnsupportedOperationException | IOException e) {
+            return; // unsupported here; this JUnit 3 test cannot report a skip
+        }
+
+        File output = outputDirectory.toFile();
+        File canonicalOutputDirectory = output.getCanonicalFile();
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    output, "external/escaped.txt", canonicalOutputDirectory);
+            fail("expected a symlink target outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must remain within the output directory"));
+        }
+    }
+
+    public void testRemoteResourceResolvesNestedSymlinksBeforeCheckingContainment() throws Exception {
+        Path temporaryDirectory = Files.createTempDirectory("remote-resource-nested-path");
+        Path outputDirectory = Files.createDirectory(temporaryDirectory.resolve("output"));
+        Path insideDirectory = Files.createDirectory(outputDirectory.resolve("inside"));
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        try {
+            Files.createSymbolicLink(outputDirectory.resolve("inside-link"), insideDirectory);
+            Files.createSymbolicLink(insideDirectory.resolve("outside-link"), outsideDirectory);
+        } catch (UnsupportedOperationException | IOException e) {
+            return; // unsupported here; this JUnit 3 test cannot report a skip
+        }
+
+        File output = outputDirectory.toFile();
+        File canonicalOutputDirectory = output.getCanonicalFile();
+        File safeOutputFile = AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                output, "inside-link/not-created/resource.txt", canonicalOutputDirectory);
+        assertEquals(
+                insideDirectory.toRealPath().resolve("not-created/resource.txt").toFile(), safeOutputFile);
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    output, "inside-link/outside-link/not-created/resource.txt", canonicalOutputDirectory);
+            fail("expected a nested symlink target outside the output directory to be rejected");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must remain within the output directory"));
+        }
+    }
+
+    public void testRemoteResourceFailsClosedWhenPathCannotBeInspected() throws Exception {
+        Path temporaryDirectory = Files.createTempDirectory("remote-resource-inaccessible-path");
+        Path outputDirectory = Files.createDirectory(temporaryDirectory.resolve("output"));
+        Path restrictedDirectory = Files.createDirectory(outputDirectory.resolve("restricted"));
+        Path outsideDirectory = Files.createDirectory(temporaryDirectory.resolve("outside"));
+
+        EnumSet<PosixFilePermission> originalPermissions;
+        try {
+            originalPermissions = EnumSet.copyOf(Files.getPosixFilePermissions(restrictedDirectory));
+        } catch (UnsupportedOperationException e) {
+            return; // unsupported here; this JUnit 3 test cannot report a skip
+        }
+
+        try {
+            Files.createSymbolicLink(restrictedDirectory.resolve("external"), outsideDirectory);
+        } catch (UnsupportedOperationException | IOException e) {
+            return; // unsupported here; this JUnit 3 test cannot report a skip
+        }
+
+        try {
+            Files.setPosixFilePermissions(
+                    restrictedDirectory, EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+        } catch (UnsupportedOperationException e) {
+            return; // unsupported here; this JUnit 3 test cannot report a skip
+        }
+
+        try {
+            AbstractProcessRemoteResourcesMojo.resolveOutputFile(
+                    outputDirectory.toFile(),
+                    "restricted/external/escaped.txt",
+                    outputDirectory.toFile().getCanonicalFile());
+            fail("expected unreadable path components to be rejected");
+        } catch (IOException expected) {
+            // An inaccessible component must not be treated as a missing path element.
+        } finally {
+            Files.setPosixFilePermissions(restrictedDirectory, originalPermissions);
+        }
+    }
+
+    public void testMalformedSupplementalModelFailsWithMojoExecutionException() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-malformedsupplement");
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithDefaultSettings(project);
+
+        setupDefaultProject(project);
+
+        File supplementalModelsFile = new File(project.getBasedir(), "supplemental-models.xml");
+        FileUtils.fileWrite(
+                supplementalModelsFile.getAbsolutePath(),
+                "<supplementalDataModels>"
+                        + "<supplement>"
+                        + "<project>"
+                        + "<groupId>test</groupId>"
+                        + "<artifactId>test</artifactId>"
+                        + "<version>1.0</version>"
+                        + "<notAValidElement>whatever</notAValidElement>"
+                        + "</project>"
+                        + "</supplement>"
+                        + "</supplementalDataModels>");
+
+        setVariableValueToObject(mojo, "supplementalModels", new String[] {supplementalModelsFile.getAbsolutePath()});
+
+        try {
+            mojo.execute();
+            fail("Expected a MojoExecutionException for a malformed supplemental model entry");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Unable to parse supplemental XML"));
+        }
     }
 
     public void testConfigureLocatorRequiresProjectFile() throws Exception {

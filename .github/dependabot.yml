@@ -22,14 +22,23 @@ updates:
     schedule:
       interval: "daily"
     ignore:
-      # Pin the Maven runtime to the minimum this plugin supports.
+      # Stay on the Maven 3.9.x runtime; 3.9.x patch releases are still taken.
       # Named one by one so org.apache.maven:maven-archiver stays updatable.
       - dependency-name: "org.apache.maven:maven-artifact"
+        versions: [">= 3.10.0"]
       - dependency-name: "org.apache.maven:maven-core"
+        versions: [">= 3.10.0"]
       - dependency-name: "org.apache.maven:maven-model"
+        versions: [">= 3.10.0"]
       - dependency-name: "org.apache.maven:maven-model-builder"
+        versions: [">= 3.10.0"]
       - dependency-name: "org.apache.maven:maven-plugin-api"
+        versions: [">= 3.10.0"]
       - dependency-name: "org.apache.maven:maven-resolver-provider"
+        versions: [">= 3.10.0"]
+      # Maven 3 so use SLF4J 1.7.x
+      - dependency-name: "org.slf4j:*"
+        versions: [">= 2.0.0"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

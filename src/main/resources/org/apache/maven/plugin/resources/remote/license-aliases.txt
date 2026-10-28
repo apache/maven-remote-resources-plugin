@@ -1,0 +1,175 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# License names and URLs, as POMs declare them, mapped to SPDX license IDs.
+#
+# Each line holds an SPDX ID or expression, a tab, and one declared name or URL.
+# An alias that starts with http:// or https:// is a URL. A line with an ID alone makes the ID known
+# without adding an alias. Names and URLs are normalised before matching, so case,
+# punctuation, the URL scheme, "www." and a trailing ".txt" or ".html" do not matter.
+#
+# GNU license URLs and unversioned GNU names are left out on purpose: they do not say
+# whether "only" or "or later" applies, and a wrong ID is worse than none. So are URLs
+# of pages that cover two licenses at once, such as GlassFish's CDDL+GPL_1_1.html, and
+# license pages of individual projects, such as jsoup.org/license: they name no license,
+# and keep their address when the project changes its license. Map those with the
+# plugin's licenseMappings parameter instead.
+
+0BSD
+AGPL-3.0-only
+AGPL-3.0-or-later
+BSL-1.0	Boost Software License 1.0
+BSL-1.0	Boost Software License, Version 1.0
+BSL-1.0	https://www.boost.org/LICENSE_1_0.txt
+CC0-1.0	CC0
+CC0-1.0	CC0 1.0 Universal
+CC0-1.0	Creative Commons Zero v1.0 Universal
+CC0-1.0	https://creativecommons.org/publicdomain/zero/1.0/
+CC0-1.0	http://repository.jboss.org/licenses/cc0-1.0.txt
+Classpath-exception-2.0
+GPL-2.0
+GPL-2.0+
+GPL-2.0-only
+GPL-2.0-or-later
+GPL-3.0
+GPL-3.0+
+GPL-3.0-only
+GPL-3.0-or-later
+ISC	ISC License
+LGPL-2.1
+LGPL-2.1+
+LGPL-2.1-only
+LGPL-2.1-or-later
+LGPL-2.1-or-later	GNU Lesser General Public License (LGPL), version 2.1 or later
+LGPL-3.0
+LGPL-3.0+
+LGPL-3.0-only
+LGPL-3.0-or-later
+MIT-0
+Unlicense	The Unlicense
+Unlicense	https://unlicense.org/
+
+Apache-1.1	Apache License 1.1
+Apache-1.1	Apache License, Version 1.1
+Apache-1.1	Apache Software License, Version 1.1
+Apache-1.1	The Apache Software License, Version 1.1
+Apache-1.1	https://www.apache.org/licenses/LICENSE-1.1
+
+Apache-2.0	ASL 2.0
+Apache-2.0	ASL2
+Apache-2.0	Apache 2
+Apache-2.0	Apache 2.0
+Apache-2.0	Apache 2.0 License
+Apache-2.0	Apache License 2.0
+Apache-2.0	Apache License Version 2.0
+Apache-2.0	Apache License, Version 2
+Apache-2.0	Apache License, Version 2.0
+Apache-2.0	Apache Software License - Version 2.0
+Apache-2.0	Apache Software License 2.0
+Apache-2.0	Apache Software License, Version 2.0
+Apache-2.0	The Apache License, Version 2.0
+Apache-2.0	The Apache Software License, Version 2.0
+Apache-2.0	https://www.apache.org/licenses/LICENSE-2.0
+Apache-2.0	https://opensource.org/licenses/Apache-2.0
+Apache-2.0	https://opensource.org/licenses/apache2.0.php
+Apache-2.0	http://repository.jboss.org/licenses/apache-2.0.txt
+
+BSD-2-Clause	BSD 2-Clause
+BSD-2-Clause	BSD 2-Clause License
+BSD-2-Clause	BSD 2-Clause "Simplified" License
+BSD-2-Clause	Simplified BSD License
+BSD-2-Clause	https://opensource.org/licenses/BSD-2-Clause
+
+# The Eclipse Distribution License 1.0 is the 3-clause BSD license.
+BSD-3-Clause	3-Clause BSD License
+BSD-3-Clause	BSD 3-Clause
+BSD-3-Clause	BSD 3-Clause License
+BSD-3-Clause	BSD-3-Clause License
+BSD-3-Clause	New BSD License
+BSD-3-Clause	Revised BSD
+BSD-3-Clause	Revised BSD License
+BSD-3-Clause	The BSD 3-Clause License
+BSD-3-Clause	EDL 1.0
+BSD-3-Clause	Eclipse Distribution License - v 1.0
+BSD-3-Clause	Eclipse Distribution License (New BSD License)
+BSD-3-Clause	Eclipse Distribution License v. 1.0
+BSD-3-Clause	https://www.eclipse.org/org/documents/edl-v10.php
+BSD-3-Clause	https://opensource.org/licenses/BSD-3-Clause
+
+CDDL-1.0	CDDL 1.0
+CDDL-1.0	Common Development and Distribution License 1.0
+CDDL-1.0	Common Development and Distribution License (CDDL) v1.0
+CDDL-1.0	https://opensource.org/licenses/CDDL-1.0
+CDDL-1.1	CDDL 1.1
+CDDL-1.1	Common Development and Distribution License 1.1
+
+CPL-1.0	Common Public License 1.0
+CPL-1.0	Common Public License Version 1.0
+CPL-1.0	https://www.opensource.org/licenses/cpl1.0.txt
+
+EPL-1.0	EPL 1.0
+EPL-1.0	Eclipse Public License - v 1.0
+EPL-1.0	Eclipse Public License - Version 1.0
+EPL-1.0	Eclipse Public License 1.0
+EPL-1.0	Eclipse Public License v1.0
+EPL-1.0	Eclipse Public License version 1.0
+EPL-1.0	Eclipse Public License, Version 1.0
+EPL-1.0	The Eclipse Public License, Version 1.0
+EPL-1.0	https://www.eclipse.org/legal/epl-v10.html
+EPL-1.0	https://www.eclipse.org/org/documents/epl-v10.php
+
+EPL-2.0	EPL 2.0
+EPL-2.0	EPLv2
+EPL-2.0	Eclipse Public License - v 2.0
+EPL-2.0	Eclipse Public License - Version 2.0
+EPL-2.0	Eclipse Public License 2.0
+EPL-2.0	Eclipse Public License v. 2.0
+EPL-2.0	Eclipse Public License v2.0
+EPL-2.0	Eclipse Public License, Version 2.0
+EPL-2.0	https://www.eclipse.org/legal/epl-2.0/
+EPL-2.0	https://www.eclipse.org/legal/epl-v20.html
+EPL-2.0	https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt
+EPL-2.0	https://projects.eclipse.org/license/epl-2.0
+
+GPL-2.0-only WITH Classpath-exception-2.0	GPL2 w/ CPE
+GPL-2.0-only WITH Classpath-exception-2.0	GNU General Public License, version 2, with the Classpath Exception
+GPL-2.0-only WITH Classpath-exception-2.0	GNU General Public License, version 2 with the GNU Classpath Exception
+GPL-2.0-only WITH Classpath-exception-2.0	GNU General Public License, version 2 (GPL2), with the classpath exception
+GPL-2.0-only WITH Classpath-exception-2.0	https://openjdk.java.net/legal/gplv2+ce.html
+GPL-2.0-only WITH Classpath-exception-2.0	https://openjdk.org/legal/gplv2+ce.html
+
+MIT	MIT License
+MIT	The MIT License
+MIT	The MIT License (MIT)
+MIT	https://opensource.org/licenses/MIT
+MIT	https://opensource.org/licenses/mit-license.php
+
+MPL-1.0	Mozilla Public License Version 1.0
+MPL-1.0	https://www.mozilla.org/MPL/MPL-1.0.html
+MPL-1.1	MPL 1.1
+MPL-1.1	Mozilla Public License, Version 1.1
+MPL-1.1	Mozilla Public License Version 1.1
+MPL-1.1	https://www.mozilla.org/MPL/MPL-1.1.html
+MPL-2.0	MPL 2.0
+MPL-2.0	Mozilla Public License, Version 2.0
+MPL-2.0	Mozilla Public License Version 2.0
+MPL-2.0	https://www.mozilla.org/MPL/2.0/
+
+UPL-1.0	Universal Permissive License, Version 1.0
+UPL-1.0	Universal Permissive License v1.0
+UPL-1.0	https://opensource.org/licenses/UPL
+UPL-1.0	https://oss.oracle.com/licenses/upl

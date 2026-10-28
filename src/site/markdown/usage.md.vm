@@ -59,7 +59,7 @@ To turn on the bundle resource manifest generation you need to configure the plu
 
 This will trigger the scanning of that project's `${esc.d}{basedir}/src/main/resources` directory and create the `${esc.d}{basedir}/target/classes/META-INF/maven/remote-resources.xml` [manifest file](./remote-resources.html).
 
-**Note:** The files have to be named like `*.vm` to mark them as [Velocity](htps://velocity.apache.org) macro files which will be filtered by the **process** goal. If you don't name the files according to this, they will not be filtered.
+**Note:** The files have to be named like `*.vm` to mark them as [Velocity](https://velocity.apache.org) macro files which will be filtered by the **process** goal. If you don't name the files according to this, they will not be filtered.
 
 How to Use Remote Resource Bundles
 ----------------------------------
@@ -96,6 +96,74 @@ To use remote resource bundles you need to configure the plugin as follows:
 ```
 
 This will retrieve the `apache-jar-resource-bundle-1.0.jar` from the remote repositories specified in your POM, process each resource in the bundle and deposit them in your projects `${esc.d}{basedir}/target/classes` directory. 
+
+Using SPDX License IDs in Templates
+----------------------------------
+
+Dependencies declare the same license under many names, such as "Apache License, Version 2.0" and "The Apache Software License, Version 2.0". Since version 3.4.0, templates can use `${esc.d}spdx.id(${esc.d}license)` to get the [SPDX license ID](https://spdx.org/licenses/) of a declared license, for example `Apache-2.0`. The plugin tries the declared name first, then the URL, against a table of the licenses that POMs declare most often. A declaration that is already an SPDX ID or SPDX license expression is returned in its SPDX spelling.
+
+When nothing matches, or the name and URL resolve to different IDs, `${esc.d}spdx.id` returns null. Write `${esc.d}!spdx.id(${esc.d}license)` to print nothing in that case, or fall back to the declared name:
+
+```
+#[[#foreach( $dependency in $projects )
+#foreach( $license in $dependency.licenses )
+#set( $id = $spdx.id($license) )
+$dependency.groupId:$dependency.artifactId #if( $id )$id#else$license.name#end
+#end
+#end]]#
+```
+
+To resolve a declared license that the built-in table does not know, add a `licenseMappings` entry. A mapping applies when each of its `name` and `url` that is set matches the declared license, so a generic name such as "BSD" can be tied to one URL. The `spdxId` is an SPDX ID or expression; a `LicenseRef-` ID names a license that has no SPDX ID:
+
+```xml
+<configuration>
+  <licenseMappings>
+    <licenseMapping>
+      <spdxId>BSD-3-Clause</spdxId>
+      <name>BSD</name>
+      <url>https://example.org/widget/LICENSE</url>
+    </licenseMapping>
+  </licenseMappings>
+</configuration>
+```
+
+A mapping matches a spelling wherever it appears, like `licenseMerges` in the [License Maven Plugin](https://www.mojohaus.org/license-maven-plugin/). To correct the license of one artifact, use a [supplemental model](./supplemental-models.html) instead, which plays the role of that plugin's `licenses.xml`.
+
+A dependency that declares several licenses may be used under any one of them. `${esc.d}spdx.expression(${esc.d}dependency)` returns one SPDX license expression for the whole dependency, joining the IDs with `OR`, for example `CDDL-1.1 OR (GPL-2.0-only WITH Classpath-exception-2.0)`. It returns null when the dependency declares no license or when one of its licenses matches nothing, because a partial expression would leave out a choice.
+
+An ASF distribution states the one license it uses a dependency under: "include only the license that you have chosen. Prefer Category A to Category B to Category X" ([ASF 3rd Party License Policy](https://www.apache.org/legal/resolved.html)). `${esc.d}spdx.preferred(${esc.d}dependency)` makes that choice. Of the licenses that resolve, it returns the first one in Category A, else in Category B, else one without a known category, else in Category X; licenses that resolve to nothing are skipped. `${esc.d}spdx.asfCategory(${esc.d}id)` returns the ASF category, `A`, `B` or `X`, or null when the plugin does not know it.
+
+To list each license once rather than once per dependency, `${esc.d}spdx.group(${esc.d}projects)` groups the dependencies by preferred license. `${esc.d}spdx.licenseIds(${esc.d}projects)` returns every license and exception ID in use, each one once, so a template can add each license text once. `${esc.d}spdx.unresolved(${esc.d}projects)` returns the dependencies without a preferred license, which still need their declared licenses listed:
+
+```
+#[[#foreach( $group in $spdx.group($projects).entrySet() )
+$group.key:
+#foreach( $dependency in $group.value )
+  - $dependency.name ($dependency.groupId:$dependency.artifactId)
+#end
+#end
+#foreach( $dependency in $spdx.unresolved($projects) )
+$dependency.name: #foreach( $license in $dependency.licenses )$license.name #end
+#end]]#
+```
+
+`${esc.d}spdx.group` and `${esc.d}spdx.unresolved` take any list of dependencies, so they also work inside each organization of `${esc.d}projectsSortedByOrganization`:
+
+```
+#[[#foreach( $organization in $projectsSortedByOrganization.entrySet() )
+From: '$organization.key.name'#if( $organization.key.url ) ($organization.key.url)#end
+
+#foreach( $group in $spdx.group($organization.value).entrySet() )
+  $group.key:
+#foreach( $dependency in $group.value )
+    - $dependency.name ($dependency.groupId:$dependency.artifactId)
+#end
+#end
+#foreach( $dependency in $spdx.unresolved($organization.value) )
+  - $dependency.name: #foreach( $license in $dependency.licenses )$license.name #end
+#end
+#end]]#
+```
 
 Running Once in a Multi-Module Build
 ------------------------------------
