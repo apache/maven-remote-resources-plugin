@@ -746,11 +746,15 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
     protected void validate() throws MojoExecutionException {
         if (licenseMappings != null) {
+            SpdxLicenses spdx = new SpdxLicenses();
             for (LicenseMapping mapping : licenseMappings) {
-                if (SpdxLicenses.isBlank(mapping.getSpdxId())
-                        || (SpdxLicenses.isBlank(mapping.getName()) && SpdxLicenses.isBlank(mapping.getUrl()))) {
+                if (SpdxLicenses.isBlank(mapping.getName()) && SpdxLicenses.isBlank(mapping.getUrl())) {
+                    throw new MojoExecutionException("Each licenseMapping needs a name, a url or both: " + mapping);
+                }
+                if (spdx.canonicalMappingId(mapping.getSpdxId()) == null) {
                     throw new MojoExecutionException(
-                            "Each licenseMapping needs an spdxId and a name, a url or both: " + mapping);
+                            "The spdxId of a licenseMapping must be an SPDX license ID, such as MIT, or an SPDX "
+                                    + "license expression, such as Apache-2.0 OR MIT: " + mapping);
                 }
             }
         }
