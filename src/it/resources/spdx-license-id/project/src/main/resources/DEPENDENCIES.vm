@@ -17,6 +17,8 @@
 Override: #if ($projectName)$projectName#else${project.name}#end
 #foreach( $dependency in $projects )
 $dependency.artifactId expression: $!spdx.expression($dependency)
+#set( $preferred = $spdx.preferred($dependency) )
+$dependency.artifactId preferred:#if( $preferred ) $preferred $!spdx.category($preferred)#end
 #foreach( $license in $dependency.licenses )
 #set( $id = $spdx.id($license) )
 $dependency.artifactId: #if( $id )$id#else$license.name#end

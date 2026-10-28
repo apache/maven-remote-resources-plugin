@@ -131,7 +131,9 @@ A mapping matches a spelling wherever it appears, like `licenseMerges` in the [L
 
 A dependency that declares several licenses may be used under any one of them. `${esc.d}spdx.expression(${esc.d}dependency)` returns one SPDX license expression for the whole dependency, joining the IDs with `OR`, for example `CDDL-1.1 OR (GPL-2.0-only WITH Classpath-exception-2.0)`. It returns null when the dependency declares no license or when one of its licenses matches nothing, because a partial expression would leave out a choice.
 
-To list each license once rather than once per dependency, group the dependencies by SPDX expression. `${esc.d}spdx.ids(${esc.d}projects)` returns every license and exception ID in use, each one once, so a template can add each license text once. `${esc.d}spdx.unresolved(${esc.d}projects)` returns the dependencies that `${esc.d}spdx` could not resolve, which still need their declared licenses listed:
+An ASF distribution states the one license it uses a dependency under: "include only the license that you have chosen. Prefer Category A to Category B to Category X" ([ASF 3rd Party License Policy](https://www.apache.org/legal/resolved.html)). `${esc.d}spdx.preferred(${esc.d}dependency)` makes that choice. Of the licenses that resolve, it returns the first one in Category A, else in Category B, else one without a known category, else in Category X; licenses that resolve to nothing are skipped. `${esc.d}spdx.category(${esc.d}id)` returns the category, `A`, `B` or `X`, or null when the plugin does not know it.
+
+To list each license once rather than once per dependency, `${esc.d}spdx.group(${esc.d}projects)` groups the dependencies by preferred license. `${esc.d}spdx.ids(${esc.d}projects)` returns every license and exception ID in use, each one once, so a template can add each license text once. `${esc.d}spdx.unresolved(${esc.d}projects)` returns the dependencies without a preferred license, which still need their declared licenses listed:
 
 ```
 #[[#foreach( $group in $spdx.group($projects).entrySet() )
