@@ -377,6 +377,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
     /**
      * Indicate if project workspace files with the same name should be used instead of the ones from the bundle.
+     * A file in the project's base directory named like the resource is copied as is; one named like the resource
+     * plus <code>.vm</code> is rendered with Velocity, the same way as a bundled template. The plain file wins when
+     * both exist.
      *
      * @since 3.3.0
      */
