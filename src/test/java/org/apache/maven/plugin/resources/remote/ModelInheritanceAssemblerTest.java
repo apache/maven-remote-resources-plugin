@@ -21,7 +21,6 @@ package org.apache.maven.plugin.resources.remote;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
 
 /**
  * Unit tests for the SCM path normalization in {@link ModelInheritanceAssembler}.
@@ -76,8 +75,8 @@ public class ModelInheritanceAssemblerTest {
     }
 
     @Test
-    public void appendPathRejectsParentDirectoryAboveRoot() {
-        assertThrows(IllegalArgumentException.class, () -> assembler.appendPath("/../x", null, null, false));
+    public void appendPathKeepsParentDirectoryAboveRoot() {
+        assertEquals("/../x", assembler.appendPath("/../x", null, null, false));
     }
 
     /**
