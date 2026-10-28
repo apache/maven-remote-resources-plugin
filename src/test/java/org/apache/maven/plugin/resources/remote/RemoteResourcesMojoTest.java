@@ -56,7 +56,6 @@ import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
-import org.junit.Assume;
 
 /**
  * RemoteResources plugin Test Case
@@ -128,7 +127,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         try {
             Files.createSymbolicLink(outputDirectory.resolve("external"), outsideDirectory);
         } catch (UnsupportedOperationException | IOException e) {
-            Assume.assumeNoException(e);
+            return; // unsupported here; this JUnit 3 test cannot report a skip
         }
 
         File output = outputDirectory.toFile();
@@ -151,7 +150,7 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
             Files.createSymbolicLink(outputDirectory.resolve("inside-link"), insideDirectory);
             Files.createSymbolicLink(insideDirectory.resolve("outside-link"), outsideDirectory);
         } catch (UnsupportedOperationException | IOException e) {
-            Assume.assumeNoException(e);
+            return; // unsupported here; this JUnit 3 test cannot report a skip
         }
 
         File output = outputDirectory.toFile();
@@ -180,23 +179,20 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         try {
             originalPermissions = EnumSet.copyOf(Files.getPosixFilePermissions(restrictedDirectory));
         } catch (UnsupportedOperationException e) {
-            Assume.assumeNoException(e);
-            return;
+            return; // unsupported here; this JUnit 3 test cannot report a skip
         }
 
         try {
             Files.createSymbolicLink(restrictedDirectory.resolve("external"), outsideDirectory);
         } catch (UnsupportedOperationException | IOException e) {
-            Assume.assumeNoException(e);
-            return;
+            return; // unsupported here; this JUnit 3 test cannot report a skip
         }
 
         try {
             Files.setPosixFilePermissions(
                     restrictedDirectory, EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
         } catch (UnsupportedOperationException e) {
-            Assume.assumeNoException(e);
-            return;
+            return; // unsupported here; this JUnit 3 test cannot report a skip
         }
 
         try {
