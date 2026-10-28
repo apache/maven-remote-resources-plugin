@@ -64,6 +64,13 @@ class SpdxLicensesTest {
     }
 
     @Test
+    void urlMustNameTheLicense() {
+        assertEquals("Apache-2.0", spdx.id(null, "http://repository.jboss.org/licenses/apache-2.0.txt"));
+        assertNull(spdx.id("BSD", "https://asm.ow2.io/license.html"));
+        assertNull(spdx.id(null, "https://jsoup.org/license"));
+    }
+
+    @Test
     void idAtEndOfUrl() {
         assertEquals("MIT", spdx.id(null, "https://spdx.org/licenses/MIT.txt"));
         assertEquals("BSD-2-Clause", spdx.id(null, "https://opensource.org/license/bsd-2-clause"));
