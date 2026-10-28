@@ -47,7 +47,7 @@ public class ITSpdxLicenseId extends AbstractIT {
         verifier.verifyErrorFreeLog();
 
         File output = new File(projectDir, "target/maven-shared-archive-resources/DEPENDENCIES");
-        String content = FileUtils.fileRead(output);
+        String content = FileUtils.fileRead(output).replace("\r\n", "\n");
 
         assertTrue(content.contains("a-name: Apache-2.0\n"), content);
         assertTrue(content.contains("b-url: Apache-2.0\n"), content);
