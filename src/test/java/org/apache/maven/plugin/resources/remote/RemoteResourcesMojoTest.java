@@ -589,12 +589,12 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
 
     public void testFilteredAppendedResource() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-appended-filtered-resource");
-        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.4"});
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.6"});
 
         setupDefaultProject(project);
 
         String path = pathOf(new DefaultArtifact(
-                "test", "test", VersionRange.createFromVersion("1.4"), null, "jar", "", new DefaultArtifactHandler()));
+                "test", "test", VersionRange.createFromVersion("1.6"), null, "jar", "", new DefaultArtifactHandler()));
         File bundleJar = new File(path);
         bundleJar.getParentFile().mkdirs();
         buildResourceBundle(
