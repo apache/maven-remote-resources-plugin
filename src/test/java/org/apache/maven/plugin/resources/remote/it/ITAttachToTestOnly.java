@@ -31,6 +31,7 @@ import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,7 +61,7 @@ public class ITAttachToTestOnly extends AbstractIT {
 
         File[] jars = new File(projectDir, "target").listFiles((d, name) -> name.endsWith(".jar"));
         assertNotNull(jars);
-        assertTrue(jars.length == 1, "expected one jar in target");
+        assertEquals(1, jars.length, "expected one jar in target");
         try (JarFile jar = new JarFile(jars[0])) {
             assertNotNull(jar.getEntry("META-INF/beans.xml"), "the main jar lost its own META-INF/beans.xml");
             try (InputStream in = jar.getInputStream(jar.getEntry("META-INF/beans.xml"))) {
