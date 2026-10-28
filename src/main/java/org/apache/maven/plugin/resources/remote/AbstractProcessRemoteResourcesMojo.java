@@ -220,7 +220,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
      * The resource bundles that will be retrieved and processed,
      * expressed with <code>groupId:artifactId:version[:type[:classifier]]</code> format.
      * Since 3.4.0, a bundle given as <code>groupId:artifactId</code> takes its version from the project's
-     * dependency on that artifact, or else from its <code>dependencyManagement</code>.
+     * dependency on that artifact, or else from its <code>dependencyManagement</code>. Such a bundle always
+     * resolves the plain jar; give the version to name a type or classifier.
      */
     @Parameter(property = "resourceBundles", required = true)
     private List<String> resourceBundles;

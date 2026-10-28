@@ -97,6 +97,8 @@ To use remote resource bundles you need to configure the plugin as follows:
 
 This will retrieve the `apache-jar-resource-bundle-1.0.jar` from the remote repositories specified in your POM, process each resource in the bundle and deposit them in your projects `${esc.d}{basedir}/target/classes` directory. 
 
+Since version 3.4.0, a bundle can be given as `groupId:artifactId` when the project declares a dependency on it or manages its version in `dependencyManagement`; the plugin then takes the version from there and resolves the plain jar. Give the full `groupId:artifactId:version:type:classifier` form for any other type or classifier.
+
 Using SPDX License IDs in Templates
 ----------------------------------
 
