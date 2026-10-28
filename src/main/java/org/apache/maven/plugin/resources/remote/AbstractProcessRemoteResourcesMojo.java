@@ -395,6 +395,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
     private VelocityEngine velocity;
 
+    private RemoteResourcesClassLoader classLoader;
+
     protected final RepositorySystem repoSystem;
 
     /**
@@ -460,7 +462,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             List<File> resourceBundleArtifacts = downloadBundles(resourceBundles);
             supplementModels = loadSupplements(supplementalModels);
 
-            ClassLoader classLoader = initalizeClassloader(resourceBundleArtifacts);
+            classLoader = initalizeClassloader(resourceBundleArtifacts);
 
             Thread.currentThread().setContextClassLoader(classLoader);
 
@@ -501,6 +503,13 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
         } finally {
             Thread.currentThread().setContextClassLoader(origLoader);
+            if (classLoader != null) {
+                try {
+                    classLoader.close();
+                } catch (IOException e) {
+                    getLog().debug("Error closing remote resources classloader: " + e.getMessage(), e);
+                }
+            }
         }
     }
 
@@ -906,7 +915,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         return bundleArtifacts;
     }
 
-    private ClassLoader initalizeClassloader(List<File> artifacts) throws MojoExecutionException {
+    private RemoteResourcesClassLoader initalizeClassloader(List<File> artifacts) throws MojoExecutionException {
         RemoteResourcesClassLoader cl = new RemoteResourcesClassLoader(null);
         try {
             for (File artifact : artifacts) {
