@@ -384,6 +384,8 @@ class RemoteResourcesMojoTest {
         File bundleJar = new File(pathOf(new DefaultArtifact(
                 "test", "test", VersionRange.createFromVersion("1.7"), null, "jar", "", new DefaultArtifactHandler())));
         bundleJar.getParentFile().mkdirs();
+        // no template in the first bundle: rendering one goes through the class loader, whose close would
+        // evict the cached jar and hide the stale read
         buildResourceBundle(bundleMojo, "default-rewrittenbundle-first", null, new String[] {"SIMPLE.txt"}, bundleJar);
         mojo.execute();
 
