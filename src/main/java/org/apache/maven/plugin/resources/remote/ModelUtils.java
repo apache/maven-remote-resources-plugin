@@ -105,16 +105,18 @@ public final class ModelUtils {
                         parentPlugin.unsetInheritanceApplied();
                     }
                 }
-
-                // very important to use the parentPlugins List, rather than parentContainer.getPlugins()
-                // since this list is a local one, and may have been modified during processing.
-                List<Plugin> results =
-                        ModelUtils.orderAfterMerge(assembledPlugins, parentPlugins, childContainer.getPlugins());
-
-                childContainer.setPlugins(results);
-
-                childContainer.flushPluginMap();
             }
+
+            // very important to use the parentPlugins List, rather than parentContainer.getPlugins()
+            // since this list is a local one, and may have been modified during processing.
+            // The ordering only depends on the final assembled plugins, so compute it once after
+            // the loop instead of on every iteration.
+            List<Plugin> results =
+                    ModelUtils.orderAfterMerge(assembledPlugins, parentPlugins, childContainer.getPlugins());
+
+            childContainer.setPlugins(results);
+
+            childContainer.flushPluginMap();
         }
     }
 

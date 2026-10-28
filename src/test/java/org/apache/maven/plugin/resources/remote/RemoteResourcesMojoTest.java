@@ -442,6 +442,28 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         assertTrue(file.exists());
     }
 
+    public void testClassLoaderIsClosedAfterExecution() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-closeclassloader");
+        final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.0"});
+
+        setupDefaultProject(project);
+
+        String path = pathOf(new DefaultArtifact(
+                "test", "test", VersionRange.createFromVersion("1.0"), null, "jar", "", new DefaultArtifactHandler()));
+
+        File file = new File(path);
+        file.getParentFile().mkdirs();
+        buildResourceBundle("default-closeclassloader-create", null, new String[] {"SIMPLE.txt"}, file);
+
+        mojo.execute();
+
+        RemoteResourcesClassLoader classLoader =
+                (RemoteResourcesClassLoader) getVariableValueFromObject(mojo, "classLoader");
+        assertNotNull(classLoader);
+        // resources from the bundle jars must no longer be served by the closed classloader
+        assertNull(classLoader.getResource("SIMPLE.txt"));
+    }
+
     public void testVelocityUTF8() throws Exception {
         final MavenProjectResourcesStub project = createTestProject("default-utf8");
         final ProcessRemoteResourcesMojo mojo = lookupProcessMojoWithSettings(project, new String[] {"test:test:1.2"});
@@ -554,6 +576,19 @@ public class RemoteResourcesMojoTest extends AbstractMojoTestCase {
         String data = FileUtils.fileRead(file);
         assertTrue(data.contains("maven"));
         assertTrue(data.contains("rules"));
+    }
+
+    public void testValidateRejectsDescriptorWithEmptySegment() throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-validate");
+        final ProcessRemoteResourcesMojo mojo =
+                lookupProcessMojoWithSettings(project, new String[] {"org.example:dep::jar"});
+
+        try {
+            mojo.validate();
+            fail("Expected validate() to reject a resource bundle descriptor with a missing version");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("must specify a groupId, artifactId"));
+        }
     }
 
     protected void buildResourceBundle(String id, String sourceEncoding, String[] resourceNames, File jarName)

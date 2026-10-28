@@ -395,6 +395,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
     private VelocityEngine velocity;
 
+    private RemoteResourcesClassLoader classLoader;
+
     protected final RepositorySystem repoSystem;
 
     /**
@@ -460,7 +462,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             List<File> resourceBundleArtifacts = downloadBundles(resourceBundles);
             supplementModels = loadSupplements(supplementalModels);
 
-            ClassLoader classLoader = initalizeClassloader(resourceBundleArtifacts);
+            classLoader = initalizeClassloader(resourceBundleArtifacts);
 
             Thread.currentThread().setContextClassLoader(classLoader);
 
@@ -501,6 +503,13 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             }
         } finally {
             Thread.currentThread().setContextClassLoader(origLoader);
+            if (classLoader != null) {
+                try {
+                    classLoader.close();
+                } catch (IOException e) {
+                    getLog().debug("Error closing remote resources classloader: " + e.getMessage(), e);
+                }
+            }
         }
     }
 
@@ -798,9 +807,17 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         for (String artifactDescriptor : resourceBundles) {
             // groupId:artifactId:version, groupId:artifactId:version:type
             // or groupId:artifactId:version:type:classifier
-            String[] s = StringUtils.split(artifactDescriptor, ":");
+            // use the same splitting as downloadBundles() so both are consistent;
+            // also reject empty groupId/artifactId/version (e.g. a missing segment)
+            String[] s = artifactDescriptor.split(":", -1);
 
-            if (s.length < 3 || s.length > 5) {
+            if (s.length < 3
+                    || s.length > 5
+                    || s[0].isEmpty()
+                    || s[1].isEmpty()
+                    || s[2].isEmpty()
+                    || (s.length >= 4 && s[3].isEmpty())
+                    || (s.length == 5 && s[4].isEmpty())) {
                 String position;
 
                 if (bundleCount == 1) {
@@ -936,7 +953,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         return bundleArtifacts;
     }
 
-    private ClassLoader initalizeClassloader(List<File> artifacts) throws MojoExecutionException {
+    private RemoteResourcesClassLoader initalizeClassloader(List<File> artifacts) throws MojoExecutionException {
         RemoteResourcesClassLoader cl = new RemoteResourcesClassLoader(null);
         try {
             for (File artifact : artifacts) {
