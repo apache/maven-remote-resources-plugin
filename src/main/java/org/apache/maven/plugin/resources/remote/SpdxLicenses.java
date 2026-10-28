@@ -61,6 +61,8 @@ public class SpdxLicenses {
 
     private static final Pattern LICENSE_REF = Pattern.compile("LicenseRef-[A-Za-z0-9.-]+");
 
+    private static final Pattern ID_SHAPE = Pattern.compile("[A-Za-z0-9][A-Za-z0-9.+-]*");
+
     private static final Pattern ID_URL =
             Pattern.compile("(?:opensource\\.org/licenses?|spdx\\.org/licenses)/([^/?]+)");
 
@@ -173,7 +175,7 @@ public class SpdxLicenses {
     public String id(String name, String url) {
         for (LicenseMapping mapping : mappings) {
             if (matches(mapping.getName(), name, true) && matches(mapping.getUrl(), url, false)) {
-                return mapping.getSpdxId().trim();
+                return canonicalMappingId(mapping.getSpdxId());
             }
         }
         String byName = isBlank(name) ? null : idOfName(name.trim());
@@ -187,7 +189,7 @@ public class SpdxLicenses {
     private String idOfName(String name) {
         String id = knownId(name);
         if (id == null) {
-            id = parseExpression(name);
+            id = parseExpression(name, false, true);
         }
         if (id == null) {
             id = names.get(normaliseName(name));
@@ -206,13 +208,37 @@ public class SpdxLicenses {
         return id;
     }
 
+    /**
+     * Returns the SPDX ID or expression a {@link LicenseMapping} declares, with known IDs in their SPDX spelling,
+     * or {@code null} unless it is a well-formed expression. IDs the built-in table does not know are accepted
+     * as declared, since a mapping exists to name them.
+     */
+    String canonicalMappingId(String spdxId) {
+        if (isBlank(spdxId)) {
+            return null;
+        }
+        String id = knownId(spdxId.trim(), true);
+        return id != null ? id : parseExpression(spdxId, true, false);
+    }
+
     /** Returns the ID in its SPDX spelling, a <code>LicenseRef-</code> ID as declared, or {@code null}. */
     private String knownId(String token) {
+        return knownId(token, false);
+    }
+
+    private String knownId(String token, boolean anyIdShape) {
         String id = ids.get(token.toLowerCase(Locale.ROOT));
         if (id == null && LICENSE_REF.matcher(token).matches()) {
             id = token;
         }
+        if (id == null && anyIdShape && ID_SHAPE.matcher(token).matches() && !isOperator(token)) {
+            id = token;
+        }
         return id;
+    }
+
+    private static boolean isOperator(String token) {
+        return token.equalsIgnoreCase("AND") || token.equalsIgnoreCase("OR") || token.equalsIgnoreCase("WITH");
     }
 
     /**
@@ -220,15 +246,16 @@ public class SpdxLicenses {
      * SPDX license expression that combines known IDs with <code>AND</code>, <code>OR</code> or
      * <code>WITH</code>.
      */
-    private String parseExpression(String declared) {
+    private String parseExpression(String declared, boolean anyIdShape, boolean needsOperator) {
         List<String> tokens = new ArrayList<>();
         Matcher m = EXPRESSION_TOKEN.matcher(declared);
         while (m.find()) {
             tokens.add(m.group());
         }
-        ExpressionParser parser = new ExpressionParser(tokens);
+        ExpressionParser parser = new ExpressionParser(tokens, anyIdShape);
         String result = parser.expression();
-        return result != null && parser.next == tokens.size() && parser.operators > 0 ? result : null;
+        boolean complete = result != null && parser.next == tokens.size();
+        return complete && (parser.operators > 0 || !needsOperator) ? result : null;
     }
 
     /** Recursive descent over <code>term ((AND | OR) term)*</code>, where a term is an ID, optionally
@@ -240,8 +267,11 @@ public class SpdxLicenses {
 
         private int operators;
 
-        ExpressionParser(List<String> tokens) {
+        private final boolean anyIdShape;
+
+        ExpressionParser(List<String> tokens, boolean anyIdShape) {
             this.tokens = tokens;
+            this.anyIdShape = anyIdShape;
         }
 
         String expression() {
@@ -280,14 +310,14 @@ public class SpdxLicenses {
                 }
                 return "(" + inner + ")";
             }
-            String id = knownId(token);
+            String id = knownId(token, anyIdShape);
             if (id == null) {
                 return null;
             }
             if (next < tokens.size() && tokens.get(next).equalsIgnoreCase("WITH")) {
                 next++;
                 operators++;
-                String exception = next < tokens.size() ? knownId(tokens.get(next++)) : null;
+                String exception = next < tokens.size() ? knownId(tokens.get(next++), anyIdShape) : null;
                 return exception == null ? null : id + " WITH " + exception;
             }
             return id;

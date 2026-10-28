@@ -155,6 +155,16 @@ class SpdxLicensesTest {
         assertEquals("MIT", mapped.id("MIT", null));
     }
 
+    @Test
+    void mappingIds() {
+        assertEquals("Zlib", spdx.canonicalMappingId("Zlib"));
+        assertEquals("Apache-2.0 OR MIT", spdx.canonicalMappingId(" apache-2.0 or mit "));
+        assertEquals("LicenseRef-Widget", spdx.canonicalMappingId("LicenseRef-Widget"));
+        assertNull(spdx.canonicalMappingId("Apache License 2.0"));
+        assertNull(spdx.canonicalMappingId("OR"));
+        assertNull(spdx.canonicalMappingId(""));
+    }
+
     private static LicenseMapping mapping(String spdxId, String name, String url) {
         LicenseMapping mapping = new LicenseMapping();
         mapping.setSpdxId(spdxId);
