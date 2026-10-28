@@ -32,6 +32,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -957,6 +961,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         String velocityResource = null;
         try {
+            File canonicalOutputDirectory = outputDirectory.getCanonicalFile();
 
             for (Map.Entry<String, RemoteResourcesBundle> entry : remoteResources) {
                 String bundleResource = entry.getKey();
@@ -973,7 +978,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 // Don't overwrite resource that are already being provided.
 
-                File outputFile = new File(outputDirectory, projectResource);
+                File outputFile = resolveOutputFile(outputDirectory, projectResource, canonicalOutputDirectory);
 
                 FileUtils.mkdir(outputFile.getParentFile().getAbsolutePath());
 
@@ -1028,6 +1033,50 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             throw new MojoExecutionException("Error reading remote resource", ioe);
         } catch (VelocityException e) {
             throw new MojoExecutionException("Error rendering Velocity resource '" + velocityResource + "'", e);
+        }
+    }
+
+    static File resolveOutputFile(File outputDirectory, String resourceName, File canonicalOutputDirectory)
+            throws IOException, MojoExecutionException {
+        if (new File(resourceName).isAbsolute()) {
+            throw new MojoExecutionException("Absolute remote resource paths are not allowed: " + resourceName);
+        }
+        Path canonicalOutputPath = resolvePathThroughExistingAncestors(canonicalOutputDirectory.toPath());
+        Path outputPath =
+                resolvePathThroughExistingAncestors(outputDirectory.toPath().resolve(resourceName));
+        if (outputPath.equals(canonicalOutputPath) || !outputPath.startsWith(canonicalOutputPath)) {
+            throw new MojoExecutionException(
+                    "Remote resource path must remain within the output directory: " + resourceName);
+        }
+        return outputPath.toFile();
+    }
+
+    private static Path resolvePathThroughExistingAncestors(Path path) throws IOException {
+        Path normalizedPath = path.toAbsolutePath().normalize();
+        Path existingAncestor = normalizedPath;
+        List<Path> missingPathElements = new ArrayList<>();
+        while (existingAncestor != null && !existsWithoutFollowingLinks(existingAncestor)) {
+            missingPathElements.add(existingAncestor.getFileName());
+            existingAncestor = existingAncestor.getParent();
+        }
+
+        if (existingAncestor == null) {
+            return normalizedPath;
+        }
+
+        Path resolvedPath = existingAncestor.toRealPath();
+        for (int i = missingPathElements.size() - 1; i >= 0; i--) {
+            resolvedPath = resolvedPath.resolve(missingPathElements.get(i));
+        }
+        return resolvedPath.normalize();
+    }
+
+    private static boolean existsWithoutFollowingLinks(Path path) throws IOException {
+        try {
+            Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+            return true;
+        } catch (NoSuchFileException e) {
+            return false;
         }
     }
 
