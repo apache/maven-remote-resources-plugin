@@ -67,5 +67,13 @@ public class ITSpdxLicenseId extends AbstractIT {
         assertTrue(content.contains("Unresolved: d-unknown\n"), content);
         assertEquals(1, content.split("License text: Apache-2.0\n", -1).length - 1, content);
         assertTrue(content.contains("License text: Classpath-exception-2.0\n"), content);
+
+        assertTrue(
+                content.contains("Org Example Org:\n"
+                        + "  License (Apache-2.0 OR EPL-2.0): c-expression\n"
+                        + "  License Apache-2.0: a-name\n"),
+                content);
+        assertTrue(content.contains("Org an unknown organization:\n  License Apache-2.0: b-url\n"), content);
+        assertTrue(content.contains("  Unresolved d-unknown\n"), content);
     }
 }
