@@ -1219,6 +1219,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     /**
      * Opens a bundle URL without the JVM-wide <code>jar:</code> connection cache, so the bundle jar is closed
      * with the stream: a cached jar stays open on Windows and is read stale after it is rewritten.
+     *
+     * @see <a href="https://bugs.openjdk.org/browse/JDK-8239054">JDK-8239054</a>
+     * @see <a href="https://bugs.openjdk.org/browse/JDK-6947916">JDK-6947916</a>
      */
     private static InputStream openUncached(URL url) throws IOException {
         URLConnection connection = url.openConnection();
