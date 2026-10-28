@@ -33,6 +33,7 @@ under the License.
     <module>c-expression</module>
     <module>d-unknown</module>
     <module>e-dual</module>
+    <module>f-mapped</module>
   </modules>
 
   <distributionManagement>

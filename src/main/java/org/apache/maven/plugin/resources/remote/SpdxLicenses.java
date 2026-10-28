@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -41,8 +42,8 @@ import org.apache.maven.project.MavenProject;
  * Resolves a license declared in a POM to an <a href="https://spdx.org/licenses/">SPDX license ID</a>.
  * Available in templates as <code>$spdx</code>, for example <code>$!spdx.id($license)</code>.
  * <p>
- * The declared name is tried first: as a known SPDX ID, as an SPDX license expression made of known IDs,
- * and as a known alias. The declared URL is tried next: as a known alias, and as an <code>opensource.org</code>
+ * Configured {@link LicenseMapping}s are tried first. The declared name is tried next: as a known SPDX ID, as an SPDX license expression made of known IDs,
+ * and as a known alias. The declared URL is tried last: as a known alias, and as an <code>opensource.org</code>
  * or <code>spdx.org</code> URL that ends with a known ID. When the name and the URL resolve to different IDs,
  * nothing matches. The known IDs and aliases cover the licenses that POMs declare most often; a deprecated
  * SPDX ID such as <code>GPL-2.0</code> is returned as declared.
@@ -72,7 +73,14 @@ public class SpdxLicenses {
     /** Normalised URL to ID or expression. */
     private final Map<String, String> urls = new HashMap<>();
 
+    private final List<LicenseMapping> mappings;
+
     SpdxLicenses() {
+        this(Collections.emptyList());
+    }
+
+    SpdxLicenses(List<LicenseMapping> mappings) {
+        this.mappings = new ArrayList<>(mappings);
         InputStream in = SpdxLicenses.class.getResourceAsStream(RESOURCE);
         if (in == null) {
             throw new IllegalStateException("Missing resource " + RESOURCE);
@@ -163,6 +171,11 @@ public class SpdxLicenses {
      * @return the SPDX ID or expression, or {@code null} when nothing matches
      */
     public String id(String name, String url) {
+        for (LicenseMapping mapping : mappings) {
+            if (matches(mapping.getName(), name, true) && matches(mapping.getUrl(), url, false)) {
+                return mapping.getSpdxId().trim();
+            }
+        }
         String byName = isBlank(name) ? null : idOfName(name.trim());
         String byUrl = isBlank(url) ? null : idOfUrl(normaliseUrl(url));
         if (byName == null) {
@@ -281,7 +294,19 @@ public class SpdxLicenses {
         }
     }
 
-    private static boolean isBlank(String s) {
+    private static boolean matches(String expected, String declared, boolean isName) {
+        if (isBlank(expected)) {
+            return true;
+        }
+        if (isBlank(declared)) {
+            return false;
+        }
+        return isName
+                ? normaliseName(expected).equals(normaliseName(declared))
+                : normaliseUrl(expected).equals(normaliseUrl(declared));
+    }
+
+    static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
     }
 

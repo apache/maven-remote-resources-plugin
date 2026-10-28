@@ -192,6 +192,26 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     private List<String> supplementalModelArtifacts;
 
     /**
+     * Maps licenses that <code>$spdx</code> does not resolve to SPDX license IDs or expressions. A mapping
+     * applies to a declared license when each of its <code>name</code> and <code>url</code> that is set matches,
+     * ignoring case, punctuation, the URL scheme, <code>www.</code> and a trailing <code>.txt</code> or
+     * <code>.html</code>. Mappings are tried in order, before the built-in aliases.
+     * <pre>
+     * &lt;licenseMappings&gt;
+     *   &lt;licenseMapping&gt;
+     *     &lt;spdxId&gt;BSD-3-Clause&lt;/spdxId&gt;
+     *     &lt;name&gt;BSD&lt;/name&gt;
+     *     &lt;url&gt;https://example.org/widget/LICENSE&lt;/url&gt;
+     *   &lt;/licenseMapping&gt;
+     * &lt;/licenseMappings&gt;
+     * </pre>
+     *
+     * @since 3.4.0
+     */
+    @Parameter
+    private List<LicenseMapping> licenseMappings;
+
+    /**
      * The resource bundles that will be retrieved and processed,
      * expressed with <code>groupId:artifactId:version[:type[:classifier]]</code> format.
      */
@@ -725,6 +745,16 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     }
 
     protected void validate() throws MojoExecutionException {
+        if (licenseMappings != null) {
+            for (LicenseMapping mapping : licenseMappings) {
+                if (SpdxLicenses.isBlank(mapping.getSpdxId())
+                        || (SpdxLicenses.isBlank(mapping.getName()) && SpdxLicenses.isBlank(mapping.getUrl()))) {
+                    throw new MojoExecutionException(
+                            "Each licenseMapping needs an spdxId and a name, a url or both: " + mapping);
+                }
+            }
+        }
+
         int bundleCount = 1;
 
         for (String artifactDescriptor : resourceBundles) {
@@ -809,7 +839,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         context.put("project", project);
         context.put("presentYear", year);
         context.put("locator", locator);
-        context.put("spdx", new SpdxLicenses());
+        context.put("spdx", new SpdxLicenses(licenseMappings == null ? Collections.emptyList() : licenseMappings));
 
         if (inceptionYear.equals(year)) {
             context.put("projectTimespan", year);
