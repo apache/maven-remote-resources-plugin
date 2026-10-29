@@ -547,6 +547,21 @@ public class ModelInheritanceAssembler {
     // TODO This should eventually be migrated to DefaultPathTranslator.
     protected String appendPath(String parentPath, String childPath, String pathAdjustment, boolean appendPaths) {
         String uncleanPath = parentPath;
+        int protocolIdx = uncleanPath.indexOf("://");
+        boolean scpLikeScmUrl = protocolIdx < 0 && isScpLikeScmUrl(uncleanPath);
+        String suffix = "";
+
+        if (protocolIdx > -1 || scpLikeScmUrl) {
+            int suffixStart = protocolIdx > -1 ? protocolIdx + 3 : 0;
+            int queryIdx = uncleanPath.indexOf('?', suffixStart);
+            int fragmentIdx = uncleanPath.indexOf('#', suffixStart);
+            int suffixIdx = queryIdx < 0 ? fragmentIdx : fragmentIdx < 0 ? queryIdx : Math.min(queryIdx, fragmentIdx);
+
+            if (suffixIdx > -1) {
+                suffix = uncleanPath.substring(suffixIdx);
+                uncleanPath = uncleanPath.substring(0, suffixIdx);
+            }
+        }
 
         if (appendPaths) {
             if (pathAdjustment != null) {
@@ -558,16 +573,32 @@ public class ModelInheritanceAssembler {
             }
         }
 
-        String cleanedPath = "";
+        if (scpLikeScmUrl) {
+            return uncleanPath + suffix;
+        }
 
-        int protocolIdx = uncleanPath.indexOf("://");
+        String cleanedPath = "";
 
         if (protocolIdx > -1) {
             cleanedPath = uncleanPath.substring(0, protocolIdx + 3);
             uncleanPath = uncleanPath.substring(protocolIdx + 3);
         }
 
-        return cleanedPath + resolvePath(uncleanPath);
+        return cleanedPath + resolvePath(uncleanPath) + suffix;
+    }
+
+    private static boolean isScpLikeScmUrl(String path) {
+        if (!path.startsWith("scm:")) {
+            return false;
+        }
+
+        int providerSeparator = path.indexOf(':', "scm:".length());
+        int hostSeparator = providerSeparator < 0 ? -1 : path.indexOf(':', providerSeparator + 1);
+        if (hostSeparator < 0) {
+            return false;
+        }
+
+        return hostSeparator > providerSeparator + 1;
     }
 
     /**

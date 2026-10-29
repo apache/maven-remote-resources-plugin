@@ -87,4 +87,32 @@ public class ModelInheritanceAssemblerTest {
     public void appendPathNormalizesUrlWithPort() {
         assertEquals("http://host:8080/x", assembler.appendPath("http://host:8080/repo/../x", null, null, false));
     }
+
+    @Test
+    public void appendPathNormalizesUrlPathWithoutChangingQueryString() {
+        assertEquals(
+                "http://host/project?p=a/../b",
+                assembler.appendPath("http://host/repo/../project?p=a/../b", null, null, false));
+    }
+
+    @Test
+    public void appendPathAddsChildBeforeQueryString() {
+        assertEquals(
+                "http://host/repo/child?ref=release",
+                assembler.appendPath("http://host/repo?ref=release", "child", null, true));
+    }
+
+    @Test
+    public void appendPathPreservesFragmentWhenNormalizingUrlPath() {
+        assertEquals(
+                "http://host/project#section/../heading",
+                assembler.appendPath("http://host/repo/../project#section/../heading", null, null, false));
+    }
+
+    @Test
+    public void appendPathPreservesScpLikeScmUrl() {
+        assertEquals(
+                "scm:git:git@github.com:org/../repo.git",
+                assembler.appendPath("scm:git:git@github.com:org/../repo.git", null, null, false));
+    }
 }
