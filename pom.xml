@@ -64,7 +64,6 @@ under the License.
   </distributionManagement>
 
   <properties>
-    <javaVersion>8</javaVersion>
     <mavenVersion>3.9.16</mavenVersion>
     <resolverVersion>1.9.27</resolverVersion>
     <project.build.outputTimestamp>2024-12-30T10:45:13Z</project.build.outputTimestamp>
