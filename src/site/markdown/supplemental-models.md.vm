@@ -56,7 +56,7 @@ For example, imagine that your project's POM has declared the following two depe
 
 Now imagine that your project needs to include a file in its distribution that lists organization and project URLs for each dependency, in a format like this:
 
-```unknown
+```text
 From: Apache Software Foundation (http://www.apache.org/)
 
  - Commons FOO (http://commons.apache.org/foo/) org.apache.commons.foo:foo:1
@@ -166,7 +166,7 @@ To make the supplemental models above reusable using this mechanism, we first pu
 
 Note that this is just a simple, unadorned JAR artifact. We then move the above POM and `supplemental-models.xml` file into a separate project directory structure:
 
-```unknown
+```text
 |-- pom.xml
 `-- src
     `-- main
