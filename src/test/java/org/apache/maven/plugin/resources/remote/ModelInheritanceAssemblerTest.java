@@ -115,4 +115,37 @@ public class ModelInheritanceAssemblerTest {
                 "scm:git:git@github.com:org/../repo.git",
                 assembler.appendPath("scm:git:git@github.com:org/../repo.git", null, null, false));
     }
+
+    @Test
+    public void appendPathDoesNotTreatUrlAuthorityAsAPathSegment() {
+        assertEquals(
+                "https://host/../child?ref=a/../b#section",
+                assembler.appendPath("https://host/../child?ref=a/../b#section", null, null, false));
+    }
+
+    @Test
+    public void appendPathPreservesRawUrlComponents() {
+        assertEquals(
+                "https://user%40name@[::1]:8080/repo%2Fname/child?ref=a%2Fb#part%20one",
+                assembler.appendPath(
+                        "https://user%40name@[::1]:8080/repo%2Fname?ref=a%2Fb#part%20one", "child", null, true));
+    }
+
+    @Test
+    public void appendPathKeepsScmAndMalformedUrlCompatibility() {
+        assertEquals(
+                "scm:git:git@host:repo.git/child",
+                assembler.appendPath("scm:git:git@host:repo.git", "child", null, true));
+        assertEquals(
+                "http://host/repo with spaces/child?ref=x",
+                assembler.appendPath("http://host/repo with spaces?ref=x", "child", null, true));
+    }
+
+    @Test
+    public void appendPathHandlesEmptyUrlPathAndFileUrls() {
+        assertEquals("https://host/child?ref=main", assembler.appendPath("https://host?ref=main", "child", null, true));
+        assertEquals(
+                "file:///repo/child?ignored#part",
+                assembler.appendPath("file:///repo/./sub/..?ignored#part", "child", null, true));
+    }
 }
