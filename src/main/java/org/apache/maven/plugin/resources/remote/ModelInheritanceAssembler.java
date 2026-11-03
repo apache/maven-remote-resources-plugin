@@ -18,6 +18,8 @@
  */
 package org.apache.maven.plugin.resources.remote;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -546,7 +548,35 @@ public class ModelInheritanceAssembler {
 
     // TODO This should eventually be migrated to DefaultPathTranslator.
     protected String appendPath(String parentPath, String childPath, String pathAdjustment, boolean appendPaths) {
+        // SCM connection strings are not necessarily URIs (for example scp-style Git paths).
+        // Keep their existing handling, including the fallback for malformed dependency metadata.
+        if (!parentPath.startsWith("scm:") && parentPath.contains("://")) {
+            try {
+                URI uri = new URI(parentPath);
+                if (uri.isAbsolute() && !uri.isOpaque()) {
+                    return appendUriPath(uri, childPath, pathAdjustment, appendPaths);
+                }
+            } catch (URISyntaxException ignored) {
+                // Odd URLs in dependency POMs must not fail the build.
+            }
+        }
+
         String uncleanPath = parentPath;
+        int protocolIdx = uncleanPath.indexOf("://");
+        boolean scpLikeScmUrl = protocolIdx < 0 && isScpLikeScmUrl(uncleanPath);
+        String suffix = "";
+
+        if (protocolIdx > -1 || scpLikeScmUrl) {
+            int suffixStart = protocolIdx > -1 ? protocolIdx + 3 : 0;
+            int queryIdx = uncleanPath.indexOf('?', suffixStart);
+            int fragmentIdx = uncleanPath.indexOf('#', suffixStart);
+            int suffixIdx = queryIdx < 0 ? fragmentIdx : fragmentIdx < 0 ? queryIdx : Math.min(queryIdx, fragmentIdx);
+
+            if (suffixIdx > -1) {
+                suffix = uncleanPath.substring(suffixIdx);
+                uncleanPath = uncleanPath.substring(0, suffixIdx);
+            }
+        }
 
         if (appendPaths) {
             if (pathAdjustment != null) {
@@ -558,16 +588,50 @@ public class ModelInheritanceAssembler {
             }
         }
 
-        String cleanedPath = "";
+        if (scpLikeScmUrl) {
+            return uncleanPath + suffix;
+        }
 
-        int protocolIdx = uncleanPath.indexOf("://");
+        String cleanedPath = "";
 
         if (protocolIdx > -1) {
             cleanedPath = uncleanPath.substring(0, protocolIdx + 3);
             uncleanPath = uncleanPath.substring(protocolIdx + 3);
         }
 
-        return cleanedPath + resolvePath(uncleanPath);
+        return cleanedPath + resolvePath(uncleanPath) + suffix;
+    }
+
+    private static String appendUriPath(URI uri, String childPath, String pathAdjustment, boolean appendPaths) {
+        String path = uri.getRawPath();
+        String suffix = (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery())
+                + (uri.getRawFragment() == null ? "" : "#" + uri.getRawFragment());
+        String original = uri.toString();
+        // Retain the raw prefix and suffix so percent escapes are not decoded or escaped twice.
+        String prefix = original.substring(0, original.length() - path.length() - suffix.length());
+        if (appendPaths) {
+            if (pathAdjustment != null) {
+                path += "/" + pathAdjustment;
+            }
+            if (childPath != null) {
+                path += "/" + childPath;
+            }
+        }
+        return prefix + resolvePath(path) + suffix;
+    }
+
+    private static boolean isScpLikeScmUrl(String path) {
+        if (!path.startsWith("scm:")) {
+            return false;
+        }
+
+        int providerSeparator = path.indexOf(':', "scm:".length());
+        int hostSeparator = providerSeparator < 0 ? -1 : path.indexOf(':', providerSeparator + 1);
+        if (hostSeparator < 0) {
+            return false;
+        }
+
+        return hostSeparator > providerSeparator + 1;
     }
 
     /**
