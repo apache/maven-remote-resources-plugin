@@ -23,6 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Comparator;
 import java.util.List;
 
@@ -33,8 +34,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
-import org.codehaus.plexus.util.FileUtils;
-import org.codehaus.plexus.util.StringUtils;
 
 /**
  * Bundle up resources that should be considered as a remote-resource,
@@ -135,7 +134,7 @@ public class BundleRemoteResourcesMojo extends AbstractMojo {
         String[] includedFiles = scanner.getIncludedFiles();
 
         for (String resource : includedFiles) {
-            remoteResourcesBundle.addRemoteResource(StringUtils.replace(resource, '\\', '/'));
+            remoteResourcesBundle.addRemoteResource(resource.replace('\\', '/'));
         }
 
         int n = remoteResourcesBundle.getRemoteResources().size();
@@ -145,7 +144,11 @@ public class BundleRemoteResourcesMojo extends AbstractMojo {
 
         File f = new File(outputDirectory, RESOURCES_MANIFEST);
 
-        FileUtils.mkdir(f.getParentFile().getAbsolutePath());
+        try {
+            Files.createDirectories(f.getParentFile().toPath());
+        } catch (IOException e) {
+            throw new MojoExecutionException("Error creating remote resources manifest.", e);
+        }
 
         try (Writer writer = new FileWriter(f)) {
             w.write(writer, remoteResourcesBundle);

@@ -97,9 +97,6 @@ import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.codehaus.plexus.resource.ResourceManager;
 import org.codehaus.plexus.resource.loader.FileResourceLoader;
-import org.codehaus.plexus.util.FileUtils;
-import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.io.CachingOutputStream;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
@@ -507,8 +504,9 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
                 // ----------------------------------------------------------------------------
                 try {
                     File dotFile = new File(project.getBuild().getDirectory(), ".plxarc");
-                    FileUtils.mkdir(dotFile.getParentFile().getAbsolutePath());
-                    FileUtils.fileWrite(dotFile.getAbsolutePath(), outputDirectory.getName());
+                    Files.createDirectories(dotFile.getParentFile().toPath());
+                    // platform default charset, as the plexus-utils FileUtils.fileWrite call used
+                    Files.write(dotFile.toPath(), outputDirectory.getName().getBytes(Charset.defaultCharset()));
                 } catch (IOException e) {
                     throw new MojoExecutionException("Error creating dot file for archiving instructions.", e);
                 }
@@ -674,7 +672,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         for (MavenProject p : projects) {
             if (p.getOrganization() != null
-                    && StringUtils.isNotEmpty(p.getOrganization().getName())) {
+                    && p.getOrganization().getName() != null
+                    && !p.getOrganization().getName().isEmpty()) {
                 List<MavenProject> sortedProjects = organizations.get(p.getOrganization());
                 if (sortedProjects == null) {
                     sortedProjects = new ArrayList<>();
@@ -1114,7 +1113,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 File outputFile = resolveOutputFile(outputDirectory, projectResource, canonicalOutputDirectory);
 
-                FileUtils.mkdir(outputFile.getParentFile().getAbsolutePath());
+                Files.createDirectories(outputFile.getParentFile().toPath());
 
                 // resource exists in project resources
                 if (copyResourceIfExists(outputFile, projectResource, context, bundle.getSourceEncoding())) {
@@ -1149,9 +1148,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
                 if (appendedResourceFile.exists()) {
                     getLog().info("Copying appended resource: " + projectResource);
-                    try (InputStream in = Files.newInputStream(appendedResourceFile.toPath());
-                            OutputStream out = new FileOutputStream(outputFile, true)) {
-                        IOUtil.copy(in, out);
+                    try (OutputStream out = new FileOutputStream(outputFile, true)) {
+                        Files.copy(appendedResourceFile.toPath(), out);
                     }
 
                 } else if (appendedVmResourceFile.exists()) {
