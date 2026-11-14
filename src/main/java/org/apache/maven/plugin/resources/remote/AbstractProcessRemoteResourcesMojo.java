@@ -53,6 +53,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.archiver.MavenArchiver;
@@ -96,6 +98,7 @@ import org.apache.velocity.exception.ResourceNotFoundException;
 import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.codehaus.plexus.resource.ResourceManager;
+import org.codehaus.plexus.resource.loader.FileResourceCreationException;
 import org.codehaus.plexus.resource.loader.FileResourceLoader;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
@@ -197,6 +200,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
      */
     @Parameter
     private List<String> supplementalModelArtifacts;
+
+    private List<File> supplementalModelArtifactJars = Collections.emptyList();
 
     /**
      * Maps licenses that <code>$spdx</code> does not resolve to SPDX license IDs or expressions. A mapping
@@ -526,21 +531,19 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
     }
 
     private void configureLocator() throws MojoExecutionException {
+        supplementalModelArtifactJars = Collections.emptyList();
         if (supplementalModelArtifacts != null && !supplementalModelArtifacts.isEmpty()) {
             List<File> artifacts = downloadBundles(supplementalModelArtifacts);
+            List<File> jarArtifacts = new ArrayList<>();
 
             for (File artifact : artifacts) {
                 if (artifact.isDirectory()) {
                     locator.addSearchPath(FileResourceLoader.ID, artifact.getAbsolutePath());
                 } else {
-                    try {
-                        locator.addSearchPath(
-                                "jar", "jar:" + artifact.toURI().toURL().toExternalForm());
-                    } catch (MalformedURLException e) {
-                        throw new MojoExecutionException("Could not use jar " + artifact.getAbsolutePath(), e);
-                    }
+                    jarArtifacts.add(artifact);
                 }
             }
+            supplementalModelArtifactJars = jarArtifacts;
         }
 
         File projectFile = project.getFile();
@@ -1290,20 +1293,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         for (String set : models) {
             getLog().debug("Preparing ruleset: " + set);
             try {
-                File f = locator.getResourceAsFile(set, getLocationTemp(set));
-
-                if (null == f || !f.exists()) {
-                    throw new MojoExecutionException("Cold not resolve " + set);
-                }
-                if (!f.canRead()) {
-                    throw new MojoExecutionException("Supplemental data models won't be loaded. " + "File "
-                            + f.getAbsolutePath() + " cannot be read, check permissions on the file.");
-                }
-
-                getLog().debug("Loading supplemental models from " + f.getAbsolutePath());
-
-                SupplementalDataModelXpp3Reader reader = new SupplementalDataModelXpp3Reader();
-                SupplementalDataModel supplementalModel = reader.read(new FileReader(f));
+                SupplementalDataModel supplementalModel = loadSupplementalModel(set);
                 supplements.addAll(supplementalModel.getSupplement());
             } catch (Exception e) {
                 String msg = "Error loading supplemental data models: " + e.getMessage();
@@ -1323,6 +1313,45 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
         }
 
         return supplementMap;
+    }
+
+    private SupplementalDataModel loadSupplementalModel(String name)
+            throws IOException, XmlPullParserException, FileResourceCreationException, MojoExecutionException {
+        File file = null;
+        try {
+            file = locator.getResourceAsFile(name, getLocationTemp(name));
+        } catch (org.codehaus.plexus.resource.loader.ResourceNotFoundException ignored) {
+            // Search the supplemental model artifacts if the other resource paths do not contain this model.
+        }
+
+        if (file != null) {
+            if (!file.exists()) {
+                throw new MojoExecutionException("Cold not resolve " + name);
+            }
+            if (!file.canRead()) {
+                throw new MojoExecutionException("Supplemental data models won't be loaded. " + "File "
+                        + file.getAbsolutePath() + " cannot be read, check permissions on the file.");
+            }
+
+            getLog().debug("Loading supplemental models from " + file.getAbsolutePath());
+            try (Reader reader = new FileReader(file)) {
+                return new SupplementalDataModelXpp3Reader().read(reader);
+            }
+        }
+
+        String entryName = name.startsWith("/") ? name.substring(1) : name;
+        for (File artifact : supplementalModelArtifactJars) {
+            try (JarFile jar = new JarFile(artifact)) {
+                JarEntry entry = jar.getJarEntry(entryName);
+                if (entry != null) {
+                    getLog().debug("Loading supplemental models from " + artifact.getAbsolutePath() + "!/" + entryName);
+                    try (InputStream in = jar.getInputStream(entry)) {
+                        return new SupplementalDataModelXpp3Reader().read(in);
+                    }
+                }
+            }
+        }
+        throw new MojoExecutionException("Cold not resolve " + name);
     }
 
     /**
