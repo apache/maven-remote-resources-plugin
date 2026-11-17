@@ -215,22 +215,22 @@ public class ModelInheritanceAssembler {
         }
 
         // developers
-        if (child.getDevelopers().size() == 0) {
+        if (child.getDevelopers().isEmpty()) {
             child.setDevelopers(parent.getDevelopers());
         }
 
         // licenses
-        if (child.getLicenses().size() == 0) {
+        if (child.getLicenses().isEmpty()) {
             child.setLicenses(parent.getLicenses());
         }
 
         // developers
-        if (child.getContributors().size() == 0) {
+        if (child.getContributors().isEmpty()) {
             child.setContributors(parent.getContributors());
         }
 
         // mailingLists
-        if (child.getMailingLists().size() == 0) {
+        if (child.getMailingLists().isEmpty()) {
             child.setMailingLists(parent.getMailingLists());
         }
 

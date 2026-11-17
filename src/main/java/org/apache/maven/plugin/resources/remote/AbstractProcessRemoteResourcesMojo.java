@@ -447,7 +447,7 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
 
         if (resolveScopes == null) {
             resolveScopes = new String[] {
-                (this.includeScope == null || this.includeScope.isEmpty()) ? JavaScopes.TEST : this.includeScope
+                this.includeScope == null || this.includeScope.isEmpty() ? JavaScopes.TEST : this.includeScope
             };
         }
 
@@ -1089,8 +1089,8 @@ public abstract class AbstractProcessRemoteResourcesMojo extends AbstractMojo {
             throw new MojoExecutionException("Error parsing remote resource bundle descriptor.", xppe);
         }
 
-        getLog().info("Copying " + resourceCount + " resource" + ((resourceCount > 1) ? "s" : "") + " from "
-                + bundleCount + " bundle" + ((bundleCount > 1) ? "s" : "") + ".");
+        getLog().info("Copying " + resourceCount + " resource" + (resourceCount > 1 ? "s" : "") + " from " + bundleCount
+                + " bundle" + (bundleCount > 1 ? "s" : "") + ".");
 
         String velocityResource = null;
         try {

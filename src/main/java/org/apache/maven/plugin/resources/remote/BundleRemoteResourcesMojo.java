@@ -138,7 +138,7 @@ public class BundleRemoteResourcesMojo extends AbstractMojo {
         }
 
         int n = remoteResourcesBundle.getRemoteResources().size();
-        getLog().info("Writing " + RESOURCES_MANIFEST + " descriptor with " + n + " entr" + ((n > 1) ? "ies" : "y"));
+        getLog().info("Writing " + RESOURCES_MANIFEST + " descriptor with " + n + " entr" + (n > 1 ? "ies" : "y"));
 
         RemoteResourcesBundleXpp3Writer w = new RemoteResourcesBundleXpp3Writer();
 
