@@ -19,8 +19,6 @@
 package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 
 import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
@@ -31,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ITFilterLocalOverride extends AbstractIT {
     @Test
-    public void test() throws IOException, URISyntaxException {
+    public void test() throws Exception {
         File dir = TestUtils.getTestDir("filter-local-override");
         MavenRunner verifier = TestUtils.newVerifier(dir);
 
