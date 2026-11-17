@@ -19,9 +19,7 @@
 package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.jar.JarFile;
 
@@ -41,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class ITAttachToTestOnly extends AbstractIT {
     @Test
-    public void test() throws IOException, URISyntaxException {
+    public void test() throws Exception {
         File dir = TestUtils.getTestDir("attach-to-test-only");
 
         MavenRunner verifier = TestUtils.newVerifier(new File(dir, "bundle"));

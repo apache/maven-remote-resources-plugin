@@ -19,8 +19,6 @@
 package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 
 import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
@@ -37,7 +35,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 public class ITRunOnlyAtExecutionRoot extends AbstractIT {
     @Test
-    public void test() throws IOException, URISyntaxException {
+    public void test() throws Exception {
         // Workaround for Windows + Maven-3.5.x/3.6.0 + Jenkins due to MNG-6261
         assumeTrue(!(System.getenv("JENKINS_HOME") != null
                 && Os.isFamily(Os.FAMILY_WINDOWS)
