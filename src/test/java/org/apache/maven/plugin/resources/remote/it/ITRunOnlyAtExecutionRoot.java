@@ -19,10 +19,11 @@
 package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.Os;
 import org.junit.jupiter.api.Test;
 
@@ -75,7 +76,7 @@ public class ITRunOnlyAtExecutionRoot extends AbstractIT {
         assertFalse(new File(dir, "child1/" + depResource).exists());
         assertFalse(new File(dir, "child2/" + depResource).exists());
 
-        String content = FileUtils.fileRead(output);
+        String content = new String(Files.readAllBytes(output.toPath()), StandardCharsets.UTF_8);
 
         assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.mrr41:release:1.0"));
         assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.mrr41:snapshot:1.0-SNAPSHOT"));

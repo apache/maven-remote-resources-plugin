@@ -19,10 +19,11 @@
 package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.codehaus.plexus.util.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,7 +48,7 @@ public class ITBadDependencyPoms extends AbstractIT {
                 "[WARNING] Invalid project model for artifact [test:invalid:0.1]. It will be ignored by the remote resources Mojo");
 
         File output = new File(dir, "target/maven-shared-archive-resources/DEPENDENCIES");
-        String content = FileUtils.fileRead(output);
+        String content = new String(Files.readAllBytes(output.toPath()), StandardCharsets.UTF_8);
 
         assertTrue(content.contains("Dependency Id: test:pom:0.2"));
     }

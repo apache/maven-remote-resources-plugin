@@ -19,10 +19,11 @@
 package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.codehaus.plexus.util.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,7 +47,7 @@ public class ITSpdxLicenseId extends AbstractIT {
         verifier.verifyErrorFreeLog();
 
         File output = new File(projectDir, "target/maven-shared-archive-resources/DEPENDENCIES");
-        String content = FileUtils.fileRead(output).replace("\r\n", "\n");
+        String content = new String(Files.readAllBytes(output.toPath()), StandardCharsets.UTF_8).replace("\r\n", "\n");
 
         assertTrue(content.contains("a-name: Apache-2.0\n"), content);
         assertTrue(content.contains("b-url: Apache-2.0\n"), content);
