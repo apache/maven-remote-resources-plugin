@@ -19,6 +19,8 @@
 package org.apache.maven.plugin.resources.remote.stub;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Properties;
@@ -26,7 +28,6 @@ import java.util.Properties;
 import org.apache.maven.api.plugin.testing.MojoExtension;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.FileUtils;
 
 /**
  * Stub
@@ -59,7 +60,7 @@ public class MavenProjectBasicStub extends MavenProject {
         testRootDir = MojoExtension.getBasedir() + "/target/test-classes/unit/test-dir/" + identifier;
 
         if (!new File(testRootDir).exists()) {
-            FileUtils.mkdir(testRootDir);
+            Files.createDirectories(Paths.get(testRootDir));
         }
 
         artifact.populate(this);

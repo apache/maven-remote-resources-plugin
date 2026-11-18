@@ -21,11 +21,11 @@ package org.apache.maven.plugin.resources.remote.it;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.jar.JarFile;
 
 import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +54,9 @@ public class ITAttachToTestOnly extends AbstractIT {
         verifier.execute();
         verifier.verifyErrorFreeLog();
 
-        String testResource = FileUtils.fileRead(new File(projectDir, "target/test-classes/META-INF/beans.xml"));
+        String testResource = new String(
+                Files.readAllBytes(new File(projectDir, "target/test-classes/META-INF/beans.xml").toPath()),
+                StandardCharsets.UTF_8);
         assertTrue(testResource.contains("from bundle"), testResource);
 
         File[] jars = new File(projectDir, "target").listFiles((d, name) -> name.endsWith(".jar"));

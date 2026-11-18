@@ -19,10 +19,11 @@
 package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.codehaus.plexus.util.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -52,7 +53,7 @@ public class ITGetDependencyProjects extends AbstractIT {
         verifier.verifyErrorFreeLog();
 
         File output = new File(projectDir, "target/maven-shared-archive-resources/DEPENDENCIES");
-        String content = FileUtils.fileRead(output);
+        String content = new String(Files.readAllBytes(output.toPath()), StandardCharsets.UTF_8);
 
         assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.gdp:release:1.0"));
         assertTrue(content.contains("Dependency Id: org.apache.maven.plugin.rresource.it.gdp:snapshot:1.0-SNAPSHOT"));
