@@ -31,6 +31,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +40,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
@@ -51,6 +53,7 @@ import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Model;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.resources.remote.stub.ArtifactStub;
 import org.apache.maven.plugin.resources.remote.stub.MavenProjectBuildStub;
@@ -284,6 +287,35 @@ class RemoteResourcesMojoTest {
         } catch (MojoExecutionException e) {
             assertTrue(e.getMessage().contains("Unable to parse supplemental XML"), e.getMessage());
         }
+    }
+
+    @Test
+    void testSupplementalModelArtifactCanBeRewrittenBetweenExecutions(
+            @InjectMojo(goal = "process", pom = DEFAULT_PROCESS_POM_PATH) ProcessRemoteResourcesMojo mojo)
+            throws Exception {
+        final MavenProjectResourcesStub project = createTestProject("default-rewrittensupplementalmodel");
+        configureProcessMojo(mojo, project, Collections.emptyList());
+        setupDefaultProject(project);
+
+        File supplementalModelsJar = new File(pathOf(new DefaultArtifact(
+                "test",
+                "supplement",
+                VersionRange.createFromVersion("1.0"),
+                null,
+                "jar",
+                "",
+                new DefaultArtifactHandler())));
+        writeSupplementalModelsJar(supplementalModelsJar, "before");
+        setVariableValueToObject(mojo, "supplementalModelArtifacts", Collections.singletonList("test:supplement:1.0"));
+        setVariableValueToObject(mojo, "supplementalModels", new String[] {"supplemental-models.xml"});
+
+        mojo.execute();
+        assertEquals("before", supplementalOrganizationName(mojo));
+
+        writeSupplementalModelsJar(supplementalModelsJar, "after");
+        mojo.execute();
+
+        assertEquals("after", supplementalOrganizationName(mojo));
     }
 
     @Test
@@ -865,6 +897,26 @@ class RemoteResourcesMojoTest {
                 }
             }
         }
+    }
+
+    private void writeSupplementalModelsJar(File jarFile, String organizationName) throws IOException {
+        jarFile.getParentFile().mkdirs();
+        File temporaryJar = new File(jarFile.getParentFile(), jarFile.getName() + ".tmp");
+        String model = "<supplementalDataModels><supplement><project>"
+                + "<groupId>test</groupId><artifactId>test</artifactId>"
+                + "<organization><name>" + organizationName + "</name></organization>"
+                + "</project></supplement></supplementalDataModels>";
+        try (JarOutputStream jar = new JarOutputStream(Files.newOutputStream(temporaryJar.toPath()))) {
+            jar.putNextEntry(new ZipEntry("supplemental-models.xml"));
+            jar.write(model.getBytes(StandardCharsets.UTF_8));
+            jar.closeEntry();
+        }
+        Files.move(temporaryJar.toPath(), jarFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private String supplementalOrganizationName(ProcessRemoteResourcesMojo mojo) throws Exception {
+        Map<?, ?> supplementModels = (Map<?, ?>) getVariableValueFromObject(mojo, "supplementModels");
+        return ((Model) supplementModels.get("test:test")).getOrganization().getName();
     }
 
     /**
