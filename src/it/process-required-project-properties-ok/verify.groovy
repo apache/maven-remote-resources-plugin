@@ -20,4 +20,4 @@
 def dir = new File(basedir, 'target/maven-shared-archive-resources')
 
 assert new File(dir, 'required-property.txt').text
-        .contains('mrrp-bundle-c org.apache.maven.its:mrrp-process-required-properties - test1 - test2')
+.contains('mrrp-bundle-c org.apache.maven.its:mrrp-process-required-properties - test1 - test2')
