@@ -53,8 +53,8 @@ under the License.
     <url>https://github.com/apache/maven-remote-resources-plugin/issues</url>
   </issueManagement>
   <ciManagement>
-    <system>Jenkins</system>
-    <url>https://ci-maven.apache.org/job/Maven/job/maven-box/job/maven-remote-resources-plugin/</url>
+    <system>GitHub</system>
+    <url>https://github.com/apache/maven-remote-resources-plugin/actions</url>
   </ciManagement>
   <distributionManagement>
     <site>
@@ -64,7 +64,6 @@ under the License.
   </distributionManagement>
 
   <properties>
-    <javaVersion>8</javaVersion>
     <mavenVersion>3.9.16</mavenVersion>
     <resolverVersion>1.9.27</resolverVersion>
     <project.build.outputTimestamp>2024-12-30T10:45:13Z</project.build.outputTimestamp>
@@ -80,7 +79,7 @@ under the License.
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
-        <version>3.21.0</version>
+        <version>3.22.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -156,7 +155,7 @@ under the License.
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-resources</artifactId>
-      <version>1.4.0</version>
+      <version>1.4.1</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
@@ -385,6 +384,7 @@ under the License.
 
         <plugins>
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>

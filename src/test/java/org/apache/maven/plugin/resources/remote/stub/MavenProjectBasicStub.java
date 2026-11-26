@@ -19,16 +19,15 @@
 package org.apache.maven.plugin.resources.remote.stub;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Properties;
 
 import org.apache.maven.api.plugin.testing.MojoExtension;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.model.Profile;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.FileUtils;
 
 /**
  * Stub
@@ -61,7 +60,7 @@ public class MavenProjectBasicStub extends MavenProject {
         testRootDir = MojoExtension.getBasedir() + "/target/test-classes/unit/test-dir/" + identifier;
 
         if (!new File(testRootDir).exists()) {
-            FileUtils.mkdir(testRootDir);
+            Files.createDirectories(Paths.get(testRootDir));
         }
 
         artifact.populate(this);
@@ -135,14 +134,14 @@ public class MavenProjectBasicStub extends MavenProject {
     private void initializeParentFields() {
         // the pom should be located in the isolated dummy root
         super.setFile(new File(getBasedir(), "pom.xml"));
-        super.setDependencyArtifacts(new HashSet<Artifact>());
-        super.setArtifacts(new HashSet<Artifact>());
-        super.setReportArtifacts(new HashSet<Artifact>());
-        super.setExtensionArtifacts(new HashSet<Artifact>());
-        super.setRemoteArtifactRepositories(new LinkedList<ArtifactRepository>());
-        super.setPluginArtifactRepositories(new LinkedList<ArtifactRepository>());
-        super.setCollectedProjects(new LinkedList<MavenProject>());
-        super.setActiveProfiles(new LinkedList<Profile>());
+        super.setDependencyArtifacts(new HashSet<>());
+        super.setArtifacts(new HashSet<>());
+        super.setReportArtifacts(new HashSet<>());
+        super.setExtensionArtifacts(new HashSet<>());
+        super.setRemoteArtifactRepositories(new LinkedList<>());
+        super.setPluginArtifactRepositories(new LinkedList<>());
+        super.setCollectedProjects(new LinkedList<>());
+        super.setActiveProfiles(new LinkedList<>());
         super.setOriginalModel(null);
         super.setExecutionProject(this);
         super.setArtifact(artifact);

@@ -42,7 +42,6 @@ import org.apache.maven.model.Reporting;
 import org.apache.maven.model.Resource;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.Site;
-import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /**
@@ -128,18 +127,17 @@ public class ModelInheritanceAssembler {
                 child.setScm(childScm);
             }
 
-            if (StringUtils.isEmpty(childScm.getConnection()) && !StringUtils.isEmpty(parentScm.getConnection())) {
+            if (isEmpty(childScm.getConnection()) && !isEmpty(parentScm.getConnection())) {
                 childScm.setConnection(
                         appendPath(parentScm.getConnection(), child.getArtifactId(), childPathAdjustment, appendPaths));
             }
 
-            if (StringUtils.isEmpty(childScm.getDeveloperConnection())
-                    && !StringUtils.isEmpty(parentScm.getDeveloperConnection())) {
+            if (isEmpty(childScm.getDeveloperConnection()) && !isEmpty(parentScm.getDeveloperConnection())) {
                 childScm.setDeveloperConnection(appendPath(
                         parentScm.getDeveloperConnection(), child.getArtifactId(), childPathAdjustment, appendPaths));
             }
 
-            if (StringUtils.isEmpty(childScm.getUrl()) && !StringUtils.isEmpty(parentScm.getUrl())) {
+            if (isEmpty(childScm.getUrl()) && !isEmpty(parentScm.getUrl())) {
                 childScm.setUrl(
                         appendPath(parentScm.getUrl(), child.getArtifactId(), childPathAdjustment, appendPaths));
             }
@@ -219,22 +217,22 @@ public class ModelInheritanceAssembler {
         }
 
         // developers
-        if (child.getDevelopers().size() == 0) {
+        if (child.getDevelopers().isEmpty()) {
             child.setDevelopers(parent.getDevelopers());
         }
 
         // licenses
-        if (child.getLicenses().size() == 0) {
+        if (child.getLicenses().isEmpty()) {
             child.setLicenses(parent.getLicenses());
         }
 
         // developers
-        if (child.getContributors().size() == 0) {
+        if (child.getContributors().isEmpty()) {
             child.setContributors(parent.getContributors());
         }
 
         // mailingLists
-        if (child.getMailingLists().size() == 0) {
+        if (child.getMailingLists().isEmpty()) {
             child.setMailingLists(parent.getMailingLists());
         }
 
@@ -298,7 +296,7 @@ public class ModelInheritanceAssembler {
 
             childReporting.setExcludeDefaults(parentReporting.isExcludeDefaults());
 
-            if (StringUtils.isEmpty(childReporting.getOutputDirectory())) {
+            if (isEmpty(childReporting.getOutputDirectory())) {
                 childReporting.setOutputDirectory(parentReporting.getOutputDirectory());
             }
 
@@ -521,7 +519,7 @@ public class ModelInheritanceAssembler {
                 }
             }
 
-            if (StringUtils.isEmpty(childDistMgmt.getDownloadUrl())) {
+            if (isEmpty(childDistMgmt.getDownloadUrl())) {
                 childDistMgmt.setDownloadUrl(parentDistMgmt.getDownloadUrl());
             }
 
@@ -544,6 +542,10 @@ public class ModelInheritanceAssembler {
         repository.setUniqueVersion(parentRepository.isUniqueVersion());
 
         return repository;
+    }
+
+    private static boolean isEmpty(String str) {
+        return str == null || str.isEmpty();
     }
 
     // TODO This should eventually be migrated to DefaultPathTranslator.

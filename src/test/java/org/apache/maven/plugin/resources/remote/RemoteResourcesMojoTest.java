@@ -845,7 +845,7 @@ class RemoteResourcesMojoTest {
         String data = FileUtils.fileRead(xmlFile);
 
         List<String> expectedOrder = new ArrayList<>(Arrays.asList(resourceNames));
-        Collections.sort(expectedOrder);
+        expectedOrder.sort(null);
         assertContainsInOrder(data, expectedOrder);
 
         if (null != jarName) {

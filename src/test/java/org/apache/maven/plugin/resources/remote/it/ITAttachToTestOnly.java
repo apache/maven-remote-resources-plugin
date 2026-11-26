@@ -19,15 +19,13 @@
 package org.apache.maven.plugin.resources.remote.it;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.jar.JarFile;
 
 import org.apache.maven.plugin.resources.remote.it.support.MavenRunner;
 import org.apache.maven.plugin.resources.remote.it.support.TestUtils;
-import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class ITAttachToTestOnly extends AbstractIT {
     @Test
-    public void test() throws IOException, URISyntaxException {
+    public void test() throws Exception {
         File dir = TestUtils.getTestDir("attach-to-test-only");
 
         MavenRunner verifier = TestUtils.newVerifier(new File(dir, "bundle"));
@@ -56,7 +54,9 @@ public class ITAttachToTestOnly extends AbstractIT {
         verifier.execute();
         verifier.verifyErrorFreeLog();
 
-        String testResource = FileUtils.fileRead(new File(projectDir, "target/test-classes/META-INF/beans.xml"));
+        String testResource = new String(
+                Files.readAllBytes(new File(projectDir, "target/test-classes/META-INF/beans.xml").toPath()),
+                StandardCharsets.UTF_8);
         assertTrue(testResource.contains("from bundle"), testResource);
 
         File[] jars = new File(projectDir, "target").listFiles((d, name) -> name.endsWith(".jar"));

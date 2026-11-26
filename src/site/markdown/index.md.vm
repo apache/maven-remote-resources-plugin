@@ -26,33 +26,33 @@ under the License.
 
 # ${project.name}
 
-This plugin is used to retrieve JARs of resources from remote repositories, process those resources, and incorporate them into JARs you build with Maven.
+This plugin retrieves JARs of resources from remote repositories, processes those resources, and incorporates them into JARs you build with Maven.
 
-A very common use-case is the need to package certain resources in a consistent way across your organization. For example at Apache, it is required that every JAR produced contains a copy of the Apache license and a notice file that references all used software in a given project: see [Apache Resource Bundles](/apache-resource-bundles/).
+A common use-case is packaging resources consistently across your organization. At Apache, every JAR must contain a copy of the Apache license and a notice file that references all used software in a given project: see [Apache Resource Bundles](/apache-resource-bundles/).
 
 Goals Overview
 --------------
 
-- [remote-resources:bundle](./bundle-mojo.html) creates the resource bundle manifest required by the remote resource bundle processing. The [manifest file](./remote-resources.html), `${esc.d}{basedir}/target/classes/META-INF/maven/remote-resources.xml`, is created from the contents of the `src/main/resources` directory.
-- [remote-resources:process](./process-mojo.html) retrieves the specified remote resource bundles, processes them and makes them available to the `process-resources` phase.
-- [remote-resources:aggregate](./aggregate-mojo.html) retrieves the specified remote resource bundles, processes them and makes them available to the `process-resources` phase in aggregate mode.
+- [remote-resources:bundle](./bundle-mojo.html) creates the resource bundle manifest. The [manifest file](./remote-resources.html), `${esc.d}{basedir}/target/classes/META-INF/maven/remote-resources.xml`, comes from `src/main/resources`.
+- [remote-resources:process](./process-mojo.html) retrieves remote resource bundles, processes them, and makes them available to the process-resources phase.
+- [remote-resources:aggregate](./aggregate-mojo.html) retrieves remote resource bundles, processes them in aggregate mode, and makes them available to the process-resources phase.
 
 Usage
 -----
 
-General instructions on how to use the Remote Resources Plugin can be found on the [usage page](./usage.html). Some more specific use cases are described in the examples given below.
+General instructions for using the Remote Resources Plugin are on the [usage page](./usage.html). Some specific use cases appear in the examples below.
 
-If you need help using some of the more advanced features of the plugin, check out the advanced help pages:
+If you need help with advanced features, see the advanced help pages:
 
 - [Patching Bad POMs with Supplemental Models](./supplemental-models.html)
 
-In case you still have questions regarding the plugin's usage, please have a look at the [FAQ](./faq.html) and feel free to contact the [user mailing list](./mailing-lists.html). The posts to the mailing list are archived and could already contain the answer to your question as part of an older thread. Hence, it is also worth browsing/searching the [mail archive](./mailing-lists.html).
+If you have questions about the plugin, check the [FAQ](./faq.html) or contact the [user mailing list](./mailing-lists.html). Posts to the mailing list are archived. You can browse or search the [mail archive](./mailing-lists.html).
 
-If you feel like the plugin is missing a feature or has a defect, you can fill a feature request or bug report in our [issue tracker](./issue-management.html). When creating a new issue, please provide a comprehensive description of your concern. Especially for fixing bugs it is crucial that the developers can reproduce your problem. For this reason, entire debug logs, POMs or most preferably little demo projects attached to the issue are very much appreciated. Of course, patches are welcome, too. Contributors can check out the project from our [source repository](./scm.html) and will find supplementary information in the [guide to helping with Maven](/guides/development/guide-helping.html).
+If you think the plugin is missing a feature or has a defect, file a feature request or bug report. When creating an issue, provide a clear description of your concern. For fixing bugs, attach entire debug logs, POMs, or demo projects. We also welcome patches. Contributors can get code from our [source repository](./scm.html) and find more information in the [guide to helping with Maven](/guides/development/guide-helping.html).
 
 Examples
 --------
 
-To provide you with better understanding of some usages of the Remote Resources Plugin, you can take a look at the following examples:
+To help you understand the Remote Resources Plugin usages, see these examples:
 
 - [Sharing Resources Example](./examples/sharing-resources.html)

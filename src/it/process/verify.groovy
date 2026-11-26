@@ -17,13 +17,13 @@
  * under the License.
  */
 
-dir = new File( basedir, 'target/maven-shared-archive-resources' )
+dir = new File(basedir, 'target/maven-shared-archive-resources')
 
-assert new File( dir, 'a/a.txt' ).text.contains( 'mrrp-bundle-a' )
-assert new File( dir, 'b/b.txt' ).text.contains( 'mrrp-bundle-b' )
+assert new File(dir, 'a/a.txt').text.contains('mrrp-bundle-a')
+assert new File(dir, 'b/b.txt').text.contains('mrrp-bundle-b')
 
-assert new File( dir, 'common.txt' ).text.contains( 'mrrp-bundle-a' ) // bundle a is first in classpath
-assert new File( dir, 'common-vm.txt' ).text.contains( 'mrrp-bundle-a org.apache.maven.its:mrrp-process' )
-assert new File( dir, 'common2.txt' ).text.contains( 'using project\'s resource' ) // bundle content overridden by local project's resources
+assert new File(dir, 'common.txt').text.contains('mrrp-bundle-a') // bundle a is first in classpath
+assert new File(dir, 'common-vm.txt').text.contains('mrrp-bundle-a org.apache.maven.its:mrrp-process')
+assert new File(dir, 'common2.txt').text.contains('using project\'s resource') // bundle content overridden by local project's resources
 
-return true;
+return true

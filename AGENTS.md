@@ -15,8 +15,6 @@
  limitations under the License.
 -->
 
-# Agent guide for maven-reporting-api
-
 # Agent Guide for maven-remote-resources-plugin
 
 This file is read by automated agents (security scanners, code
