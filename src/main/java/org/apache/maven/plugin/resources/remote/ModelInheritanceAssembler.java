@@ -608,9 +608,6 @@ public class ModelInheritanceAssembler {
         String path = uri.getRawPath();
         String suffix = (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery())
                 + (uri.getRawFragment() == null ? "" : "#" + uri.getRawFragment());
-        String original = uri.toString();
-        // Retain the raw prefix and suffix so percent escapes are not decoded or escaped twice.
-        String prefix = original.substring(0, original.length() - path.length() - suffix.length());
         if (appendPaths) {
             if (pathAdjustment != null) {
                 path += "/" + pathAdjustment;
@@ -619,7 +616,10 @@ public class ModelInheritanceAssembler {
                 path += "/" + childPath;
             }
         }
-        return prefix + resolvePath(path) + suffix;
+
+        // Resolve a URI reference built from raw components so existing percent escapes, authority,
+        // query, and fragment are preserved without slicing the original URL string.
+        return uri.resolve(URI.create(resolvePath(path) + suffix)).toString();
     }
 
     private static boolean isScpLikeScmUrl(String path) {

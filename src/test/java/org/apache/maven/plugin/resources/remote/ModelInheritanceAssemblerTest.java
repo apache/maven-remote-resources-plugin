@@ -145,7 +145,7 @@ public class ModelInheritanceAssemblerTest {
     public void appendPathHandlesEmptyUrlPathAndFileUrls() {
         assertEquals("https://host/child?ref=main", assembler.appendPath("https://host?ref=main", "child", null, true));
         assertEquals(
-                "file:///repo/child?ignored#part",
+                "file:/repo/child?ignored#part",
                 assembler.appendPath("file:///repo/./sub/..?ignored#part", "child", null, true));
     }
 }
